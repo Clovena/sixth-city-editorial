@@ -5,7 +5,7 @@
     "name": "Toronto Hogs",
     "owner": "Zac",
     "conference": "SCC",
-    "colors": ["#7a709b", "#ea332a", "#4f4471"],
+    "colors": ["#4f4471", "#ea332a", "#7a709b"],
     "founded": 2021,
     "rebrands": [],
     "sleeper_id": "1"
@@ -16,7 +16,7 @@
     "name": "Bikini Bottom Stars",
     "owner": "Jacob",
     "conference": "HCC",
-    "colors": ["#b580ff", "#ff808b", "#caff80"],
+    "colors": ["#ff808b", "#b580ff", "#caff80"],
     "founded": 2021,
     "rebrands": [],
     "sleeper_id": "2"
@@ -27,7 +27,7 @@
     "name": "Newfoundland Blowers",
     "owner": "Brendan",
     "conference": "SCC",
-    "colors": ["#ab3032", "#192f5d", "#ae9273"],
+    "colors": ["#192f5d", "#ab3032", "#ae9273"],
     "founded": 2021,
     "rebrands": [],
     "sleeper_id": "3"
@@ -38,7 +38,7 @@
     "name": "Thunder Bay Mustangs",
     "owner": "Steve",
     "conference": "SCC",
-    "colors": ["#0a2351", "#81c78d", "#ffffff"],
+    "colors": ["#81c78d", "#0a2351", "#ffffff"],
     "founded": 2021,
     "rebrands": [
       { "year": 2021, "name": "Thunder Bay Sunshine" }
@@ -64,7 +64,7 @@
     "name": "Choccolocco Railfans",
     "owner": "Sean",
     "conference": "HCC",
-    "colors": ["#49351a", "#d5913a", "#a58b8b"],
+    "colors": ["#d5913a", "#49351a", "#a58b8b"],
     "founded": 2021,
     "rebrands": [],
     "sleeper_id": "6"
@@ -75,7 +75,7 @@
     "name": "Prince Edward Islanders",
     "owner": "Jared",
     "conference": "HCC",
-    "colors": ["#00d5d6", "#ff6d01", "#002288"],
+    "colors": ["#ff6d01", "#00d5d6", "#002288"],
     "founded": 2021,
     "rebrands": [
       { "year": 2021, "name": "Pokemon Omega Judge Judy" },
@@ -150,7 +150,7 @@
     "name": "Mississauga Mastodons",
     "owner": "Gibby",
     "conference": "HCC",
-    "colors": ["#39bbf0", "#9f5134", "#d7e7ed"],
+    "colors": ["#9f5134", "#39bbf0", "#d7e7ed"],
     "founded": 2021,
     "rebrands": [],
     "sleeper_id": "12"
