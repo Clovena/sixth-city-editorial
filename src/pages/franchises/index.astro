@@ -39,7 +39,9 @@ const hccFranchises = franchises.filter(f => f.conference === 'HCC')
       <p class="section-label">League Membership</p>
       <h1 class="page-title">Franchises</h1>
       <p class="page-subtitle" style="margin-top: 0.75rem;">
-        14 franchises across two conferences. Each one a distinct identity, built and owned by the people who matter.
+        Fourteen franchises across two conferences comprise Sixth City 
+        Dynasty. Many organizations are based in Canada, but the league 
+        stretches down to the US and across the globe to Australia.
       </p>
     </div>
 
@@ -66,6 +68,14 @@ const hccFranchises = franchises.filter(f => f.conference === 'HCC')
       <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
         <h2 style="font-family: var(--font-display); font-size: 1.35rem; font-weight: 600; margin: 0; color: var(--color-text-primary);">Senatorial Canadian Conference</h2>
         <span class="label-badge badge-scc">SCC</span>
+      </div>
+      <div>
+        <p class="page-subheader" style="margin: 0.75rem 0; text-align: justify;">
+          The SCC embraces the everyman’s approach to football: hard-nosed,
+          down and dirty blue collar football that the people love. However, 
+          some wonder whether or not they are willing to adapt to the way
+          the game is changing.
+        </p>
       </div>
       <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1px; background-color: var(--color-border);">
         {sccFranchises.map(franchise => {
@@ -129,6 +139,14 @@ const hccFranchises = franchises.filter(f => f.conference === 'HCC')
       <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
         <h2 style="font-family: var(--font-display); font-size: 1.35rem; font-weight: 600; margin: 0; color: var(--color-text-primary);">House of Commons Conference</h2>
         <span class="label-badge badge-hcc">HCC</span>
+      </div>
+      <div>
+        <p class="page-subheader" style="margin: 0.75rem 0; text-align: justify;">
+          The HCC is the older and more prestigious conference. They pride 
+          themselves on their refined strategies, but opponents might say 
+          that their lackadaisical temperament has made them no longer 
+          representative of what their cities want in a football team.
+        </p>
       </div>
       <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1px; background-color: var(--color-border);">
         {hccFranchises.map(franchise => {
