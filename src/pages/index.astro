@@ -26,21 +26,27 @@ function getFranchise(abbr: string) {
   <div style="max-width: 1200px; margin: 0 auto; padding: 0 1.5rem;">
     <div style="padding: 5rem 0 4rem; border-bottom: 1px solid var(--color-border);">
 
-      <p style="font-family: var(--font-body); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--color-gold-dim); margin-bottom: 1.25rem;">Est. 2021 &bull; Cleveland, Ohio</p>
-
       <h1 style="font-family: var(--font-display); font-size: clamp(2.5rem, 7vw, 5rem); font-weight: 700; line-height: 1.05; letter-spacing: -0.02em; color: var(--color-text-primary); margin: 0 0 1.5rem; max-width: 14ch;">
         Sixth City Dynasty Football League
       </h1>
 
+      <p style="font-family: var(--font-body); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--color-gold-dim); margin-bottom: 1.25rem;">Est. 2021 &bull; Cleveland, Ohio</p>
+
       <p style="font-size: 1.05rem; color: var(--color-text-secondary); line-height: 1.65; max-width: 58ch; margin: 0 0 2.5rem;">
-        A 14-team dynasty fantasy football league built by friends who attended college in Cleveland, Ohio. Named for the city's historic "Sixth City" designation. Entering our sixth season.
+        The Sixth City Dynasty Football League was founded in 2021 as a
+        branch off of a standard redraft league with origins in the Sigma
+        Phi Epsilon Ohio Zeta chapter. Rooted in Cleveland, Sixth City is
+        host to members throughout the state of Ohio.<br><br>What began as a group of 
+        fraternity buddies coming together to enjoy the game of football has 
+        grown into a vibrant sports community, contributing to a league that 
+        has become an entire universe rich with history, rivalries, and traditions.
       </p>
 
       <!-- Quick stats row -->
       <div style="display: flex; flex-wrap: wrap; gap: 0; border: 1px solid var(--color-border); width: fit-content;">
         {[
-          { label: 'Seasons Completed', value: '5' },
           { label: 'Franchises', value: '14' },
+          { label: 'Seasons Completed', value: '5' },
           { label: 'Champions', value: String(totalChampions) },
           { label: 'Dynasty Bowls', value: String(seasons.length) },
         ].map((stat, i) => (
@@ -54,7 +60,7 @@ function getFranchise(abbr: string) {
       <!-- Season status -->
       <div style="margin-top: 2rem; display: inline-flex; align-items: center; gap: 0.75rem; padding: 0.6rem 1rem; background-color: var(--color-surface); border: 1px solid var(--color-border);">
         <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: var(--color-gold); opacity: 0.6;"></span>
-        <span style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-secondary); letter-spacing: 0.04em;">Season 6 begins fall 2026</span>
+        <span style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-secondary); letter-spacing: 0.04em;">Season 6 begins September 9th, 2026</span>
       </div>
 
     </div>
