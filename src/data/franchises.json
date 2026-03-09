@@ -51,7 +51,7 @@
     "name": "Winnipeg Wranglers",
     "owner": "Ryan",
     "conference": "HCC",
-    "colors": ["#4262f9", "#f3d971", "#1a018e"],
+    "colors": ["#f3d971", "#4262f9", "#1a018e"],
     "founded": 2021,
     "rebrands": [
       { "year": 2021, "name": "Winnipeg Wankers" }
@@ -92,7 +92,7 @@
     "name": "Iqaluit Trout",
     "owner": "Bret",
     "conference": "HCC",
-    "colors": ["#62b0e5", "#c91b48", "#002b64"],
+    "colors": ["#c91b48", "#62b0e5", "#002b64"],
     "founded": 2021,
     "rebrands": [],
     "sleeper_id": "8"
@@ -172,7 +172,7 @@
     "name": "Gold Coast Sharks",
     "owner": "Logan",
     "conference": "SCC",
-    "colors": ["#ef979e", "#006d75", "#e7cd78"],
+    "colors": ["#006d75", "#ef979e", "#e7cd78"],
     "founded": 2021,
     "rebrands": [
       { "year": 2021, "name": "Unsolicited Dak Pics" }
