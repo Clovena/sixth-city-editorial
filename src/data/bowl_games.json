@@ -1,38 +1,47 @@
 [
   {
-    "slug": "atom-bowl",
-    "name": "Atom Bowl",
-    "team_a": "BKB",
-    "team_b": "WPG",
-    "year_established": 2026,
-    "description": "A matchup steeped in atomic-age irony. The Bikini Bottom Stars take their name from the Bikini Atoll, site of the 1946 Operation Crossroads nuclear tests — the same event that gave the world the 'bikini' and gave pop culture its most recognizable fictional underwater metropolis. The Winnipeg Wranglers bring cold-country grit to a warm-water rivalry. The Atom Bowl references both the atoll's nuclear legacy and the elemental nature of this first-year pairing.",
+    "slug": "atlantic-bowl",
+    "name": "Atlantic Bowl",
+    "team_a": "NFD",
+    "team_b": "PEI",
+    "year_established": 2024,
+    "description": "A long-standing feud set against the backdrop of the Atlantic. The Blowers and Islanders represent provinces separated by the frigid water and wind-swept coasts of the St Lawrence Gulf. PEI has been a consistent HCC presence; NFD has had their ups and downs but are always a thrill to follow. The Atlantic Bowl returns for another year of maritime bragging rights.",
     "history": []
   },
   {
-    "slug": "cascade-cup",
-    "name": "Cascade Cup",
-    "team_a": "MIS",
-    "team_b": "LOW",
-    "year_established": 2026,
-    "description": "Geography and identity collide in the Cascade Cup. Mississauga and Hamilton — the Lower City — share a waterfall heritage and a second-city psychology. Both franchises exist in the shadow of larger neighbors, and both have channeled that chip-on-the-shoulder energy into competitive rosters. The Cup takes its name from the cascading falls common to their region and the cascading ambitions of two franchises still hunting their first championship.",
-    "history": []
-  },
-  {
-    "slug": "gateway-cup",
-    "name": "Gateway Cup",
-    "team_a": "TBY",
-    "team_b": "GLD",
-    "year_established": 2026,
-    "description": "Thunder Bay is the gateway to the Canadian northwest; Gold Coast is a gateway to sun, surf, and the Pacific rim. The Gateway Cup pairs two franchises from opposite ends of the geographic spectrum, united by their roles as regional representatives and their shared hunger for sustained success. TBY enters 2026 as reigning SCC champions; GLD is still searching for their first title.",
+    "slug": "blue-collar-classic",
+    "name": "Blue-Collar Classic",
+    "team_a": "CHC",
+    "team_b": "IQT",
+    "year_established": 2024,
+    "description": "An unlikely pairing united by a working-class ethos. Iqaluit toils on the fishing docks in the extreme north; Choccolocco (Alabama) grinds away on the railroad tracks in the deep south. Both franchises represent proud industrial heritages; both franchises have moments of success in the HCC; and both franchises are trying to claw their way back to an ever-elusive former glory.",
     "history": []
   },
   {
     "slug": "animation-altercation",
     "name": "Animation Altercation",
-    "team_a": "SAR",
-    "team_b": "NNY",
+    "team_a": "NNY",
+    "team_b": "SAR",
     "year_established": 2026,
-    "description": "Both franchises are rooted in animated fictional universes. Sarnia SeaSnakes carries the serpentine energy of classic animated villainy. New New York Benders take their identity directly from Futurama's 31st-century New York — home of Bender Bending Rodríguez. The name rhymes with Fox's legendary 'Animation Domination' Sunday block, which housed both franchises' spiritual ancestors. This is a rivalry of cartoons, references, and comedic menace.",
+    "description": "A clash of rivals rooted in animated fictional universes. Sarnia refers to a more obscure yet beloved moment in the world of Spongebob, while New New York overtly draws from Futurama's 31st-century world. The Bowl Game name is inspired by Fox's legendary 'Animation Domination' Sunday block, and the matchup itself gives two familiar foes a spotlight at the highest level.",
+    "history": []
+  },
+  {
+    "slug": "atom-bowl",
+    "name": "Atom Bowl",
+    "team_a": "BKB",
+    "team_b": "WPG",
+    "year_established": 2026,
+    "description": "A marquee matchup inspired by the Atomic Age. The Bikini Bottom Stars are based in the Bikini Atoll, the canonical home of SpongeBob SquarePants and the site of a score of nuclear tests between 1946 and 1958. The Winnipeg Wranglers share a home with one of the largest nuclear test sites in Western Canada. The Atom Bowl acknowledges the nuclear legacy of both regions and derives its name from the real-life Atom Bowl played in 1946 in the aftermath of Nagasaki.",
+    "history": []
+  },
+  {
+    "slug": "cascade-cup",
+    "name": "Cascade Cup",
+    "team_a": "LOW",
+    "team_b": "MIS",
+    "year_established": 2026,
+    "description": "Two well-acquainted HCC rivals in a clash of overlooked locales. Mississauga lives in the shadow of a larger Canadian metro, and Lower City (Connecticut) remains permanently overlooked in its area. Both have channeled that chip-on-the-shoulder energy year after year. The Cup itself takes its name from the waterfalls common to each team's region, as well as the cascading ambitions of two franchises still hunting their first taste of real success.",
     "history": []
   },
   {
@@ -41,25 +50,16 @@
     "team_a": "TOR",
     "team_b": "VAN",
     "year_established": 2026,
-    "description": "The league's premier Canadian civic rivalry. Toronto and Vancouver — Canada's two largest cities, separated by 4,400 kilometers and a cultural fault line — meet annually in the Dominion Classic. The name invokes the historical Dominion of Canada, that vast stretch of territory that once connected two coasts under a single administrative identity. TOR is the reigning champion; VAN is the scrappy counterpuncher with a dynasty bowl appearance on their resume. This is the matchup the league was built for.",
+    "description": "The league's premier Canadian civic rivalry. Toronto and Vancouver — separated by over 2700 miles — meet in a battle of Canada's two largest cities, each believing they lay claim to the cultural mecca of the Great White North. The name invokes the historical Dominion of Canada, and the annual meeting of the Hogs and Mounties all but decide who reigns supreme over that Dominion.",
     "history": []
   },
   {
-    "slug": "atlantic-bowl",
-    "name": "Atlantic Bowl",
-    "team_a": "NFD",
-    "team_b": "PEI",
-    "year_established": 2024,
-    "description": "The Atlantic Bowl is the league's longest-running regional rivalry, matching Newfoundland and Prince Edward Island in an annual celebration of Atlantic Canadian identity. Both franchises represent provinces separated by the Cabot Strait — cold water, wind-swept coasts, and a stubborn regional pride. NFD has been a consistent SCC presence; PEI made their first Dynasty Bowl appearance in 2025 and is ascending. The Atlantic Bowl returns for another year of maritime bragging rights.",
-    "history": []
-  },
-  {
-    "slug": "blue-collar-classic",
-    "name": "Blue-Collar Classic",
-    "team_a": "IQT",
-    "team_b": "CHC",
-    "year_established": 2024,
-    "description": "Iqaluit and Choccolocco, Alabama are separated by thousands of miles but united by a working-class, lunch-pail ethos that defines both franchises. IQT grinds in the extreme north; CHC represents a small Alabama city with a proud industrial heritage and a railroad-obsessed fanbase. Both franchises have championship pedigree — CHC took Dynasty Bowl I, IQT reached the championship in 2024. The Blue-Collar Classic is a rivalry between two teams who earn everything the hard way.",
+    "slug": "gateway-cup",
+    "name": "Gateway Cup",
+    "team_a": "GLD",
+    "team_b": "TBY",
+    "year_established": 2026,
+    "description": "Two franchises from opposite ends of the world. Thunder Bay is the gateway to the Canadian northwest; Gold Coast is the gateway to the Great Barrier Reef. The Gateway Cup highlights the Sharks and Mustangs as regional representatives for fanbases otherwise untethered to the rest of the league, and as organizations hungry for sustained success after years of heartbreak.",
     "history": []
   }
 ]
