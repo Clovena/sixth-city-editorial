@@ -1,5 +1,3 @@
-Jared's franchise operated as "Pokemon Omega Judge Judy" from 2021 through 2024 before rebranding to the Prince Edward Islanders ahead of season 5.
+The Prince Edward Islanders have been a member of Sixth City since the inaugural season in 2021, originally operating as Pokémon Omega Judge Judy before rebranding ahead of the 2025 campaign. The franchise now draws from the maritime heritage of Prince Edward Island, honoring the fishermen and traders who have worked the waters off Canada's smallest province for generations. 
 
-The timing was prophetic. PEI immediately won the HCC Championship in 2025 and made their first Dynasty Bowl appearance, falling to BKB. It was a coming-out moment — the franchise arrived in its new identity by going further than it ever had under the old one.
-
-Prince Edward Island: small province, big moment.
+The front office operates with an outspoken, confrontational style, led by a GM who isn't afraid to make enemies in pursuit of success. Prince Edward Island approaches the trade block with reckless abandon, embracing risk and volatility in roster construction. This aggressive, us-vs-the-world mentality has created one of the league's most polarizing franchises, but also one of the most dangerous competitors in the HCC.

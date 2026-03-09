@@ -1,3 +1,3 @@
-The Mississauga Mastodons are a franchise with a big name and a quiet demeanor. Gibby's squad has been building steadily, and the ice blue and brown color scheme gives the Mastodons a visual identity as sturdy as the prehistoric creature they're named for.
+The Mississauga Mastodons have been a member of Sixth City since the inaugural season in 2021. The franchise operates with fierce loyalty to players they enjoy watching, building long-term relationships with their roster rather than constantly churning through talent. 
 
-No championships yet. No dynasty bowl appearances. But the Mastodons are the kind of roster that tends to age well in dynasty formats — and Mississauga, sitting in Toronto's shadow with its own civic pride, is the right city for a franchise playing the long game.
+Mississauga stays reserved on the trade block but becomes outspoken and visible when the team catches fire. The Mastodons made history as the first franchise to develop a fight song, establishing a cultural identity that extends beyond the gridiron. This blend of player loyalty, selective aggression, and organizational pride has created a distinctive personality for the franchise.

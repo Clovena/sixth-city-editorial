@@ -1,5 +1,3 @@
-Originally the Calgary Cocks, the franchise was adopted by Nathan ahead of 2024 and rebranded as the Lower City Lasercats — a name that captures both the Hamilton, Ontario second-city identity and the franchise's commitment to speed and chaos.
+The Lower City Lasercats have been a member of Sixth City since 2024, adopting the former Calgary Cocks franchise under new ownership. The franchise operates with unconventional roster building strategies and head-turning trades that keep the rest of the league guessing. 
 
-Red and orange: a franchise that plays like it's on fire. Nathan's roster-building philosophy prioritizes upside over safety, and the Lasercats have the potential to be a breakout contender.
-
-Still searching for the first conference title. The machinery is in motion.
+Lower City doesn't take anything overly seriously, approaching the game with a refreshing lightheartedness that makes them easy to work with and entertaining to watch. Always up for a good time on the gridiron and in conference with other ownership, the Lasercats have quickly established themselves as one of the league's most entertaining franchises. This fun-first philosophy, combined with creative roster construction, has made Lower City a breath of fresh air in the HCC.

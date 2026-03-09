@@ -1,5 +1,3 @@
-Connor's Vancouver Mounties are a franchise with real historical stakes. VAN lost Dynasty Bowl I in 2021 and came back to win the SCC Championship in 2022. Their opponent across the country, their rival in any room, is TOR.
+The Vancouver Mounties have been a member of Sixth City since the inaugural season in 2021. Drawing from the legacy of the Royal Canadian Mounted Police, the franchise operates with a combative, almost militant style. 
 
-The navy and red color scheme is institutional. The Mounties play a measured, physical style that reflects the franchise's roots in the Pacific northwest.
-
-VAN has the pedigree. The next Dynasty Bowl appearance is overdue.
+The front office becomes outspoken and visible when the team performs well, but falls completely silent during down periods. Vancouver is generally difficult to reach for trade discussions, preferring to operate on their own terms and timeline. This uncompromising approach makes them one of the most unpredictable presences in the SCC.

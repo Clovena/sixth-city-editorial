@@ -1,5 +1,3 @@
-Ryan's Winnipeg Wranglers are a founding-era champion, having won Dynasty Bowl II in 2022 — competing at the time under their original "Winnipeg Wankers" identity.
+The Winnipeg Wranglers have been a member of Sixth City since the inaugural season in 2021, originally established as the Winnipeg Wankers before rebranding ahead of the 2022 campaign. The franchise draws from the grit and resilience of prairie culture, where survival demands toughness and self-reliance in the face of harsh, unforgiving conditions. 
 
-The transition from Wankers to Wranglers brought a new visual identity but the same competitive edge. The classic blue and yellow color scheme anchors a franchise with championship pedigree and a chip on its shoulder.
-
-WPG's 2022 championship was an upset — and the franchise hasn't forgotten how good that felt.
+Winnipeg operates with a stars-and-scrubs philosophy, building around elite playmakers like Ja'Marr Chase, Justin Jefferson, and Jahmyr Gibbs while filling out the roster with depth pieces. The front office sends out plenty of trade offers but rarely finds a way to close deals. This, combined with a love-hate relationship with the game itself, has created a franchise defined by flashes of brilliance tempered by missed opportunities in the HCC.

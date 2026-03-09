@@ -1,5 +1,3 @@
-Originally the Thunder Bay Sunshine in the league's inaugural 2021 season, Steve's franchise rebranded to the Mustangs ahead of 2022 and found its identity.
+The Thunder Bay Mustangs have been a member of Sixth City since the inaugural season in 2021, originally established as the Thunder Bay Sunshine before rebranding ahead of the 2022 campaign. The franchise maintains a luminous identity through its iconography, embodying a sense of brightness and clarity. 
 
-In 2025, TBY claimed the SCC Championship for the first time — a breakthrough season that put the franchise in the Dynasty Bowl conversation. The Mustangs play a style defined by persistence and late-developing talent.
-
-Thunder Bay is the gateway to the Canadian northwest, and this franchise carries that frontier energy into every season.
+Thunder Bay takes an analytical and calculated approach to roster construction, making quiet moves in the off-season that work toward a clear long-term vision. The Mustangs rarely make win-now pushes, instead preferring to preserve core talent and roster flexibility for sustained competitiveness. This patient, methodical philosophy has positioned Thunder Bay as a consistently dangerous opponent in the SCC, capable of striking when conditions align perfectly.

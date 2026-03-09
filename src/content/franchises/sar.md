@@ -1,5 +1,3 @@
-No franchise in the league carries more identity history than the Sarnia SeaSnakes.
+The Sarnia SeaSnakes have been a member of Sixth City since 2023, adopting the former Montreal Generals franchise following the 2022 season and becoming the first relocated team in league history. Based in Ontario's chemical valley along the shores of Lake Huron, the franchise builds around a select few blue-chip players while surrounding them with young talent and banking on their ascension. 
 
-Founded as the Montreal Generals (MTL) in 2021, the franchise won the SCC Championship that year. In 2023, Pat adopted the franchise and rebranded as the Sarnia SeaSnakes — and the 2021 SCC title came with it.
-
-From MTL to SAR, from Montreal to Sarnia: the franchise has lived multiple lives. The purple and forest green color scheme announces a franchise comfortable with reinvention. The SeaSnakes carry history from every era they've inhabited.
+Sarnia plays things close to the vest, keeping their intentions quiet until the right opportunity emerges, then striking decisively on the trade block. This patient yet opportunistic approach has positioned the SeaSnakes as a franchise perpetually on the cusp of contention in the SCC.

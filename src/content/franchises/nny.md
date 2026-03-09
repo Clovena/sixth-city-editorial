@@ -1,5 +1,3 @@
-Originally the Saskatoon Squirrels under a previous owner, the franchise was adopted by Josh ahead of the 2024 season and rebranded as the New New York Benders — a direct reference to Futurama's 31st-century setting and its most iconic character.
+he New New York Benders have been a member of Sixth City since 2024, adopting the former Saskatoon Squirrels franchise under new ownership. The franchise draws from the animated world of Futurama, both from the setting itself and the hard-drinking robot protagonist Bender. 
 
-Josh brought a new energy to a franchise that had been quietly competitive but never quite broken through. The grey-blue and grey palette suits a franchise with a sci-fi identity and a chip on its shoulder.
-
-The Benders are still finding their place in the league's power structure.
+The front office embodies a rebellious, irreverent spirit that Bender epitomizes, operates with flippant, full-throttle energy in drafts and on the trade block. New New York loves the game of football with genuine passion, even when results on the gridiron don't inspire confidence in future success. This spirited, all-action approach has made the Benders one of the league's most entertaining teams to watch, win or lose.

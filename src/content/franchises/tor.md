@@ -1,5 +1,3 @@
-The Toronto Hogs are the league's defining rivalry franchise — BKB's chief foil and the standard-bearer of the Senatorial Canadian Conference.
+The Toronto Hogs have been a member of Sixth City since the inaugural season in 2021. The team name pays homage to Toronto's 19th-century meatpacking industry, capturing the gritty, blue-collar identity that defines this franchise. 
 
-After back-to-back SCC titles in 2023 and 2024, Zac's squad broke through to claim Dynasty Bowl IV, ending the HCC's championship monopoly and establishing TOR as the only SCC franchise to ever win the Dynasty Bowl.
-
-The Hogs play with an identity that blends institutional seriousness with a willingness to take risks at the roster-building level. The name is blunt, the purple-and-red colors are bold, and the franchise has earned every bit of its standing.
+The Hogs embrace a ground-and-pound philosophy built around elite running back play, with Jonathan Taylor, Breece Hall, and Ashton Jeanty all taking snaps in Toronto during their careers. The front office operates with an analytical yet impulsive style that keeps things interesting on the trade block. Toronto's aggressive roster construction and commitment to elite playmakers have established them as a perennial threat, though not always a force, in the SCC.

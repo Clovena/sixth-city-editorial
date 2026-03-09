@@ -1,5 +1,3 @@
-Sean won the very first Dynasty Bowl. The inaugural champion. The franchise that set the standard before the standard existed.
+The Choccolocco Railfans have been a member of Sixth City since the inaugural season in 2021. Based in rural Alabama, the franchise draws from the region's railroad heritage and the blue-collar workers who built the rail lines threading through Appalachian foothills. 
 
-The Choccolocco Railfans take their name from a small Alabama city with a proud industrial heritage — railroads, iron, and the kind of civic identity that doesn't need anyone's approval. The brown-and-yellow color scheme fits.
-
-Since 2021, CHC has not returned to the championship. That story isn't over.
+Choccolocco maintains an extremely quiet presence on the trade block, rarely holding discussions publicly but always accessible in private. The front office understands the reality of their competitive position in any given year and acts accordingly with swift, informed decisiveness. This no-nonsense, precise approach has established the Railfans as one of the most respected franchises in the HCC.

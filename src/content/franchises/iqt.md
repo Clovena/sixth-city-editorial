@@ -1,5 +1,3 @@
-Bret's Iqaluit Trout grind it out from the extreme north. The franchise embodies the blue-collar ethos of Canada's far north — underrated, understated, and capable of a shock result when the playoff bracket opens up.
+The Iqaluit Trout have been a member of Sixth City since the inaugural season in 2021. Based in Nunavut, Canada's northernmost territory, the franchise draws from the frigid Arctic landscape and the wildlife that thrives in one of the world's harshest environments. The Trout have cultivated a self-deprecating identity but defends their honor against opposing teams when challenged. 
 
-In 2024, IQT claimed the HCC Championship and made their first Dynasty Bowl appearance, falling to TOR in a tight matchup. The ceiling is proven. The second trip to the championship is the mission.
-
-The red-violet and sky blue color scheme is distinctive — there's nothing quite like it in the league.
+The Trout place strong emphasis on philanthropy and supporting their community, establishing themselves as one of the league's most socially conscious organizations. This blend of humility, defiance, and charitable commitment has created a franchise identity that extends far beyond wins and losses in the HCC.

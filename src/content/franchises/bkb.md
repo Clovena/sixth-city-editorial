@@ -1,5 +1,3 @@
-The Bikini Bottom Stars are the league's dynasty. Two championships (2023, 2025). Three conference titles in five seasons. No franchise has been more consistently dominant.
+The Bikini Bottom Stars have been a member of Sixth City since the inaugural season in 2021. The franchise is inspired by the fictional underwater world of Spongebob Squarepants, with the "Stars" nickname honoring Patrick Star himself. 
 
-Jacob's franchise takes its name from Bikini Atoll — the Pacific island site of the 1946 Operation Crossroads nuclear tests, and the spiritual birthplace of SpongeBob's fictional underwater world. The BKB identity fuses absurdist pop culture with a very serious winning track record.
-
-They are the team every other franchise is measuring themselves against.
+Bikini Bottom has established itself as the league's most aggressive buyer, consistently trading draft capital for established talent and building perennial strength at wide receiver. The front office operates with a level-headed approach that capitalizes on opportunity, going all-in when championship windows open. This calculated aggression has made the Stars the most decorated franchise in Sixth City history, setting the standard for sustained excellence in the HCC.
