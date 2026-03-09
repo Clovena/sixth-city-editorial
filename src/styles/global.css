@@ -152,12 +152,16 @@
     color: var(--color-text-primary);
   }
 
-  .page-subtitle {
+  .page-subtitle, 
+  .page-subheader {
     font-family: var(--font-body);
     font-size: 1rem;
     color: var(--color-text-secondary);
     line-height: 1.65;
-    max-width: 60ch;
+  }
+
+  .page-subtitle {
+      max-width: 60ch;
   }
 
   .bowl-card {
