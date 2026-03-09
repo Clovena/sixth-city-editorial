@@ -47,8 +47,9 @@ const teamB = franchises.find(f => f.abbr === game.team_b);
       <div style="display: grid; grid-template-columns: 1fr auto 1fr; align-items: stretch;">
 
         <!-- Team A -->
-        <a href={`/franchises/${teamA?.abbr}`} style="text-decoration: none; padding: 2rem; display: block; border-right: 1px solid var(--color-border);" style={`border-left: 4px solid ${teamA?.colors[0]};`}>
-          <div style={`padding: 2rem; border-left: 4px solid ${teamA?.colors[0]};`}>
+        <a href={`/franchises/${teamA?.abbr}`} style="text-decoration: none; display: block;">
+          <div style={`padding: 2rem; border-left: 4px solid ${teamA?.colors[0]}; border-right: 1px solid var(--color-border);`}>
+            <img src={`/images/logos/${game.team_a}.png`} alt="" width="48" height="48" style="object-fit: contain; margin-bottom: 0.75rem; display: block;" onerror="this.style.display='none'" />
             <p style="font-family: var(--font-body); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-text-muted); margin: 0 0 0.4rem;">{teamA?.abbr} &bull; <span class={`label-badge badge-${teamA?.conference.toLowerCase()}`}>{teamA?.conference}</span></p>
             <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; color: var(--color-text-primary); margin: 0 0 0.5rem; line-height: 1.2;">{teamA?.name}</h2>
             <p style="font-size: 0.8rem; color: var(--color-text-muted); margin: 0;">Owner: {teamA?.owner}</p>
@@ -71,6 +72,7 @@ const teamB = franchises.find(f => f.abbr === game.team_b);
         <!-- Team B -->
         <a href={`/franchises/${teamB?.abbr}`} style="text-decoration: none; display: block;">
           <div style={`padding: 2rem; border-right: 4px solid ${teamB?.colors[0]};`}>
+            <img src={`/images/logos/${game.team_b}.png`} alt="" width="48" height="48" style="object-fit: contain; margin-bottom: 0.75rem; display: block;" onerror="this.style.display='none'" />
             <p style="font-family: var(--font-body); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-text-muted); margin: 0 0 0.4rem;">{teamB?.abbr} &bull; <span class={`label-badge badge-${teamB?.conference.toLowerCase()}`}>{teamB?.conference}</span></p>
             <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; color: var(--color-text-primary); margin: 0 0 0.5rem; line-height: 1.2;">{teamB?.name}</h2>
             <p style="font-size: 0.8rem; color: var(--color-text-muted); margin: 0;">Owner: {teamB?.owner}</p>

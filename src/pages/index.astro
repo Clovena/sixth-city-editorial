@@ -80,20 +80,40 @@ function getFranchise(abbr: string) {
                 <p style="font-size: 0.7rem; color: var(--color-text-muted); margin: 0.2rem 0 0;">{season.dynasty_bowl.label}</p>
               </div>
 
-              <div style={`border-left: 3px solid ${winner?.colors[0]}; padding-left: 1.25rem;`}>
-                <p style="font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-gold-dim); margin: 0 0 0.2rem;">Champion</p>
-                <a href={`/franchises/${winner?.abbr}`} style="font-family: var(--font-display); font-size: 1.05rem; font-weight: 700; color: var(--color-gold); text-decoration: none; line-height: 1.2; display: block;">
-                  {winner?.name}
-                </a>
-                <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0.2rem 0 0;">{winner?.abbr} &bull; {winner?.owner}</p>
+              <div style={`border-left: 3px solid ${winner?.colors[0]}; padding-left: 1.25rem; display: flex; align-items: center; gap: 0.9rem;`}>
+                <img
+                  src={`/images/logos/${winner?.abbr}.png`}
+                  alt=""
+                  width="32"
+                  height="32"
+                  style="object-fit: contain; flex-shrink: 0;"
+                  onerror="this.style.display='none'"
+                />
+                <div>
+                  <p style="font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-gold-dim); margin: 0 0 0.2rem;">Champion</p>
+                  <a href={`/franchises/${winner?.abbr}`} style="font-family: var(--font-display); font-size: 1.05rem; font-weight: 700; color: var(--color-gold); text-decoration: none; line-height: 1.2; display: block;">
+                    {winner?.name}
+                  </a>
+                  <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0.2rem 0 0;">{winner?.abbr} &bull; {winner?.owner}</p>
+                </div>
               </div>
 
-              <div style="padding-left: 1.25rem;">
-                <p style="font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-muted); margin: 0 0 0.2rem;">Runner-Up</p>
-                <a href={`/franchises/${loser?.abbr}`} style="font-family: var(--font-display); font-size: 1.05rem; font-weight: 600; color: var(--color-text-secondary); text-decoration: none; line-height: 1.2; display: block;">
-                  {loser?.name}
-                </a>
-                <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0.2rem 0 0;">{loser?.abbr} &bull; {loser?.owner}</p>
+              <div style="padding-left: 1.25rem; display: flex; align-items: center; gap: 0.9rem;">
+                <img
+                  src={`/images/logos/${loser?.abbr}.png`}
+                  alt=""
+                  width="32"
+                  height="32"
+                  style="object-fit: contain; flex-shrink: 0; opacity: 0.6;"
+                  onerror="this.style.display='none'"
+                />
+                <div>
+                  <p style="font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-muted); margin: 0 0 0.2rem;">Runner-Up</p>
+                  <a href={`/franchises/${loser?.abbr}`} style="font-family: var(--font-display); font-size: 1.05rem; font-weight: 600; color: var(--color-text-secondary); text-decoration: none; line-height: 1.2; display: block;">
+                    {loser?.name}
+                  </a>
+                  <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0.2rem 0 0;">{loser?.abbr} &bull; {loser?.owner}</p>
+                </div>
               </div>
 
             </div>

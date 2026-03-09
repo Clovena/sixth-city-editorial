@@ -59,14 +59,24 @@ const hccFranchises = franchises.filter(f => f.conference === 'HCC');
             <a href={`/franchises/${franchise.abbr}`} style="text-decoration: none; display: block;">
               <div class="franchise-card" style={`border-left: 3px solid ${primaryColor};`}>
                 <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.75rem;">
-                  <div>
-                    <p style="font-family: var(--font-body); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-text-muted); margin: 0 0 0.3rem;">{franchise.abbr}</p>
-                    <h3 style="font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--color-text-primary); margin: 0; line-height: 1.2;">{franchise.name}</h3>
+                  <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <img
+                      src={`/images/logos/${franchise.abbr}.png`}
+                      alt=""
+                      width="36"
+                      height="36"
+                      style="object-fit: contain; flex-shrink: 0;"
+                      onerror="this.style.display='none'"
+                    />
+                    <div>
+                      <p style="font-family: var(--font-body); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-text-muted); margin: 0 0 0.3rem;">{franchise.abbr}</p>
+                      <h3 style="font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--color-text-primary); margin: 0; line-height: 1.2;">{franchise.name}</h3>
+                    </div>
                   </div>
                   {champs > 0 && (
                     <div style="display: flex; gap: 2px; flex-shrink: 0; margin-left: 0.75rem; margin-top: 0.2rem;">
                       {Array.from({ length: champs }).map(() => (
-                        <span style="color: var(--color-gold); font-size: 0.9rem;">&#9670;</span>
+                        <span style="color: var(--color-gold); font-size: 1.25rem;">&#11043;</span>
                       ))}
                     </div>
                   )}
@@ -100,14 +110,24 @@ const hccFranchises = franchises.filter(f => f.conference === 'HCC');
             <a href={`/franchises/${franchise.abbr}`} style="text-decoration: none; display: block;">
               <div class="franchise-card" style={`border-left: 3px solid ${primaryColor};`}>
                 <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.75rem;">
-                  <div>
-                    <p style="font-family: var(--font-body); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-text-muted); margin: 0 0 0.3rem;">{franchise.abbr}</p>
-                    <h3 style="font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--color-text-primary); margin: 0; line-height: 1.2;">{franchise.name}</h3>
+                  <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <img
+                      src={`/images/logos/${franchise.abbr}.png`}
+                      alt=""
+                      width="36"
+                      height="36"
+                      style="object-fit: contain; flex-shrink: 0;"
+                      onerror="this.style.display='none'"
+                    />
+                    <div>
+                      <p style="font-family: var(--font-body); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-text-muted); margin: 0 0 0.3rem;">{franchise.abbr}</p>
+                      <h3 style="font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--color-text-primary); margin: 0; line-height: 1.2;">{franchise.name}</h3>
+                    </div>
                   </div>
                   {champs > 0 && (
                     <div style="display: flex; gap: 2px; flex-shrink: 0; margin-left: 0.75rem; margin-top: 0.2rem;">
                       {Array.from({ length: champs }).map(() => (
-                        <span style="color: var(--color-gold); font-size: 0.9rem;">&#9670;</span>
+                        <span style="color: var(--color-gold); font-size: 1.25rem;">&#11043;</span>
                       ))}
                     </div>
                   )}
