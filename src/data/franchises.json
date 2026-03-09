@@ -5,7 +5,7 @@
     "name": "Toronto Hogs",
     "owner": "Zac",
     "conference": "SCC",
-    "colors": ["#6B21A8", "#DC2626"],
+    "colors": ["#7a709b", "#ea332a", "#4f4471"],
     "founded": 2021,
     "rebrands": [],
     "sleeper_id": "1"
@@ -16,7 +16,7 @@
     "name": "Bikini Bottom Stars",
     "owner": "Jacob",
     "conference": "HCC",
-    "colors": ["#7DD3FC", "#84CC16", "#F9A8D4"],
+    "colors": ["#b580ff", "#ff808b", "#caff80"],
     "founded": 2021,
     "rebrands": [],
     "sleeper_id": "2"
@@ -27,7 +27,7 @@
     "name": "Newfoundland Blowers",
     "owner": "Brendan",
     "conference": "SCC",
-    "colors": ["#7F1D1D", "#1E3A5F"],
+    "colors": ["#ab3032", "#192f5d", "#ae9273"],
     "founded": 2021,
     "rebrands": [],
     "sleeper_id": "3"
@@ -38,7 +38,7 @@
     "name": "Thunder Bay Mustangs",
     "owner": "Steve",
     "conference": "SCC",
-    "colors": ["#60A5FA", "#86EFAC"],
+    "colors": ["#0a2351", "#81c78d", "#ffffff"],
     "founded": 2021,
     "rebrands": [
       { "year": 2021, "name": "Thunder Bay Sunshine" }
@@ -51,7 +51,7 @@
     "name": "Winnipeg Wranglers",
     "owner": "Ryan",
     "conference": "HCC",
-    "colors": ["#1D4ED8", "#FDE047"],
+    "colors": ["#4262f9", "#f3d971", "#1a018e"],
     "founded": 2021,
     "rebrands": [
       { "year": 2021, "name": "Winnipeg Wankers" }
@@ -64,7 +64,7 @@
     "name": "Choccolocco Railfans",
     "owner": "Sean",
     "conference": "HCC",
-    "colors": ["#78350F", "#FDE047"],
+    "colors": ["#49351a", "#d5913a", "#a58b8b"],
     "founded": 2021,
     "rebrands": [],
     "sleeper_id": "6"
@@ -75,7 +75,7 @@
     "name": "Prince Edward Islanders",
     "owner": "Jared",
     "conference": "HCC",
-    "colors": ["#0D9488", "#FB923C"],
+    "colors": ["#00d5d6", "#ff6d01", "#002288"],
     "founded": 2021,
     "rebrands": [
       { "year": 2021, "name": "Pokemon Omega Judge Judy" },
@@ -92,7 +92,7 @@
     "name": "Iqaluit Trout",
     "owner": "Bret",
     "conference": "HCC",
-    "colors": ["#C026D3", "#7DD3FC"],
+    "colors": ["#62b0e5", "#c91b48", "#002b64"],
     "founded": 2021,
     "rebrands": [],
     "sleeper_id": "8"
@@ -103,7 +103,7 @@
     "name": "New New York Benders",
     "owner": "Josh",
     "conference": "SCC",
-    "colors": ["#6B7F9E", "#9CA3AF"],
+    "colors": ["#a6c1d6", "#fffbc7", "#000d18"],
     "founded": 2021,
     "rebrands": [
       { "year": 2021, "name": "Saskatoon Squirrels" },
@@ -119,7 +119,7 @@
     "name": "Lower City Lasercats",
     "owner": "Nathan",
     "conference": "HCC",
-    "colors": ["#DC2626", "#F97316"],
+    "colors": ["#df7937", "#de432f", "#201719"],
     "founded": 2021,
     "rebrands": [
       { "year": 2021, "name": "Calgary Cocks" },
@@ -135,7 +135,7 @@
     "name": "Sarnia SeaSnakes",
     "owner": "Pat",
     "conference": "SCC",
-    "colors": ["#7C3AED", "#166534"],
+    "colors": ["#89bea4", "#ec9bbc", "#5e905a"],
     "founded": 2021,
     "rebrands": [
       { "year": 2021, "name": "Montreal Generals" },
@@ -150,7 +150,7 @@
     "name": "Mississauga Mastodons",
     "owner": "Gibby",
     "conference": "HCC",
-    "colors": ["#BAE6FD", "#78350F"],
+    "colors": ["#39bbf0", "#9f5134", "#d7e7ed"],
     "founded": 2021,
     "rebrands": [],
     "sleeper_id": "12"
@@ -161,7 +161,7 @@
     "name": "Vancouver Mounties",
     "owner": "Connor",
     "conference": "SCC",
-    "colors": ["#1E3A5F", "#DC2626"],
+    "colors": ["#012652", "#a80012", "#c8cac7"],
     "founded": 2021,
     "rebrands": [],
     "sleeper_id": "13"
@@ -172,7 +172,7 @@
     "name": "Gold Coast Sharks",
     "owner": "Logan",
     "conference": "SCC",
-    "colors": ["#0D9488", "#D4B483", "#F9A8D4"],
+    "colors": ["#ef979e", "#006d75", "#e7cd78"],
     "founded": 2021,
     "rebrands": [
       { "year": 2022, "name": "Unsolicited Dak Pics" }
