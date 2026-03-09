@@ -3,7 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 import franchises from '../../data/franchises.json';
 import seasons from '../../data/seasons.json';
 import bowlGames from '../../data/bowl_games.json';
-import { getEntry } from 'astro:content';
+import { getEntry, render } from 'astro:content';
 
 export async function getStaticPaths() {
   return franchises.map(f => ({ params: { abbr: f.abbr } }));
@@ -20,8 +20,8 @@ if (!franchise) {
 const notesEntry = await getEntry('franchises', abbr.toLowerCase());
 let FranchiseContent: any = null;
 if (notesEntry) {
-  const rendered = await notesEntry.render();
-  FranchiseContent = rendered.Content;
+  const { Content } = await render(notesEntry);
+  FranchiseContent = Content;
 }
 
 // Championship history (account for MTL being SAR's predecessor)
