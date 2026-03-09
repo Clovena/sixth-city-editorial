@@ -165,6 +165,16 @@ const secondaryColor = franchise.colors[1] ?? franchise.colors[0];
       <!-- Main column -->
       <div>
 
+        <!-- Franchise notes markdown -->
+        {FranchiseContent && (
+          <div style="margin-bottom: 2rem;">
+            <h2 style="font-family: var(--font-display); font-size: 1.35rem; font-weight: 600; margin-bottom: 1.25rem; color: var(--color-text-primary);">Franchise Notes</h2>
+            <div style="font-size: 0.9rem; color: var(--color-text-secondary); text-align: justify; line-height: 1.7;">
+              <FranchiseContent />
+            </div>
+          </div>
+        )}
+
         <!-- Rebrand history -->
         {hasRebrands && (
           <div style="background-color: var(--color-surface); border: 1px solid var(--color-border); padding: 1.25rem 1.5rem; margin-bottom: 2rem;">
@@ -234,17 +244,6 @@ const secondaryColor = franchise.colors[1] ?? franchise.colors[0];
           </div>
           <p style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: 0.6rem;">Win-loss records will be populated in a future update.</p>
         </div>
-
-        <!-- Franchise notes markdown -->
-        {FranchiseContent && (
-          <div style="margin-top: 2.5rem;">
-            <h2 style="font-family: var(--font-display); font-size: 1.35rem; font-weight: 600; margin-bottom: 1.25rem; color: var(--color-text-primary);">Franchise Notes</h2>
-            <div style="font-size: 0.9rem; color: var(--color-text-secondary); line-height: 1.7;">
-              <FranchiseContent />
-            </div>
-          </div>
-        )}
-
       </div>
 
       <!-- Sidebar -->
