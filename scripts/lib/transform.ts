@@ -58,8 +58,8 @@ export function buildSeasonStats(
       year,
       wins: s.wins,
       losses: s.losses,
-      points_for: sleeperPoints(s.fpts, s.fpts_decimal),
-      points_against: sleeperPoints(s.fpts_against, s.fpts_against_decimal),
+      points_for: sleeperPoints(s.fpts, s.fpts_decimal) || 0,
+      points_against: sleeperPoints(s.fpts_against, s.fpts_against_decimal) || 0,
     };
   }
 

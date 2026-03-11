@@ -50,7 +50,7 @@
       "wins": 0,
       "losses": 0,
       "points_for": 0,
-      "points_against": null,
+      "points_against": 0,
       "playoff": "",
       "finish": ""
     }
@@ -106,7 +106,7 @@
       "wins": 0,
       "losses": 0,
       "points_for": 0,
-      "points_against": null,
+      "points_against": 0,
       "playoff": "",
       "finish": ""
     }
@@ -162,7 +162,7 @@
       "wins": 0,
       "losses": 0,
       "points_for": 0,
-      "points_against": null,
+      "points_against": 0,
       "playoff": "",
       "finish": ""
     }
@@ -218,7 +218,7 @@
       "wins": 0,
       "losses": 0,
       "points_for": 0,
-      "points_against": null,
+      "points_against": 0,
       "playoff": "",
       "finish": ""
     }
@@ -274,7 +274,7 @@
       "wins": 0,
       "losses": 0,
       "points_for": 0,
-      "points_against": null,
+      "points_against": 0,
       "playoff": "",
       "finish": ""
     }
@@ -330,7 +330,7 @@
       "wins": 0,
       "losses": 0,
       "points_for": 0,
-      "points_against": null,
+      "points_against": 0,
       "playoff": "",
       "finish": ""
     }
@@ -386,7 +386,7 @@
       "wins": 0,
       "losses": 0,
       "points_for": 0,
-      "points_against": null,
+      "points_against": 0,
       "playoff": "",
       "finish": ""
     }
@@ -442,7 +442,7 @@
       "wins": 0,
       "losses": 0,
       "points_for": 0,
-      "points_against": null,
+      "points_against": 0,
       "playoff": "",
       "finish": ""
     }
@@ -498,7 +498,7 @@
       "wins": 0,
       "losses": 0,
       "points_for": 0,
-      "points_against": null,
+      "points_against": 0,
       "playoff": "",
       "finish": ""
     }
@@ -554,7 +554,7 @@
       "wins": 0,
       "losses": 0,
       "points_for": 0,
-      "points_against": null,
+      "points_against": 0,
       "playoff": "",
       "finish": ""
     }
@@ -610,7 +610,7 @@
       "wins": 0,
       "losses": 0,
       "points_for": 0,
-      "points_against": null,
+      "points_against": 0,
       "playoff": "",
       "finish": ""
     }
@@ -666,7 +666,7 @@
       "wins": 0,
       "losses": 0,
       "points_for": 0,
-      "points_against": null,
+      "points_against": 0,
       "playoff": "",
       "finish": ""
     }
@@ -722,7 +722,7 @@
       "wins": 0,
       "losses": 0,
       "points_for": 0,
-      "points_against": null,
+      "points_against": 0,
       "playoff": "",
       "finish": ""
     }
@@ -778,7 +778,7 @@
       "wins": 0,
       "losses": 0,
       "points_for": 0,
-      "points_against": null,
+      "points_against": 0,
       "playoff": "",
       "finish": ""
     }
