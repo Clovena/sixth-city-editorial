@@ -5,6 +5,7 @@ dist/
 src/data/raw/
 # generated types
 .astro/
+*.swp
 
 # dependencies
 node_modules/
