@@ -1,10 +1,10 @@
 ---
-title: "2026 Rookie Mock Draft: Round 1"
-date: 2026-03-11
+title: "2026 Rookie Mock: Round 1"
+date: 2026-03-12
 type: mock_draft
 ---
 
-The rookie draft looms large in Sixth City. Picks are on the move, the NFL Combine is history, and excitement is bubbling up more and more by the day. 
+The rookie draft looms large in Sixth City. The NFL Combine is in the books, our draft picks are on the move, and excitement is bubbling up more and more by the day. 
 <br><br>
 Let's take a look at how the first round of selections might shake out across this very interesting draft board.
 

@@ -133,7 +133,7 @@ const rendered = await Promise.all(
   :global(.print-page) {
     width: 8.5in;
     height: 11in;
-    padding: 0.6in 0.75in;
+    padding: 0.5in;
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
@@ -157,7 +157,7 @@ const rendered = await Promise.all(
 
   /* Intro paragraph(s) on page 1 */
   :global(.print-intro) {
-    font-size: 14pt;
+    font-size: 13pt;
     line-height: 1.55;
     color: var(--color-text-primary);
     text-align: justify;
@@ -190,11 +190,11 @@ const rendered = await Promise.all(
     print-color-adjust: exact;
   }
   :global(.ranking-section .team-entry span) {
-    font-size: 24pt !important;
+    font-size: 26pt !important;
     color: var(--color-text-primary) !important;
   }
   :global(.ranking-section .team-entry p) {
-    font-size: 16pt !important;
+    font-size: 13pt !important;
     color: var(--color-text-primary) !important;
     margin: 0.05in 0 0 !important;
   }
@@ -202,7 +202,7 @@ const rendered = await Promise.all(
   /* Blurb paragraph expands to fill the section */
   :global(.ranking-section > p) {
     flex: 1;
-    font-size: 12pt;
+    font-size: 13pt;
     line-height: 1.55;
     color: var(--color-text-primary);
     text-align: justify;
