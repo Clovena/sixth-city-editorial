@@ -14,6 +14,14 @@ async function get<T>(path: string): Promise<T> {
 
 // ─── Raw API shapes ────────────────────────────────────────────────────────
 
+export interface SleeperNflState {
+  week: number;           // current NFL week (1-indexed)
+  season: string;         // e.g. "2026"
+  season_type: string;    // 'pre', 'regular', 'post'
+  display_week: number;
+  [key: string]: unknown;
+}
+
 export interface SleeperLeague {
   league_id: string;
   name: string;
@@ -84,6 +92,10 @@ export interface SleeperBracketMatch {
 }
 
 // ─── Endpoint functions ────────────────────────────────────────────────────
+
+/** Current NFL state — week, season, season_type, etc. */
+export const getNflState = () =>
+  get<SleeperNflState>('/state/nfl');
 
 /** Full league info for a given league_id. */
 export const getLeague = (leagueId: string) =>

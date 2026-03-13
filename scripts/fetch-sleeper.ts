@@ -17,7 +17,7 @@ import { writeFileSync, mkdirSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import config from '../src/data/config.json' assert { type: 'json' };
-import { getRosters } from './lib/sleeper-api.js';
+import { getRosters, getMatchups, getNflState } from './lib/sleeper-api.js';
 import { buildSeasonStats } from './lib/transform.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -64,16 +64,23 @@ console.log(
     : `Fetching current season (${seasonsToFetch[0].year})...`
 );
 
+// Fetch NFL state once — needed to know the current week for the active season
+const nflState = await getNflState();
+saveRaw('nfl-state.json', nflState);
+console.log(`NFL state: season ${nflState.season}, week ${nflState.week} (${nflState.season_type})`);
+
 const allResults = loadResults();
 
 for (const season of seasonsToFetch) {
   console.log(`\n→ Season ${season.year} (league_id: ${season.league_id})`);
 
+  // Pull team rosters
   const rosters = await getRosters(season.league_id);
 
   saveRaw(`${season.year}-rosters.json`, rosters);
   console.log(`  cached raw response to src/data/raw/`);
 
+  // Pull season stats
   const seasonStats = buildSeasonStats(season.year, rosters);
 
   // Merge: only overwrite API-derived fields; preserve playoff and finish
@@ -108,6 +115,15 @@ for (const season of seasonsToFetch) {
   }
 
   console.log(`  updated ${Object.keys(seasonStats).length} franchises`);
+
+  // Pull matchups for each regular-season week
+  const maxWeek = season.current ? nflState.week : 17;
+  const matchupsByWeek: Record<number, unknown> = {};
+  for (let week = 1; week <= maxWeek; week++) {
+    matchupsByWeek[week] = await getMatchups(season.league_id, week);
+  }
+  saveRaw(`${season.year}-matchups.json`, matchupsByWeek);
+  console.log(`  cached matchups weeks 1–${maxWeek} to src/data/raw/`);
 }
 
 saveResults(allResults);
