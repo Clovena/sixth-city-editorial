@@ -1,8 +1,10 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import bowlGames from '../../data/bowl_games.json';
-import rivalryGames from '../../data/rivalries.json';
+import spotlightGames from '../../data/bowl_games.json';
 import franchises from '../../data/franchises.json';
+
+const bowlGames = spotlightGames.filter(bg => bg.type === "bowl-game");
+const rivalryGames = spotlightGames.filter(rg => rg.type === "rivalry");
 
 function getFranchise(abbr: string) {
   return franchises.find(f => f.abbr === abbr);
