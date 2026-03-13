@@ -1,0 +1,265 @@
+---
+import Layout from '../layouts/Layout.astro';
+import config from '../data/config.json';
+import franchisesJson from '../data/franchises.json';
+
+// ── Load all matchup files at build time ────────────────────────────────────
+const matchupGlob = import.meta.glob('/src/data/raw/*-matchups.json', { eager: true });
+
+// Compact form: strip players/starters/player_points arrays — keep only what the UI needs
+type MatchupEntry = { roster_id: number; matchup_id: number; score: number };
+const matchupsData: Record<string, Record<string, MatchupEntry[]>> = {};
+
+for (const [path, mod] of Object.entries(matchupGlob)) {
+  const m = path.match(/(\d{4})-matchups/);
+  if (!m) continue;
+  const year = m[1];
+  const raw = (mod as { default: Record<string, any[]> }).default;
+  const weeks: Record<string, MatchupEntry[]> = {};
+  for (const [week, entries] of Object.entries(raw)) {
+    weeks[week] = entries.map(e => ({
+      roster_id: e.roster_id,
+      matchup_id: e.matchup_id,
+      score: e.custom_points != null ? e.custom_points : e.points,
+    }));
+  }
+  matchupsData[year] = weeks;
+}
+
+// ── Franchise lookup: roster_id (= f.id) → { name, abbr } ──────────────────
+const franchiseMap: Record<number, { name: string; abbr: string }> = {};
+for (const f of franchisesJson) {
+  franchiseMap[f.id] = { name: f.name, abbr: f.abbr };
+}
+
+// ── Determine default season (latest year with data) ────────────────────────
+const sortedSeasons = [...config.seasons].sort((a, b) => b.year - a.year);
+
+const defaultSeasonYear = sortedSeasons
+  .find(s => Object.keys(matchupsData[String(s.year)] ?? {}).length > 0)
+  ?.year ?? sortedSeasons[0].year;
+
+// ── Determine default week (max numeric week in default season) ──────────────
+const defaultWeekNum = Math.max(
+  ...Object.keys(matchupsData[String(defaultSeasonYear)] ?? {}).map(Number)
+);
+---
+
+<Layout title="Scores" description="Week-by-week matchup scores for every season of the Sixth City Dynasty Football League.">
+
+  <div style="max-width: 1200px; margin: 0 auto; padding: 4rem 1.5rem 0;">
+
+    <!-- Page header -->
+    <div style="padding-bottom: 2.5rem; border-bottom: 1px solid var(--color-border);">
+      <p class="section-label">Results</p>
+      <h1 class="page-title">Scores</h1>
+      <p class="page-subtitle" style="margin-top: 0.75rem;">
+        Season and week-by-week matchup results across all six seasons of the SCDFL.
+      </p>
+    </div>
+
+    <!-- Controls -->
+    <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+
+      <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+        <label for="season-select" style="font-family: var(--font-body); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-muted);">Season</label>
+        <select id="season-select" style="font-family: var(--font-body); font-size: 0.9rem; color: var(--color-text-primary); background-color: var(--color-surface); border: 1px solid var(--color-border); border-radius: 4px; padding: 0.5rem 2rem 0.5rem 0.75rem; appearance: none; -webkit-appearance: none; background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%226%22 viewBox=%220 0 10 6%22><path d=%22M0 0l5 6 5-6z%22 fill=%22%23888%22/></svg>'); background-repeat: no-repeat; background-position: right 0.6rem center; cursor: pointer; min-width: 140px;">
+          {sortedSeasons.map(s => (
+            <option
+              value={s.year}
+              selected={s.year === defaultSeasonYear}
+              disabled={Object.keys(matchupsData[String(s.year)] ?? {}).length === 0}
+            >
+              {s.year} Season{Object.keys(matchupsData[String(s.year)] ?? {}).length === 0 ? ' (no data)' : ''}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+        <label for="week-select" style="font-family: var(--font-body); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-muted);">Week</label>
+        <select id="week-select" style="font-family: var(--font-body); font-size: 0.9rem; color: var(--color-text-primary); background-color: var(--color-surface); border: 1px solid var(--color-border); border-radius: 4px; padding: 0.5rem 2rem 0.5rem 0.75rem; appearance: none; -webkit-appearance: none; background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%226%22 viewBox=%220 0 10 6%22><path d=%22M0 0l5 6 5-6z%22 fill=%22%23888%22/></svg>'); background-repeat: no-repeat; background-position: right 0.6rem center; cursor: pointer; min-width: 110px;">
+          <!-- populated by JS -->
+        </select>
+      </div>
+
+    </div>
+
+    <!-- Scores grid -->
+    <div id="scores-grid" style="margin-top: 2rem; padding-bottom: 4rem;"></div>
+
+  </div>
+
+</Layout>
+
+<style>
+  :global(.matchups-grid) {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    max-width: 72ch;
+  }
+
+  :global(.matchup-card) {
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  :global(.team-row) {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 1rem;
+    transition: background-color 0.1s ease;
+  }
+
+  :global(.team-row + .team-row) {
+    border-top: 1px solid var(--color-border);
+  }
+
+  :global(.team-row.winner) {
+    background-color: color-mix(in srgb, var(--color-surface) 80%, transparent);
+  }
+
+  :global(.team-row.loser) {
+    opacity: 0.55;
+  }
+
+  :global(.team-row.tied) {
+    background-color: transparent;
+  }
+
+  :global(.team-logo) {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+
+  :global(.team-name) {
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  :global(.team-score) {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    min-width: 3.5rem;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  :global(.winner .team-score) {
+    color: var(--color-gold);
+  }
+
+  :global(.no-data) {
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    color: var(--color-text-muted);
+    padding: 3rem 0;
+    text-align: center;
+  }
+</style>
+
+<script define:vars={{ matchupsData, franchiseMap, defaultSeasonYear, defaultWeekNum }}>
+  const seasonSelect = document.getElementById('season-select');
+  const weekSelect = document.getElementById('week-select');
+  const grid = document.getElementById('scores-grid');
+
+  // ── Populate week dropdown for a given season ────────────────────────────
+  function populateWeeks(year, selectedWeek) {
+    const weeks = Object.keys(matchupsData[String(year)] ?? {})
+      .map(Number)
+      .sort((a, b) => a - b);
+
+    weekSelect.innerHTML = weeks
+      .map(w => `<option value="${w}"${w === selectedWeek ? ' selected' : ''}>Week ${w}</option>`)
+      .join('');
+  }
+
+  // ── Render matchups for a given season + week ────────────────────────────
+  function renderScores(year, week) {
+    const entries = matchupsData[String(year)]?.[String(week)] ?? [];
+
+    if (entries.length === 0) {
+      grid.innerHTML = '<p class="no-data">No data available for this selection.</p>';
+      return;
+    }
+
+    // Group by matchup_id — skip null/0 entries (bye teams in playoff weeks)
+    const grouped = {};
+    for (const entry of entries) {
+      if (!entry.matchup_id) continue;
+      if (!grouped[entry.matchup_id]) grouped[entry.matchup_id] = [];
+      grouped[entry.matchup_id].push(entry);
+    }
+
+    const matchupIds = Object.keys(grouped)
+      .map(Number)
+      .filter(n => n > 0 && !isNaN(n))
+      .sort((a, b) => a - b);
+
+    let html = '<div class="matchups-grid">';
+    for (const mid of matchupIds) {
+      const [teamA, teamB] = grouped[mid];
+      if (!teamA || !teamB) continue;
+
+      const scoreA = teamA.score;
+      const scoreB = teamB.score;
+      const aWins = scoreA > scoreB;
+      const bWins = scoreB > scoreA;
+
+      const fA = franchiseMap[teamA.roster_id] ?? { name: `Roster ${teamA.roster_id}`, abbr: 'UNKNOWN' };
+      const fB = franchiseMap[teamB.roster_id] ?? { name: `Roster ${teamB.roster_id}`, abbr: 'UNKNOWN' };
+
+      html += `
+        <div class="matchup-card">
+          ${teamRow(fA, scoreA, aWins, bWins)}
+          ${teamRow(fB, scoreB, bWins, aWins)}
+        </div>`;
+    }
+    html += '</div>';
+
+    grid.innerHTML = html;
+  }
+
+  function teamRow(franchise, score, isWinner, isLoser) {
+    const cls = isWinner ? 'winner' : isLoser ? 'loser' : 'tied';
+    return `
+      <div class="team-row ${cls}">
+        <img class="team-logo"
+             src="/images/logos/${franchise.abbr}.png"
+             alt="${franchise.name}"
+             onerror="this.style.display='none'" />
+        <span class="team-name">${franchise.name}</span>
+        <span class="team-score">${score.toFixed(2)}</span>
+      </div>`;
+  }
+
+  // ── Wire up event listeners ──────────────────────────────────────────────
+  seasonSelect.addEventListener('change', () => {
+    const year = Number(seasonSelect.value);
+    const weeks = Object.keys(matchupsData[String(year)] ?? {}).map(Number).sort((a, b) => a - b);
+    const latestWeek = weeks[weeks.length - 1] ?? 1;
+    populateWeeks(year, latestWeek);
+    renderScores(year, latestWeek);
+  });
+
+  weekSelect.addEventListener('change', () => {
+    renderScores(Number(seasonSelect.value), Number(weekSelect.value));
+  });
+
+  // ── Initial render ───────────────────────────────────────────────────────
+  populateWeeks(defaultSeasonYear, defaultWeekNum);
+  renderScores(defaultSeasonYear, defaultWeekNum);
+</script>
