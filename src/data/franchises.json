@@ -104,7 +104,7 @@
     "owner": "Josh",
     "conference": "SCC",
     "colors": ["#a6c1d6", "#fffbc7", "#000d18"],
-    "founded": 2021,
+    "founded": 2024,
     "rebrands": [
       { "year": 2021, "name": "Saskatoon Squirrels" },
       { "year": 2022, "name": "Saskatoon Squirrels" },
@@ -120,7 +120,7 @@
     "owner": "Nathan",
     "conference": "HCC",
     "colors": ["#df7937", "#de432f", "#201719"],
-    "founded": 2021,
+    "founded": 2024,
     "rebrands": [
       { "year": 2021, "name": "Calgary Cocks" },
       { "year": 2022, "name": "Calgary Cocks" },
@@ -136,7 +136,7 @@
     "owner": "Pat",
     "conference": "SCC",
     "colors": ["#89bea4", "#ec9bbc", "#5e905a"],
-    "founded": 2021,
+    "founded": 2023,
     "rebrands": [
       { "year": 2021, "name": "Montreal Generals" },
       { "year": 2022, "name": "Montreal Generals" }
