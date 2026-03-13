@@ -306,7 +306,7 @@ const secondaryColor = franchise.colors[1] ?? franchise.colors[0];
                 const oppAbbr = getBowlOpponent(bg);
                 const opp = getOpponentFranchise(oppAbbr);
                 return (
-                  <a href={`/bowl-games/${bg.slug}`} style="text-decoration: none; display: block; padding: 0.75rem; background-color: var(--color-surface-alt); border: 1px solid var(--color-border); transition: border-color 0.15s ease;" onmouseover="this.style.borderColor='var(--color-border-light)'" onmouseout="this.style.borderColor='var(--color-border)'">
+                  <a href={`/spotlight-games/${bg.slug}`} style="text-decoration: none; display: block; padding: 0.75rem; background-color: var(--color-surface-alt); border: 1px solid var(--color-border); transition: border-color 0.15s ease;" onmouseover="this.style.borderColor='var(--color-border-light)'" onmouseout="this.style.borderColor='var(--color-border)'">
                     <p style="font-family: var(--font-display); font-size: 0.9rem; font-weight: 600; color: var(--color-gold); margin: 0 0 0.2rem;">{bg.name}</p>
                     <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0;">vs <span style="color: var(--color-text-secondary);">{opp?.name ?? oppAbbr}</span></p>
                   </a>
@@ -325,7 +325,7 @@ const secondaryColor = franchise.colors[1] ?? franchise.colors[0];
                 const oppAbbr = getRivalryOpponent(rg);
                 const opp = getOpponentFranchise(oppAbbr);
                 return (
-                  <a href={`/bowl-games/${rg.slug}`} style="text-decoration: none; display: block; padding: 0.75rem; background-color: var(--color-surface-alt); border: 1px solid var(--color-border); transition: border-color 0.15s ease;" onmouseover="this.style.borderColor='var(--color-border-light)'" onmouseout="this.style.borderColor='var(--color-border)'">
+                  <a href={`/spotlight-games/${rg.slug}`} style="text-decoration: none; display: block; padding: 0.75rem; background-color: var(--color-surface-alt); border: 1px solid var(--color-border); transition: border-color 0.15s ease;" onmouseover="this.style.borderColor='var(--color-border-light)'" onmouseout="this.style.borderColor='var(--color-border)'">
                     <p style="font-family: var(--font-display); font-size: 0.9rem; font-weight: 600; color: var(--color-gold); margin: 0 0 0.2rem;">vs {opp?.name ?? oppAbbr}</p>
                   </a>
                 );
