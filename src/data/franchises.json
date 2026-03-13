@@ -43,10 +43,11 @@
     "owner": "Steve",
     "conference": "SCC",
     "colors": ["#81c78d", "#0a2351", "#ffffff"],
-    "founded": 2021,
+    "founded": 2022,
     "rebrands": [
       { "year": 2021, "name": "Thunder Bay Sunshine" }
     ],
+    "predecessor_abbr": "TBS",
     "sleeper_id": "4"
   },
   {
