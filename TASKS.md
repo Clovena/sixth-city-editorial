@@ -10,7 +10,7 @@
   - home/index.html still says Bowl Games on <a> block
 
 ## Dev
-- ...
+- Bugfix Netlify deployment
 
 ## QA
 - Single game matchups API query
