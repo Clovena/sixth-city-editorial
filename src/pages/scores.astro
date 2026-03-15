@@ -1,4 +1,5 @@
 ---
+import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import config from '../data/config.json';
 import franchisesJson from '../data/franchises.json';
@@ -45,6 +46,10 @@ for (const f of franchisesJson) {
     rebrands: (f.rebrands ?? []) as Array<{ year: number; name: string }>,
   };
 }
+
+// ── Recap slug set: "year/slug" keys for matchups that have recap content ────
+const allRecaps = await getCollection('recaps');
+const recapSlugsArr: string[] = allRecaps.map(r => r.id); // e.g. "2024/04-bkb-tor"
 
 // ── Dynasty Bowl lookup: year → { winner, loser, label } ────────────────────
 const dynastyBowls: Record<string, { winner: string; loser: string; label: string }> = {};
@@ -125,9 +130,37 @@ const defaultWeekNum = Math.max(
   }
 
   :global(.matchup-card) {
+    display: block;
     border: 1px solid var(--color-border);
     border-radius: 6px;
     overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  :global(.matchup-body) {
+    display: flex;
+    align-items: stretch;
+  }
+
+  :global(.matchup-teams) {
+    flex: 1;
+    min-width: 0;
+  }
+
+  :global(.recap-btn) {
+    display: flex;
+    align-items: center;
+    padding: 0 1.1rem;
+    background-color: color-mix(in srgb, var(--color-surface) 80%, transparent);
+    border-left: 1px solid var(--color-border);
+    color: var(--color-gold);
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+    letter-spacing: 0.03em;
   }
 
   :global(.team-row) {
@@ -207,10 +240,18 @@ const defaultWeekNum = Math.max(
   }
 </style>
 
-<script define:vars={{ matchupsData, franchiseMap, dynastyBowls, defaultSeasonYear, defaultWeekNum }}>
+<script define:vars={{ matchupsData, franchiseMap, dynastyBowls, recapSlugsArr, defaultSeasonYear, defaultWeekNum }}>
   const seasonSelect = document.getElementById('season-select');
   const weekSelect = document.getElementById('week-select');
   const grid = document.getElementById('scores-grid');
+
+  const recapSlugs = new Set(recapSlugsArr); // "year/slug" keys
+
+  function makeSlug(week, abbrA, abbrB) {
+    const pad = String(week).padStart(2, '0');
+    const [t1, t2] = [abbrA.toLowerCase(), abbrB.toLowerCase()].sort();
+    return `${pad}-${t1}-${t2}`;
+  }
 
   // ── Populate week dropdown for a given season ────────────────────────────
   function populateWeeks(year, selectedWeek) {
@@ -272,12 +313,21 @@ const defaultWeekNum = Math.max(
         }
       }
 
+      const slug = makeSlug(week, fA.abbr, fB.abbr);
+      const gameUrl = `/games/${year}/${slug}`;
+      const hasRecap = recapSlugs.has(`${year}/${slug}`);
+
       html += `
-        <div class="matchup-card">
+        <a class="matchup-card" href="${gameUrl}">
           ${banner}
-          ${teamRow(fA, scoreA, aWins, bWins, year)}
-          ${teamRow(fB, scoreB, bWins, aWins, year)}
-        </div>`;
+          <div class="matchup-body">
+            <div class="matchup-teams">
+              ${teamRow(fA, scoreA, aWins, bWins, year)}
+              ${teamRow(fB, scoreB, bWins, aWins, year)}
+            </div>
+            ${hasRecap ? `<div class="recap-btn">Recap&nbsp;→</div>` : ''}
+          </div>
+        </a>`;
     }
     html += '</div>';
 

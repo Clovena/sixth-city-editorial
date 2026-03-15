@@ -1,4 +1,4 @@
-import { defineCollection } from 'astro:content';
+import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 
 const franchises = defineCollection({
@@ -10,4 +10,19 @@ const writeups = defineCollection({
   loader: glob({ pattern: '*.md', base: './src/content/writeups' }),
 });
 
-export const collections = { franchises, writeups };
+const recaps = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/recaps' }),
+  schema: z.object({
+    year: z.number(),
+    week: z.number(),
+    team_a: z.string(),
+    team_b: z.string(),
+    title: z.string(),
+    subtitle: z.string().optional(),
+    author: z.string().default('Zac'),
+    date: z.string(),
+    featured: z.boolean().default(false),
+  }),
+});
+
+export const collections = { franchises, writeups, recaps };

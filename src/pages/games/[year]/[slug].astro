@@ -1,0 +1,252 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../../layouts/Layout.astro';
+import franchisesJson from '../../../data/franchises.json';
+
+// ── Static paths — self-contained, no module-scope variable access ────────────
+export async function getStaticPaths() {
+  const { default: franchises } = await import('../../../data/franchises.json');
+  const franchiseById = Object.fromEntries(franchises.map((f: any) => [f.id, f]));
+
+  const matchupGlob = import.meta.glob('/src/data/raw/*-matchups.json', { eager: true });
+  const paths: any[] = [];
+
+  for (const [path, mod] of Object.entries(matchupGlob)) {
+    const m = path.match(/(\d{4})-matchups/);
+    if (!m) continue;
+    const yearStr = m[1];
+    const weeks = (mod as { default: Record<string, any[]> }).default;
+
+    for (const [weekStr, entries] of Object.entries(weeks)) {
+      const grouped: Record<number, any[]> = {};
+      for (const e of entries) {
+        if (!e.matchup_id) continue;
+        if (!grouped[e.matchup_id]) grouped[e.matchup_id] = [];
+        grouped[e.matchup_id].push(e);
+      }
+
+      for (const pair of Object.values(grouped)) {
+        if (pair.length < 2) continue;
+        const [eA, eB] = pair;
+        const fA = franchiseById[eA.roster_id];
+        const fB = franchiseById[eB.roster_id];
+        if (!fA || !fB) continue;
+
+        const weekNum = parseInt(weekStr);
+        const weekPad = String(weekNum).padStart(2, '0');
+        const [t1, t2] = [fA.abbr.toLowerCase(), fB.abbr.toLowerCase()].sort();
+        const slug = `${weekPad}-${t1}-${t2}`;
+
+        paths.push({
+          params: { year: yearStr, slug },
+          props: { year: parseInt(yearStr), week: weekNum, rosterIdA: eA.roster_id, rosterIdB: eB.roster_id },
+        });
+      }
+    }
+  }
+
+  return paths;
+}
+
+// ── Page component ────────────────────────────────────────────────────────────
+const { year, week, rosterIdA, rosterIdB } = Astro.props;
+const { slug } = Astro.params;
+
+// Load matchup data for this page
+const matchupGlob = import.meta.glob('/src/data/raw/*-matchups.json', { eager: true });
+const matchupsData: Record<string, Record<string, any[]>> = {};
+for (const [path, mod] of Object.entries(matchupGlob)) {
+  const m = path.match(/(\d{4})-matchups/);
+  if (!m) continue;
+  matchupsData[m[1]] = (mod as { default: Record<string, any[]> }).default;
+}
+
+const franchiseById = Object.fromEntries(franchisesJson.map(f => [f.id, f]));
+const fA = franchiseById[rosterIdA]!;
+const fB = franchiseById[rosterIdB]!;
+
+// Scores
+const weekEntries: any[] = matchupsData[String(year)]?.[String(week)] ?? [];
+const entryA = weekEntries.find((e: any) => e.roster_id === rosterIdA);
+const entryB = weekEntries.find((e: any) => e.roster_id === rosterIdB);
+const scoreA: number = entryA ? (entryA.custom_points != null ? entryA.custom_points : entryA.points) : 0;
+const scoreB: number = entryB ? (entryB.custom_points != null ? entryB.custom_points : entryB.points) : 0;
+const aWins = scoreA > scoreB;
+const bWins = scoreB > scoreA;
+
+// Records through this week
+const allWeeks = matchupsData[String(year)] ?? {};
+const sortedWeekNums = Object.keys(allWeeks).map(Number).sort((a, b) => a - b);
+let winsA = 0, lossesA = 0, winsB = 0, lossesB = 0;
+for (const w of sortedWeekNums) {
+  if (w > week) break;
+  const wEntries: any[] = allWeeks[String(w)] ?? [];
+  const gGrouped: Record<number, any[]> = {};
+  for (const e of wEntries) {
+    if (!e.matchup_id) continue;
+    if (!gGrouped[e.matchup_id]) gGrouped[e.matchup_id] = [];
+    gGrouped[e.matchup_id].push(e);
+  }
+  for (const gPair of Object.values(gGrouped)) {
+    if (gPair.length < 2) continue;
+    const myA = gPair.find((e: any) => e.roster_id === rosterIdA);
+    if (myA) {
+      const opp = gPair.find((e: any) => e.roster_id !== rosterIdA)!;
+      const myS = myA.custom_points != null ? myA.custom_points : myA.points;
+      const oppS = opp.custom_points != null ? opp.custom_points : opp.points;
+      if (myS > oppS) winsA++; else if (oppS > myS) lossesA++;
+    }
+    const myB = gPair.find((e: any) => e.roster_id === rosterIdB);
+    if (myB) {
+      const opp = gPair.find((e: any) => e.roster_id !== rosterIdB)!;
+      const myS = myB.custom_points != null ? myB.custom_points : myB.points;
+      const oppS = opp.custom_points != null ? opp.custom_points : opp.points;
+      if (myS > oppS) winsB++; else if (oppS > myS) lossesB++;
+    }
+  }
+}
+
+// Effective identity (adopted franchises use predecessor identity pre-founding)
+function getEffective(franchise: any, yr: number) {
+  if (franchise.founded !== 2021 && yr < franchise.founded) {
+    const rebrand = franchise.rebrands?.find((r: any) => r.year === yr);
+    return {
+      name: rebrand?.name ?? franchise.name,
+      logoAbbr: franchise.predecessor_abbr ?? franchise.abbr,
+    };
+  }
+  return { name: franchise.name, logoAbbr: franchise.abbr };
+}
+const effA = getEffective(fA, year);
+const effB = getEffective(fB, year);
+
+// Recap
+const allRecaps = await getCollection('recaps');
+const recap = allRecaps.find(r => r.id === `${year}/${slug}`) ?? null;
+let Content: any = null;
+if (recap) {
+  const rendered = await render(recap);
+  Content = rendered.Content;
+}
+
+const pageTitle = recap ? recap.data.title : `${effA.name} vs ${effB.name}`;
+---
+
+<Layout title={pageTitle} description={`Week ${week}, ${year} — ${effA.name} vs ${effB.name}`}>
+
+  <div style="max-width: 760px; margin: 0 auto; padding: 4rem 1.5rem 6rem;">
+
+    <a href="/scores" style="font-family: var(--font-body); font-size: 0.72rem; font-weight: 600; color: var(--color-text-muted); text-decoration: none; letter-spacing: 0.1em; text-transform: uppercase;">← Scores</a>
+
+    <p class="section-label" style="margin-top: 1.75rem;">Week {week} &middot; {year} Season</p>
+
+    <!-- Score block -->
+    <div style="border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; margin-top: 0.75rem;">
+
+      <div class:list={['game-team', aWins ? 'winner' : bWins ? 'loser' : 'tied']}>
+        <img src={`/images/logos/${effA.logoAbbr}.png`} alt={effA.name} width="52" height="52"
+             style="object-fit: contain; flex-shrink: 0;" onerror="this.style.display='none'" />
+        <div style="flex: 1; min-width: 0;">
+          <div class="game-team-name">{effA.name}</div>
+          <div class="game-record">{winsA}–{lossesA}</div>
+        </div>
+        <span class:list={['game-score', aWins ? 'winner' : '']}>{scoreA.toFixed(2)}</span>
+      </div>
+
+      <div style="height: 1px; background: var(--color-border);"></div>
+
+      <div class:list={['game-team', bWins ? 'winner' : aWins ? 'loser' : 'tied']}>
+        <img src={`/images/logos/${effB.logoAbbr}.png`} alt={effB.name} width="52" height="52"
+             style="object-fit: contain; flex-shrink: 0;" onerror="this.style.display='none'" />
+        <div style="flex: 1; min-width: 0;">
+          <div class="game-team-name">{effB.name}</div>
+          <div class="game-record">{winsB}–{lossesB}</div>
+        </div>
+        <span class:list={['game-score', bWins ? 'winner' : '']}>{scoreB.toFixed(2)}</span>
+      </div>
+
+    </div>
+
+    <!-- Recap (only rendered when a file exists) -->
+    {recap && (
+      <div style="margin-top: 3.5rem;">
+        <h1 class="page-title" style="margin: 0;">{recap.data.title}</h1>
+        {recap.data.subtitle && (
+          <p style="font-family: var(--font-body); font-size: 1.05rem; color: var(--color-text-muted); margin: 0.6rem 0 0; line-height: 1.5;">{recap.data.subtitle}</p>
+        )}
+        <p style="font-family: var(--font-body); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-muted); margin: 1rem 0 0;">
+          {recap.data.date}
+        </p>
+        <hr style="border: none; border-top: 1px solid var(--color-border); margin: 1.5rem 0;" />
+        <div class="recap-body">
+          {Content && <Content />}
+        </div>
+      </div>
+    )}
+
+  </div>
+
+</Layout>
+
+<style>
+  .game-team {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+  }
+
+  .game-team.winner {
+    background-color: color-mix(in srgb, var(--color-surface) 80%, transparent);
+  }
+
+  .game-team.loser {
+    opacity: 0.55;
+  }
+
+  .game-team-name {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .game-record {
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    margin-top: 0.2rem;
+  }
+
+  .game-score {
+    font-family: var(--font-body);
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+    min-width: 4.5rem;
+    text-align: right;
+  }
+
+  .game-score.winner {
+    color: var(--color-gold);
+  }
+
+  .recap-body :global(p) {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--color-text-primary);
+    margin: 0 0 1.25rem;
+  }
+
+  .recap-body :global(h2),
+  .recap-body :global(h3) {
+    font-family: var(--font-display);
+    color: var(--color-text-primary);
+    margin: 2rem 0 0.75rem;
+  }
+</style>
