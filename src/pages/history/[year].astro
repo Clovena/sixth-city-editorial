@@ -3,6 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 import seasons from '../../data/seasons.json';
 import franchises from '../../data/franchises.json';
 import results from '../../data/results.json';
+import { getEntry, render } from 'astro:content';
 
 export function getStaticPaths() {
   return seasons.map(s => ({ params: { year: String(s.year) } }));
@@ -178,6 +179,11 @@ const rightSemiBottom= getMatchupWinner(rightBottom[0], rightBottom[1]);
 
 const champion = allRows.find(r => r.finish === 'Champion');
 const runnerUp = allRows.find(r => r.finish === 'Runner-up');
+
+// ── Season summary markdown ──────────────────────────────────────────────────
+
+const seasonEntry = await getEntry('seasons', year);
+const { Content: SeasonSummary } = seasonEntry ? await render(seasonEntry) : { Content: null };
 ---
 
 <Layout
@@ -207,16 +213,8 @@ const runnerUp = allRows.find(r => r.finish === 'Runner-up');
     <!-- Season summary -->
     <div class="section-rule">
       <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; margin-bottom: 1.25rem;">Season Summary</h2>
-      <div style="max-width: 72ch; font-size: 0.95rem; color: var(--color-text-secondary); line-height: 1.7;">
-        <p style="margin-bottom: 1rem;">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-        </p>
-        <p style="margin-bottom: 1rem;">
-          Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium.
-        </p>
-        <p>
-          Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet consectetur adipisci velit.
-        </p>
+      <div class="season-summary" style="max-width: 72ch; font-size: 0.95rem; color: var(--color-text-secondary); line-height: 1.7;">
+        {SeasonSummary ? <SeasonSummary /> : <p></p>}
       </div>
     </div>
 
@@ -510,6 +508,14 @@ const runnerUp = allRows.find(r => r.finish === 'Runner-up');
 </Layout>
 
 <style>
+  /* ── Season summary ──────────────────────────────── */
+  .season-summary :global(p) {
+    margin-bottom: 1rem;
+  }
+  .season-summary :global(p:last-child) {
+    margin-bottom: 0;
+  }
+
   /* ── Bracket layout ──────────────────────────────── */
   .bracket-wrap {
     display: flex;
