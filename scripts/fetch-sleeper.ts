@@ -17,7 +17,7 @@ import { writeFileSync, mkdirSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import config from '../src/data/config.json' assert { type: 'json' };
-import { getRosters, getMatchups, getNflState } from './lib/sleeper-api.js';
+import { getRosters, getMatchups, getNflState, getPlayers } from './lib/sleeper-api.js';
 import { buildSeasonStats } from './lib/transform.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -127,4 +127,23 @@ for (const season of seasonsToFetch) {
 }
 
 saveResults(allResults);
+
+// ─── Player ID map (opt-in, run with --players) ────────────────────────────
+
+if (process.argv.includes('--players')) {
+  console.log('\nFetching player ID map from Sleeper (this may take a moment)...');
+  const raw = await getPlayers();
+  const map: Record<string, { espn_id: string; full_name: string; position: string }> = {};
+  for (const [playerId, player] of Object.entries(raw)) {
+    if (!player.espn_id) continue;
+    map[playerId] = {
+      espn_id: String(player.espn_id),
+      full_name: player.full_name ?? '',
+      position: player.position ?? '',
+    };
+  }
+  writeFileSync(join(DATA_DIR, 'player-id-map.json'), JSON.stringify(map, null, 2));
+  console.log(`✓ Wrote src/data/player-id-map.json (${Object.keys(map).length} players with ESPN IDs)`);
+}
+
 console.log('\nDone.');
