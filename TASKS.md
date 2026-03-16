@@ -1,9 +1,9 @@
 # SCDFL Site — Task Board
 
 ## TODO
+- Hall of Fame - Player awards, HOF awards, trophies
+- Player headshot call - ESPN CDN & implementation in game recaps
 - Historical matchups of spotlight games
-- History page 
-- Photo gallery?
 - Cleanup
   - Align order of top and bottom nav bars
   - home/index.html still says Bowl Games on <a> block
@@ -12,9 +12,12 @@
 
 ## Dev
 - Bugfix Netlify deployment
+- History page 
 
 ## QA
 - Single game matchups API query
+- Season recap pages
+  - Playoff brackets and transformation of matchups.json
 
 ## Completed
 - Content page
