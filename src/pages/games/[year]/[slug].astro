@@ -2,7 +2,7 @@
 import { getCollection, render } from 'astro:content';
 import Layout from '../../../layouts/Layout.astro';
 import franchisesJson from '../../../data/franchises.json';
-import { ROSTER_SLOTS } from '../../../lib/roster-slots';
+import { mapStartersToSlots } from '../../../lib/lineup';
 
 // ── Static paths — self-contained, no module-scope variable access ────────────
 export async function getStaticPaths() {
@@ -131,6 +131,10 @@ if (recap) {
 }
 
 const pageTitle = recap ? recap.data.title : `${effA.name} vs ${effB.name}`;
+
+// Lineups
+const lineupA = mapStartersToSlots(entryA?.starters ?? [], entryA?.starters_points ?? [], year, week);
+const lineupB = mapStartersToSlots(entryB?.starters ?? [], entryB?.starters_points ?? [], year, week);
 ---
 
 <Layout title={pageTitle} description={`Week ${week}, ${year} — ${effA.name} vs ${effB.name}`}>
@@ -186,30 +190,32 @@ const pageTitle = recap ? recap.data.title : `${effA.name} vs ${effB.name}`;
         </div>
 
         <!-- Roster rows -->
-        {ROSTER_SLOTS.map((slot) => (
-          <>
-            <div
-              class="lineup-row lineup-row-a"
-              style={`--slot-surface: var(--color-${slot.colorVar}-surface); --slot-glow: var(--color-${slot.colorVar}-glow);`}
-              data-defensive={slot.isDefensive ? 'true' : undefined}
-            >
-              <span class="lineup-pos">{slot.position}</span>
-              <span class="lineup-thumb"></span>
-              <span class="lineup-name">Lorem Ipsum</span>
-              <span class="lineup-score">12.42</span>
-            </div>
-            <div
-              class="lineup-row lineup-row-b"
-              style={`--slot-surface: var(--color-${slot.colorVar}-surface); --slot-glow: var(--color-${slot.colorVar}-glow);`}
-              data-defensive={slot.isDefensive ? 'true' : undefined}
-            >
-              <span class="lineup-pos">{slot.position}</span>
-              <span class="lineup-thumb"></span>
-              <span class="lineup-name">Lorem Ipsum</span>
-              <span class="lineup-score">12.42</span>
-            </div>
-          </>
-        ))}
+        {lineupA.map((slotA, i) => {
+          const slotB = lineupB[i];
+          if (!slotA.visible) return null;
+          return (
+            <>
+              <div
+                class="lineup-row lineup-row-a"
+                style={`--slot-surface: var(--color-${slotA.colorVar}-surface); --slot-glow: var(--color-${slotA.colorVar}-glow);`}
+              >
+                <span class="lineup-pos">{slotA.position}</span>
+                <span class="lineup-thumb"></span>
+                <span class="lineup-name">{slotA.playerId}</span>
+                <span class="lineup-score">{slotA.points.toFixed(2)}</span>
+              </div>
+              <div
+                class="lineup-row lineup-row-b"
+                style={`--slot-surface: var(--color-${slotB.colorVar}-surface); --slot-glow: var(--color-${slotB.colorVar}-glow);`}
+              >
+                <span class="lineup-pos">{slotB.position}</span>
+                <span class="lineup-thumb"></span>
+                <span class="lineup-name">{slotB.playerId}</span>
+                <span class="lineup-score">{slotB.points.toFixed(2)}</span>
+              </div>
+            </>
+          );
+        })}
 
       </div>
     </div>
