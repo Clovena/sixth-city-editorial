@@ -211,12 +211,13 @@ const { Content: SeasonSummary } = seasonEntry ? await render(seasonEntry) : { C
     </div>
 
     <!-- Season summary -->
+    {SeasonSummary ? 
     <div class="section-rule">
       <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; margin-bottom: 1.25rem;">Season Summary</h2>
       <div class="season-summary" style="max-width: 72ch; font-size: 0.95rem; color: var(--color-text-secondary); line-height: 1.7;">
-        {SeasonSummary ? <SeasonSummary /> : <p></p>}
+        <SeasonSummary />
       </div>
-    </div>
+    </div> : <div></div>}
 
     <!-- Conference standings -->
     <div class="section-rule">
