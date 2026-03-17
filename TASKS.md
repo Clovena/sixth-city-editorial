@@ -30,9 +30,6 @@
 
 *From a Claude Desktop review 2026-03-17:*
 
-Navigation — minor inconsistency
-The top nav includes "Spotlight Games" but the footer nav says "Bowl Games." These link to the same page but use different labels. Pick one and use it everywhere — "Spotlight Games" is more distinctive and matches the URL, but "Bowl Games & Rivalry Week" is more descriptive. Either works, just needs to be consistent.
-
 Home page — one missing connection
 The three section cards at the bottom link to History, Franchises, and Bowl Games — but Scores and Content are nav items with no homepage representation at all. For a visitor hitting the site cold, those sections are invisible unless they notice the nav. Even a small "Latest Content" or "Recent Scores" block would surface them.
 
