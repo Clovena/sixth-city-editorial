@@ -30,6 +30,16 @@ Output goes to `dist/`.
 npm run preview
 ```
 
+## Git Workflow
+
+This project uses two primary branches:
+
+- **`dev`** — the active development branch. All feature work and updates should target this branch. Changes can be committed and pushed immediately; this branch does not trigger deployments.
+- **`main`** — production branch. Syncs to `main` trigger automatic Netlify builds and deployments. Merges into `main` should be infrequent and deliberate, and only happen when a sufficient number of changes are ready for production.
+- **`debug`** - troubleshooting and problem-solving branch. When using, best practice is to `git pull` from main and dev first to ensure the most recent versions of files. 
+
+**Feature branches** should be created off `dev` for larger or longer-running work. Merge back into `dev` via pull request.
+
 ## Deployment
 
 The site deploys automatically to Netlify on push to the main branch. Build config is in `netlify.toml`.
