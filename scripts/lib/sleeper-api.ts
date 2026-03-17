@@ -121,17 +121,3 @@ export const getWinnersBracket = (leagueId: string) =>
 export const getLosersBracket = (leagueId: string) =>
   get<SleeperBracketMatch[]>(`/league/${leagueId}/losers_bracket`);
 
-export interface SleeperPlayer {
-  espn_id?: string | null;
-  full_name?: string | null;
-  position?: string | null;
-  [key: string]: unknown;
-}
-
-/**
- * Full player metadata for all NFL players.
- * ~5MB response — use sparingly, once per day at most.
- * Run via: npm run fetch-players
- */
-export const getPlayers = () =>
-  get<Record<string, SleeperPlayer>>('/players/nfl');
