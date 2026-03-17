@@ -6,12 +6,10 @@
 - Cleanup
   - Align order of top and bottom nav bars
   - home/index.html still says Bowl Games on <a> block
-- Mobile display optimization
 - Color refactoring to surface and glow
 
 ## Dev
-- Bugfix Netlify deployment
-- History page 
+- Mobile display optimization
 
 ## QA
 - Single game matchups API query
@@ -25,4 +23,6 @@
 - Rebranded & orphaned logo implementation
 - Total row in franchise Season Records
 - Game recaps for select matchups
+- History page 
 - Player headshot call - ESPN CDN & implementation in game recaps
+- Bugfix Netlify deployment
