@@ -2,26 +2,26 @@
 
 ## TODO
 1. High priority cleanup
-  - home/index.html still says Bowl Games on <a> block
-  - Rivalry game slugs say Bowl Game
-  - Align accolade symbols on franchises/index
-  - Indent owner name to align with franchsie name on franchises/index
+    - home/index.html still says Bowl Games on <a> block
+    - Rivalry game slugs say Bowl Game
+    - Align accolade symbols on franchises/index
+    - Indent owner name to align with franchsie name on franchises/index
 1. Blurbs for Bowl Games in Content page
 1. Add homepage nav cards for Scores and Content
 1. Adjust preseason rows on franchise pages for "Season not yet started"
 1. Historical matchups of spotlight games
-  - Use matchups.json
+    - Use matchups.json
 1. More data from Sleeper API
-  - Drafts
-  - Transactions
+    - Drafts
+    - Transactions
 1. Rookie drafts on season recap pages
 1. Color refactoring to surface and glow
 1. Hall of Fame - Player awards, HOF awards, trophies
 1. Player profile pages, a la pro-football-reference?
 1. Low priority QOL cleanup
-  - Season recap brackets on mobile
-  - Franchises arranged as 2-3-2 on desktop, not 3-3-1
-  - Remove various locations of hardcoding logic to convert between SAR and MTL
+    - Season recap brackets on mobile
+    - Franchises arranged as 2-3-2 on desktop, not 3-3-1
+    - Remove various locations of hardcoding logic to convert between SAR and MTL
 
 ## Dev
 
