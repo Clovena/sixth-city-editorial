@@ -1,7 +1,7 @@
 # SCDFL Site — Task Board
 
 ## TODO
-1. Blurbs for Bowl Games in Content page
+1. Teamwise scores on franchise pages
 1. Consolation bracket
     - Seedings complete for non-playoff teams
     - Brackets generated on season recap pages
@@ -21,6 +21,7 @@
     - Remove various locations of hardcoding logic to convert between SAR and MTL
 
 ## Dev
+- Blurbs for Bowl Games in Content page
 
 ## QA
 - Single game matchups API query
