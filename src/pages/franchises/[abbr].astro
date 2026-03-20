@@ -265,7 +265,10 @@ const totalPA = franchiseResults.reduce((sum, r) => sum + r.points_against, 0);
                       </td>
                     )}
                     {seasonNotStarted ? (
-                      <td colspan="4" style="color: var(--color-text-muted); text-align: center;">Season not yet started.</td>
+                      <>
+                        <td colspan="4" class="season-not-started-desktop" style="color: var(--color-text-muted); text-align: center;">Season not yet started.</td>
+                        <td colspan="2" class="season-not-started-mobile" style="color: var(--color-text-muted); text-align: center; display: none;">Season not started.</td>
+                      </>
                     ) : (
                       <>
                         <td>{row.wins}</td>
@@ -435,6 +438,14 @@ const totalPA = franchiseResults.reduce((sum, r) => sum + r.points_against, 0);
     /* Hide PF and PA columns */
     .col-hide-mobile {
       display: none;
+    }
+
+    /* Swap colspan elements for mobile */
+    .season-not-started-desktop {
+      display: none !important;
+    }
+    .season-not-started-mobile {
+      display: table-cell !important;
     }
   }
 </style>
