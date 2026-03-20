@@ -170,6 +170,17 @@ Transforms consecutive `**bold**` + `*italic*` paragraph pairs in writeup markdo
 
 ---
 
+## Historical Matchup Lookup (`src/lib/get-historical-matchups.ts`)
+
+Scans all `/data/raw/*-matchups.json` files at build time to find historical instances of two teams playing. Used by `/spotlight-games/[slug].astro` to populate the "Historical Results" table.
+
+- `getHistoricalMatchups(teamAAbbr, teamBAbbr)` takes abbreviations, returns array of matchups sorted newest-first (year desc, week desc)
+- Matchup lookup: both teams' `roster_id` values appear in same week with matching `matchup_id`
+- Each result includes: `year`, `week`, `teamAScore`, `teamBScore` (from `custom_points` field, coalesced with `points`)
+- Handles bye weeks correctly (entries with null `matchup_id` are skipped, ensuring valid matchups only)
+
+---
+
 ## Sleeper API Fetch Scripts (`scripts/`)
 
 ```
@@ -196,6 +207,29 @@ All matchup data is embedded at build time as a JSON blob via `define:vars`. Cli
 - Week default: max week present in that season's data (use numeric comparison — string sort breaks for weeks 1–9)
 - Matchup grouping: skip entries where `matchup_id` is null/falsy (bye teams in playoff weeks cause `NaN` keys which crash rendering)
 - Dynasty Bowl banner: Week 17 only; matched by resolving each team's effective abbr against `seasons.json dynasty_bowl.winner/loser`
+
+---
+
+## Playoff Bracket (`/history/[year]`) — Clickable Matchups
+
+The playoff bracket on season history pages is fully clickable. Each matchup links to its game recap page:
+
+- **Round 1 matchups** (week 15): All first-round playoff games
+- **Semifinal matchups** (week 16): Conference/division semifinals
+- **Championship matchup** (week 17): Dynasty Bowl final
+
+Clicking any matchup navigates to `/games/[year]/[slug]` where the slug is built using `buildSlug(teamA, teamB, week)`:
+```
+[week_zero_padded]-[abbr_a_sorted_lowercase]-[abbr_b_sorted_lowercase]
+```
+
+Example: `/games/2025/15-bkb-low` (BKB vs. LOW, week 15)
+
+**Implementation details:**
+- Each matchup div is wrapped in an `<a>` tag with no visual changes
+- Teams are alphabetized before building the slug
+- Matchups with missing team data (byes, incomplete brackets) gracefully render without links
+- Replaces the previous playoff format text with "Click a matchup for more details →"
 
 ---
 

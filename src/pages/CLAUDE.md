@@ -30,6 +30,13 @@ Breakpoint: `@media (max-width: 768px)`. All mobile overrides use scoped `<style
 ### `history/[year].astro`
 - Final Standings grid goes vertical (HCC below SCC, each full width)
 - Playoff bracket `bracket-wrap` goes vertical
+- **Playoff bracket interaction**: All matchup elements are clickable links to game recaps. Each matchup wraps in an `<a href="/games/{year}/{slug}">` tag where slug is built using `buildSlug(teamA, teamB, week)`:
+  - Round 1: week 15
+  - Semifinals: week 16
+  - Championship: week 17
+  - Teams in slug are alphabetized and lowercased (e.g., `15-bkb-low`)
+  - Matchups without both teams (byes, incomplete) skip the link wrapper
+- Text above bracket changed from "{teamCount}-team field • ..." to "Click a matchup for more details →"
 
 ### `franchises/[abbr].astro`
 - Sidebar moves below Main column at full width
@@ -42,6 +49,9 @@ Breakpoint: `@media (max-width: 768px)`. All mobile overrides use scoped `<style
 - `.bowl-team-name` spans hidden on mobile to save space
 
 ### `spotlight-games/[slug].astro`
+- Fetches historical matchup data via `getHistoricalMatchups(teamA, teamB)` which scans all `/data/raw/*-matchups.json` files to find instances where both teams played in the same week with matching `matchup_id`
+- Historical Results table displays: Year | Week | Team A | Score A | Score B | Team B with winner highlighted in gold, loser muted
+- Score boxes and column widths use `min-width` to ensure consistent vertical alignment across all matchup rows
 - `.matchup-card-grid`: 3-col (A | vs | B) collapses to single column; Team B's color border swaps from right to left via `--team-b-color` CSS variable
 - `.matchup-desc-grid`: "About This Matchup" + "Historical Results" stack vertically
 

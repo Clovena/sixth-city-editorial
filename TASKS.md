@@ -1,10 +1,9 @@
 # SCDFL Site — Task Board
 
 ## TODO
-1. Blurbs for Bowl Games in Content page
-1. Adjust preseason rows on franchise pages for "Season not yet started"
-1. Historical matchups of spotlight games
-    - Use matchups.json
+1. Consolation bracket
+    - Seedings complete for non-playoff teams
+    - Brackets generated on season recap pages
 1. More data from Sleeper API
     - Drafts
     - Transactions
@@ -18,6 +17,7 @@
     - Remove various locations of hardcoding logic to convert between SAR and MTL
 
 ## Dev
+- Blurbs for Bowl Games in Content page
 
 ## QA
 - Single game matchups API query
