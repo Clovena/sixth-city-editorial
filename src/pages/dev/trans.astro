@@ -100,6 +100,21 @@ const franchiseMapObj = Object.fromEntries(franchiseMap);
     </div>
   </div>
 
+  <!-- Trade Detail Modal -->
+  <div id="trade-modal" style="display: none; position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.6); z-index: 1000; overflow-y: auto;">
+    <div style="min-height: 100%; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+      <div style="background-color: var(--color-surface); border: 1px solid var(--color-border); border-radius: 0.5rem; max-width: 600px; width: 100%; padding: 2rem; position: relative;">
+        <!-- Close button -->
+        <button id="modal-close" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--color-text-secondary); cursor: pointer; font-size: 1.5rem; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+          ✕
+        </button>
+
+        <!-- Modal content -->
+        <div id="modal-content" style="padding-top: 1rem;"></div>
+      </div>
+    </div>
+  </div>
+
   <style>
     #search-results [role="option"] {
       padding: 0.75rem 1rem;
@@ -124,6 +139,14 @@ const franchiseMapObj = Object.fromEntries(franchiseMap);
 
     :global(table tbody tr:hover) {
       background-color: var(--color-surface);
+    }
+
+    :global(table tbody tr.trade-row) {
+      cursor: pointer;
+    }
+
+    :global(table tbody tr.trade-row:hover) {
+      background-color: var(--color-gold-surface);
     }
 
     :global(table td) {
@@ -154,6 +177,49 @@ const franchiseMapObj = Object.fromEntries(franchiseMap);
       color: var(--color-text-secondary);
       font-size: 1.2rem;
     }
+
+    :global(.trade-team-section) {
+      margin-bottom: 2rem;
+    }
+
+    :global(.trade-team-header) {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+
+    :global(.trade-team-logo) {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    :global(.trade-assets) {
+      margin-left: 4rem;
+    }
+
+    :global(.trade-asset-type) {
+      margin-bottom: 0.75rem;
+      font-size: 0.85rem;
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    :global(.trade-asset-list) {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    :global(.trade-asset-list li) {
+      padding: 0.25rem 0;
+      font-size: 0.95rem;
+      color: var(--color-text-primary);
+    }
   </style>
 
   <script is:inline define:vars={{ playerList, playerMapObj, transactionsByYear, franchiseMapObj }}>
@@ -166,8 +232,12 @@ const franchiseMapObj = Object.fromEntries(franchiseMap);
     const transactionsTable = document.getElementById('transactions-table');
     const transactionsTbody = document.getElementById('transactions-tbody');
     const noResultsMessage = document.getElementById('no-results-message');
+    const tradeModal = document.getElementById('trade-modal');
+    const modalClose = document.getElementById('modal-close');
+    const modalContent = document.getElementById('modal-content');
 
     let selectedPlayerId = null;
+    let transactionMap = {}; // Store full transactions by ID
 
     // Autocomplete search
     searchInput.addEventListener('input', (e) => {
@@ -225,6 +295,7 @@ const franchiseMapObj = Object.fromEntries(franchiseMap);
     // Load transactions for selected player
     function loadTransactions(playerId) {
       const transactions = [];
+      transactionMap = {}; // Reset transaction map
 
       // Search through all years and weeks
       Object.entries(transactionsByYear).forEach(([year, weekData]) => {
@@ -241,7 +312,7 @@ const franchiseMapObj = Object.fromEntries(franchiseMap);
               const addRosterId = inAdds ? tx.adds[playerId] : null;
               const dropRosterId = inDrops ? tx.drops[playerId] : null;
 
-              transactions.push({
+              const summary = {
                 year: parseInt(year),
                 week: parseInt(week),
                 type: tx.type,
@@ -250,7 +321,12 @@ const franchiseMapObj = Object.fromEntries(franchiseMap);
                 dropRosterId,
                 waiver_bid: tx.settings?.waiver_bid,
                 transaction_id: tx.transaction_id
-              });
+              };
+
+              transactions.push(summary);
+
+              // Store full transaction for modal
+              transactionMap[tx.transaction_id] = tx;
             }
           });
         });
@@ -311,9 +387,11 @@ const franchiseMapObj = Object.fromEntries(franchiseMap);
           }
 
           const waiverBidDisplay = tx.type === 'waiver' && tx.waiver_bid !== undefined ? tx.waiver_bid : '—';
+          const rowClass = tx.type === 'trade' ? 'trade-row' : '';
+          const dataTxId = tx.type === 'trade' ? `data-tx-id="${tx.transaction_id}"` : '';
 
           return `
-            <tr>
+            <tr class="${rowClass}" ${dataTxId}>
               <td>${tx.year}</td>
               <td>${tx.week}</td>
               <td>${tx.type}</td>
@@ -327,7 +405,140 @@ const franchiseMapObj = Object.fromEntries(franchiseMap);
           return '';
         }
       }).join('');
+
+      // Add click handlers to trade rows
+      transactionsTbody.querySelectorAll('tr.trade-row').forEach(row => {
+        row.addEventListener('click', () => {
+          const txId = row.dataset.txId;
+          if (txId && transactionMap[txId]) {
+            openTradeModal(transactionMap[txId]);
+          }
+        });
+      });
     }
+
+    // Open trade modal
+    function openTradeModal(tx) {
+      const date = new Date(tx.created);
+      const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+      // Collect all teams involved
+      const teamIds = [...new Set(tx.roster_ids || [])];
+      const isMultiTeam = teamIds.length >= 3;
+      let teamsHtml = '';
+
+      teamIds.forEach(rosterId => {
+        const franchise = franchiseMapObj[rosterId];
+        if (!franchise) return;
+
+        const assetsReceived = [];
+        const assetsSent = [];
+
+        // Collect players received by this team
+        if (tx.adds) {
+          Object.entries(tx.adds).forEach(([playerId, receivingRosterId]) => {
+            if (receivingRosterId === rosterId) {
+              const player = playerMapObj[playerId];
+              if (player) {
+                assetsReceived.push(player.full_name);
+              }
+            }
+          });
+        }
+
+        // Collect players sent by this team
+        if (tx.drops) {
+          Object.entries(tx.drops).forEach(([playerId, sendingRosterId]) => {
+            if (sendingRosterId === rosterId) {
+              const player = playerMapObj[playerId];
+              if (player) {
+                assetsSent.push(player.full_name);
+              }
+            }
+          });
+        }
+
+        // Collect draft picks
+        if (tx.draft_picks && Array.isArray(tx.draft_picks)) {
+          tx.draft_picks.forEach(pick => {
+            const pickDesc = `${pick.season} Round ${pick.round}`;
+            if (pick.owner_id === rosterId) {
+              assetsReceived.push(pickDesc);
+            }
+            if (pick.previous_owner_id === rosterId) {
+              assetsSent.push(pickDesc);
+            }
+          });
+        }
+
+        // Only render team if they received something
+        if (assetsReceived.length > 0) {
+          let sectionHtml = `
+            <div class="trade-team-section">
+              <div class="trade-team-header">
+                <img src="/images/logos/${franchise.abbr}.png" alt="${franchise.abbr}" class="trade-team-logo" title="${franchise.name}" />
+                <span>${franchise.name}</span>
+              </div>
+          `;
+
+          if (isMultiTeam) {
+            // Multi-team: show sent and received
+            sectionHtml += `
+              <div class="trade-assets">
+                ${assetsSent.length > 0 ? `
+                  <div style="margin-bottom: 1rem;">
+                    <div class="trade-asset-type">Sent</div>
+                    <ul class="trade-asset-list">
+                      ${assetsSent.map(asset => `<li>• ${asset}</li>`).join('')}
+                    </ul>
+                  </div>
+                ` : ''}
+                <div>
+                  <div class="trade-asset-type">Received</div>
+                  <ul class="trade-asset-list">
+                    ${assetsReceived.map(asset => `<li>• ${asset}</li>`).join('')}
+                  </ul>
+                </div>
+              </div>
+            `;
+          } else {
+            // Two-team: show only received with header
+            sectionHtml += `
+              <div class="trade-asset-type">Received</div>
+              <ul class="trade-asset-list">
+                ${assetsReceived.map(asset => `<li>• ${asset}</li>`).join('')}
+              </ul>
+            `;
+          }
+
+          sectionHtml += `</div>`;
+          teamsHtml += sectionHtml;
+        }
+      });
+
+      modalContent.innerHTML = `
+        <h2 style="font-family: var(--font-display); font-size: 1.5rem; margin: 0 0 0.5rem;">Trade Details</h2>
+        <p style="color: var(--color-text-secondary); margin: 0 0 2rem; font-size: 0.9rem;">${dateStr}</p>
+        ${teamsHtml}
+      `;
+
+      tradeModal.style.display = 'flex';
+    }
+
+    // Close modal
+    function closeTradeModal() {
+      tradeModal.style.display = 'none';
+    }
+
+    // Wire up modal close button
+    modalClose.addEventListener('click', closeTradeModal);
+
+    // Close modal when clicking outside
+    tradeModal.addEventListener('click', (e) => {
+      if (e.target === tradeModal) {
+        closeTradeModal();
+      }
+    });
 
     // Allow Enter key to select first result
     searchInput.addEventListener('keydown', (e) => {
