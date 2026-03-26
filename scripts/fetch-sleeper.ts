@@ -17,8 +17,22 @@ import { writeFileSync, mkdirSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import config from '../src/data/config.json' assert { type: 'json' };
-import { getRosters, getMatchups, getNflState } from './lib/sleeper-api.js';
+import draftConfigData from '../src/data/draft-config.json' assert { type: 'json' };
+const draftConfig = draftConfigData as DraftConfig;
+import { getRosters, getMatchups, getTransactions, getNflState, getDraftPicks, type SleeperTransaction } from './lib/sleeper-api.js';
 import { buildSeasonStats } from './lib/transform.js';
+
+// ─── Types ─────────────────────────────────────────────────────────────────
+
+interface DraftConfigEntry {
+  year: number;
+  draft_id: string;
+  type: string;
+}
+
+interface DraftConfig {
+  drafts: DraftConfigEntry[];
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -124,9 +138,34 @@ for (const season of seasonsToFetch) {
   }
   saveRaw(`${season.year}-matchups.json`, matchupsByWeek);
   console.log(`  cached matchups weeks 1–${maxWeek} to src/data/raw/`);
+
+  // Pull transactions for each regular-season week
+  const transactionsByWeek: Record<number, SleeperTransaction[]> = {};
+  for (let week = 1; week <= maxWeek + 1; week++) {
+    transactionsByWeek[week] = await getTransactions(season.league_id, week);
+  }
+  saveRaw(`${season.year}-transactions.json`, transactionsByWeek);
+  console.log(`  cached transactions weeks 1–${maxWeek} to src/data/raw/`);
 }
 
 saveResults(allResults);
+
+// ─── Draft data ────────────────────────────────────────────────────────────
+
+if (draftConfig.drafts && draftConfig.drafts.length > 0) {
+  console.log(`\nFetching ${draftConfig.drafts.length} draft(s)...`);
+
+  for (const draftEntry of draftConfig.drafts) {
+    try {
+      const picks = await getDraftPicks(draftEntry.draft_id);
+      const filename = `${draftEntry.year}-${draftEntry.type}-draft.json`;
+      saveRaw(filename, picks);
+      console.log(`  ✓ ${filename}`);
+    } catch (err) {
+      console.error(`  ✗ Failed to fetch draft ${draftEntry.draft_id}: ${err}`);
+    }
+  }
+}
 
 // ─── Player ID map (opt-in, run with --players) ────────────────────────────
 

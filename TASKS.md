@@ -4,9 +4,6 @@
 1. Consolation bracket
     - Seedings complete for non-playoff teams
     - Brackets generated on season recap pages
-1. More data from Sleeper API
-    - Drafts
-    - Transactions
 1. Rookie drafts on season recap pages
 1. Color refactoring to surface and glow
 1. Hall of Fame - Player awards, HOF awards, trophies
@@ -15,6 +12,7 @@
     - Season recap brackets on mobile
     - Franchises arranged as 2-3-2 on desktop, not 3-3-1
     - Remove various locations of hardcoding logic to convert between SAR and MTL
+    - Transaction explorer mobile layout
 
 ## Dev
 - Blurbs for Bowl Games in Content page
@@ -37,3 +35,5 @@
 - Player headshot call - ESPN CDN & implementation in game recaps
 - Bugfix Netlify deployment
 - Mobile display optimization
+- Transaction data
+- Draft data
