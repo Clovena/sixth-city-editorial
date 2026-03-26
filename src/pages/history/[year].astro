@@ -668,7 +668,7 @@ const { Content: SeasonSummary } = seasonEntry ? await render(seasonEntry) : { C
           )}
 
           {draftBoards.map((board, bi) => (
-            <div class="draft-board" data-draft-type={board.type} style={bi > 0 ? 'display:none' : ''}>
+            <div class="draft-board" style="margin: auto -5rem;" data-draft-type={board.type} style={bi > 0 ? 'display:none' : ''}>
               <div class="draft-grid" style={`grid-template-columns: 2.5rem repeat(${board.numSlots}, minmax(5rem, 1fr));`}>
                 {/* Header row */}
                 <div class="draft-corner"></div>
@@ -970,7 +970,7 @@ const { Content: SeasonSummary } = seasonEntry ? await render(seasonEntry) : { C
   }
 
   .draft-board {
-    overflow-x: auto;
+    /* responsive, no scroll */
   }
 
   .draft-grid {
@@ -978,7 +978,6 @@ const { Content: SeasonSummary } = seasonEntry ? await render(seasonEntry) : { C
     gap: 1px;
     background: var(--color-border);
     border: 1px solid var(--color-border);
-    min-width: fit-content;
   }
 
   .draft-corner,
@@ -1096,9 +1095,9 @@ const { Content: SeasonSummary } = seasonEntry ? await render(seasonEntry) : { C
       width: 100%;
     }
 
-    /* Draft board: maintain horizontal scroll on mobile */
-    .draft-board {
-      overflow-x: auto;
+    /* Draft board: hide on mobile */
+    .draft-section {
+      display: none !important;
     }
   }
 </style>
