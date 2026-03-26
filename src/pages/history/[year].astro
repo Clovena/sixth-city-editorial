@@ -3,6 +3,8 @@ import Layout from '../../layouts/Layout.astro';
 import seasons from '../../data/seasons.json';
 import franchises from '../../data/franchises.json';
 import results from '../../data/results.json';
+import draftConfig from '../../data/draft-config.json';
+import draftSlotsData from '../../data/draft-slots.json';
 import { getEntry, render } from 'astro:content';
 
 export function getStaticPaths() {
@@ -29,6 +31,19 @@ function getEffectiveName(franchise: typeof franchises[0], yr: number): string {
   }
   return franchise.name;
 }
+
+// ── Position color mapping ──────────────────────────────────────────────────
+
+const POSITION_COLOR_MAP: Record<string, string> = {
+  QB: 'red',
+  RB: 'green', FB: 'green',
+  WR: 'scc',
+  TE: 'gold',
+  K: 'grey', PK: 'grey',
+  DT: 'hcc', DE: 'hcc', DL: 'hcc', NT: 'hcc',
+  LB: 'purple', ILB: 'purple', OLB: 'purple', MLB: 'purple',
+  CB: 'pink', S: 'pink', SS: 'pink', FS: 'pink', DB: 'pink',
+};
 
 // ── Standings ───────────────────────────────────────────────────────────────
 
@@ -139,6 +154,13 @@ for (const entry of week15) {
   matchupById.set(entry.matchup_id, list);
 }
 
+// Build slug for game recap link: [week]-[abbr1]-[abbr2] (alphabetized, lowercased)
+function buildSlug(teamA: StandingsRow | null | undefined, teamB: StandingsRow | null | undefined, week: number): string | null {
+  if (!teamA || !teamB) return null;
+  const abbrs = [teamA.effectiveAbbr, teamB.effectiveAbbr].sort().map(a => a.toLowerCase());
+  return `${String(week).padStart(2, '0')}-${abbrs[0]}-${abbrs[1]}`;
+}
+
 // Return winner of a matchup between two teams; if b is null, a gets a bye
 function getMatchupWinner(a: StandingsRow | null, b: StandingsRow | null): StandingsRow | null {
   if (!a) return null;
@@ -179,6 +201,89 @@ const rightSemiBottom= getMatchupWinner(rightBottom[0], rightBottom[1]);
 
 const champion = allRows.find(r => r.finish === 'Champion');
 const runnerUp = allRows.find(r => r.finish === 'Runner-up');
+
+// ── Draft boards ────────────────────────────────────────────────────────────
+
+type DraftCell = {
+  playerName: string;
+  position: string;
+  colorVar: string;
+  pickLabel: string;
+  isTrade: boolean;
+  tradeToAbbr: string | null;
+};
+
+type DraftBoard = {
+  type: string;
+  numRounds: number;
+  numSlots: number;
+  headers: { slot: number; abbr: string }[];
+  grid: (DraftCell | null)[][];
+};
+
+const draftBoards: DraftBoard[] = [];
+
+const draftFiles = import.meta.glob<{ default: any[] }>('../../data/raw/*-*-draft.json');
+const yearDraftEntries = draftConfig.drafts.filter(d => d.year === yearNum);
+
+for (const entry of yearDraftEntries) {
+  const filePath = `../../data/raw/${entry.year}-${entry.type}-draft.json`;
+  const mod = await draftFiles[filePath]?.();
+  if (!mod) continue;
+
+  const picks: any[] = mod.default;
+  if (!picks.length) continue;
+
+  const draftId = picks[0].draft_id;
+  const slots = (draftSlotsData as Record<string, { slot: number; original_franchise_id: number }[]>)[draftId] ?? [];
+  const numSlots = slots.length || 14;
+  const numRounds = Math.max(...picks.map(p => p.round));
+
+  const slotMap = new Map(slots.map(s => [s.slot, s.original_franchise_id]));
+  const rosterMap = new Map(franchises.map(f => [f.id, f]));
+
+  // Organize picks by round and draft_slot
+  const pickGrid = new Map<number, Map<number, any>>();
+  for (const pick of picks) {
+    if (!pickGrid.has(pick.round)) pickGrid.set(pick.round, new Map());
+    pickGrid.get(pick.round)!.set(pick.draft_slot, pick);
+  }
+
+  // Build column headers
+  const headers = slots.map(s => {
+    const f = rosterMap.get(s.original_franchise_id);
+    return { slot: s.slot, abbr: f ? getEffectiveAbbr(f, yearNum) : '???' };
+  });
+
+  // Build grid rows
+  const grid: (DraftCell | null)[][] = [];
+  for (let r = 1; r <= numRounds; r++) {
+    const row: (DraftCell | null)[] = [];
+    for (let s = 1; s <= numSlots; s++) {
+      const pick = pickGrid.get(r)?.get(s) ?? null;
+      if (!pick) {
+        row.push(null);
+        continue;
+      }
+
+      const position = (pick.metadata?.position ?? '').toUpperCase();
+      const colorVar = POSITION_COLOR_MAP[position] ?? 'white';
+      const pickLabel = `${pick.round}.${String(pick.pick_no).padStart(2, '0')}`;
+      const playerName = `${pick.metadata?.first_name ?? ''} ${pick.metadata?.last_name ?? ''}`.trim();
+
+      const originalId = slotMap.get(pick.draft_slot) ?? null;
+      const isTrade = originalId !== null && pick.roster_id !== originalId;
+      const tradeToAbbr = isTrade && rosterMap.has(pick.roster_id)
+        ? getEffectiveAbbr(rosterMap.get(pick.roster_id)!, yearNum)
+        : null;
+
+      row.push({ playerName, position, colorVar, pickLabel, isTrade, tradeToAbbr });
+    }
+    grid.push(row);
+  }
+
+  draftBoards.push({ type: entry.type, numRounds, numSlots, headers, grid });
+}
 
 // ── Season summary markdown ──────────────────────────────────────────────────
 
@@ -312,7 +417,7 @@ const { Content: SeasonSummary } = seasonEntry ? await render(seasonEntry) : { C
     <div class="section-rule">
       <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem;">Playoff Bracket</h2>
       <p style="font-size: 0.75rem; color: var(--color-text-muted); margin-bottom: 2rem;">
-        {teamCount}-team field &bull; {is8Team ? 'SCC left · HCC right' : '1-seed has first-round bye'}
+        Click a matchup for more details →
       </p>
 
       <div class="bracket-wrap">
@@ -323,79 +428,97 @@ const { Content: SeasonSummary } = seasonEntry ? await render(seasonEntry) : { C
           <!-- Round 1 (left) -->
           <div class="bracket-round">
             <!-- Top matchup -->
-            <div class="bracket-matchup">
-              <div class={`bracket-slot top${!is8Team && leftTop[1] === null ? ' bye-slot' : ''}`}>
-                {leftTop[0] && (
-                  <>
-                    <img src={`/images/logos/${leftTop[0].effectiveAbbr}.png`} alt="" width="20" height="20" onerror="this.style.display='none'" />
-                    <span class="slot-seed">{leftTop[0].seed}</span>
-                    <span class="slot-name">{leftTop[0].effectiveAbbr}</span>
-                    {!is8Team && leftTop[1] === null && <span class="bye-label">BYE</span>}
-                  </>
-                )}
-              </div>
-              {leftTop[1] !== null && (
-                <>
-                  <div class="bracket-connector-v"></div>
-                  <div class="bracket-slot bottom">
-                    {leftTop[1] && (
+            {(() => {
+              const slug = buildSlug(leftTop[0], leftTop[1], 15);
+              const matchupContent = (
+                <div class="bracket-matchup">
+                  <div class={`bracket-slot top${!is8Team && leftTop[1] === null ? ' bye-slot' : ''}`}>
+                    {leftTop[0] && (
                       <>
-                        <img src={`/images/logos/${leftTop[1].effectiveAbbr}.png`} alt="" width="20" height="20" onerror="this.style.display='none'" />
-                        <span class="slot-seed">{leftTop[1].seed}</span>
-                        <span class="slot-name">{leftTop[1].effectiveAbbr}</span>
+                        <img src={`/images/logos/${leftTop[0].effectiveAbbr}.png`} alt="" width="20" height="20" onerror="this.style.display='none'" />
+                        <span class="slot-seed">{leftTop[0].seed}</span>
+                        <span class="slot-name">{leftTop[0].effectiveAbbr}</span>
+                        {!is8Team && leftTop[1] === null && <span class="bye-label">BYE</span>}
                       </>
                     )}
                   </div>
-                </>
-              )}
-            </div>
+                  {leftTop[1] !== null && (
+                    <>
+                      <div class="bracket-connector-v"></div>
+                      <div class="bracket-slot bottom">
+                        {leftTop[1] && (
+                          <>
+                            <img src={`/images/logos/${leftTop[1].effectiveAbbr}.png`} alt="" width="20" height="20" onerror="this.style.display='none'" />
+                            <span class="slot-seed">{leftTop[1].seed}</span>
+                            <span class="slot-name">{leftTop[1].effectiveAbbr}</span>
+                          </>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+              return slug ? <a href={`/games/${year}/${slug}`} class="bracket-matchup-link">{matchupContent}</a> : matchupContent;
+            })()}
             <!-- Bottom matchup -->
-            <div class="bracket-matchup">
-              <div class="bracket-slot top">
-                {leftBottom[0] && (
-                  <>
-                    <img src={`/images/logos/${leftBottom[0].effectiveAbbr}.png`} alt="" width="20" height="20" onerror="this.style.display='none'" />
-                    <span class="slot-seed">{leftBottom[0].seed}</span>
-                    <span class="slot-name">{leftBottom[0].effectiveAbbr}</span>
-                  </>
-                )}
-              </div>
-              <div class="bracket-connector-v"></div>
-              <div class="bracket-slot bottom">
-                {leftBottom[1] && (
-                  <>
-                    <img src={`/images/logos/${leftBottom[1].effectiveAbbr}.png`} alt="" width="20" height="20" onerror="this.style.display='none'" />
-                    <span class="slot-seed">{leftBottom[1].seed}</span>
-                    <span class="slot-name">{leftBottom[1].effectiveAbbr}</span>
-                  </>
-                )}
-              </div>
-            </div>
+            {(() => {
+              const slug = buildSlug(leftBottom[0], leftBottom[1], 15);
+              const matchupContent = (
+                <div class="bracket-matchup">
+                  <div class="bracket-slot top">
+                    {leftBottom[0] && (
+                      <>
+                        <img src={`/images/logos/${leftBottom[0].effectiveAbbr}.png`} alt="" width="20" height="20" onerror="this.style.display='none'" />
+                        <span class="slot-seed">{leftBottom[0].seed}</span>
+                        <span class="slot-name">{leftBottom[0].effectiveAbbr}</span>
+                      </>
+                    )}
+                  </div>
+                  <div class="bracket-connector-v"></div>
+                  <div class="bracket-slot bottom">
+                    {leftBottom[1] && (
+                      <>
+                        <img src={`/images/logos/${leftBottom[1].effectiveAbbr}.png`} alt="" width="20" height="20" onerror="this.style.display='none'" />
+                        <span class="slot-seed">{leftBottom[1].seed}</span>
+                        <span class="slot-name">{leftBottom[1].effectiveAbbr}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+              return slug ? <a href={`/games/${year}/${slug}`} class="bracket-matchup-link">{matchupContent}</a> : matchupContent;
+            })()}
           </div>
 
           <!-- Semis (left) -->
           <div class="bracket-round bracket-round-semis">
-            <div class="bracket-matchup">
-              <div class="bracket-slot semi-slot top">
-                {leftSemiTop && (
-                  <>
-                    <img src={`/images/logos/${leftSemiTop.effectiveAbbr}.png`} alt="" width="20" height="20" onerror="this.style.display='none'" />
-                    <span class="slot-seed">{leftSemiTop.seed}</span>
-                    <span class="slot-name">{leftSemiTop.effectiveAbbr}</span>
-                  </>
-                )}
-              </div>
-              <div class="bracket-connector-v"></div>
-              <div class="bracket-slot semi-slot bottom">
-                {leftSemiBottom && (
-                  <>
-                    <img src={`/images/logos/${leftSemiBottom.effectiveAbbr}.png`} alt="" width="20" height="20" onerror="this.style.display='none'" />
-                    <span class="slot-seed">{leftSemiBottom.seed}</span>
-                    <span class="slot-name">{leftSemiBottom.effectiveAbbr}</span>
-                  </>
-                )}
-              </div>
-            </div>
+            {(() => {
+              const slug = buildSlug(leftSemiTop, leftSemiBottom, 16);
+              const matchupContent = (
+                <div class="bracket-matchup">
+                  <div class="bracket-slot semi-slot top">
+                    {leftSemiTop && (
+                      <>
+                        <img src={`/images/logos/${leftSemiTop.effectiveAbbr}.png`} alt="" width="20" height="20" onerror="this.style.display='none'" />
+                        <span class="slot-seed">{leftSemiTop.seed}</span>
+                        <span class="slot-name">{leftSemiTop.effectiveAbbr}</span>
+                      </>
+                    )}
+                  </div>
+                  <div class="bracket-connector-v"></div>
+                  <div class="bracket-slot semi-slot bottom">
+                    {leftSemiBottom && (
+                      <>
+                        <img src={`/images/logos/${leftSemiBottom.effectiveAbbr}.png`} alt="" width="20" height="20" onerror="this.style.display='none'" />
+                        <span class="slot-seed">{leftSemiBottom.seed}</span>
+                        <span class="slot-name">{leftSemiBottom.effectiveAbbr}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+              return slug ? <a href={`/games/${year}/${slug}`} class="bracket-matchup-link">{matchupContent}</a> : matchupContent;
+            })()}
           </div>
 
         </div><!-- end bracket-left -->
@@ -405,23 +528,29 @@ const { Content: SeasonSummary } = seasonEntry ? await render(seasonEntry) : { C
           <div class="bracket-final-label">
             <p class="section-label" style="text-align: center; margin-bottom: 0.5rem;">{season.dynasty_bowl.label}</p>
           </div>
-          <div class="bracket-final-slot">
-            {champion && (
-              <div class="final-team champion-team">
-                <img src={`/images/logos/${champion.effectiveAbbr}.png`} alt="" width="32" height="32" onerror="this.style.display='none'" />
-                <span class="final-seed">{champion.seed}</span>
-                <span class="final-name">{champion.effectiveAbbr}</span>
+          {(() => {
+            const slug = buildSlug(champion, runnerUp, 17);
+            const finalContent = (
+              <div class="bracket-final-slot">
+                {champion && (
+                  <div class="final-team champion-team">
+                    <img src={`/images/logos/${champion.effectiveAbbr}.png`} alt="" width="32" height="32" onerror="this.style.display='none'" />
+                    <span class="final-seed">{champion.seed}</span>
+                    <span class="final-name">{champion.effectiveAbbr}</span>
+                  </div>
+                )}
+                <div class="final-defeated">defeated</div>
+                {runnerUp && (
+                  <div class="final-team">
+                    <img src={`/images/logos/${runnerUp.effectiveAbbr}.png`} alt="" width="32" height="32" onerror="this.style.display='none'" />
+                    <span class="final-seed">{runnerUp.seed}</span>
+                    <span class="final-name">{runnerUp.effectiveAbbr}</span>
+                  </div>
+                )}
               </div>
-            )}
-            <div class="final-defeated">defeated</div>
-            {runnerUp && (
-              <div class="final-team">
-                <img src={`/images/logos/${runnerUp.effectiveAbbr}.png`} alt="" width="32" height="32" onerror="this.style.display='none'" />
-                <span class="final-seed">{runnerUp.seed}</span>
-                <span class="final-name">{runnerUp.effectiveAbbr}</span>
-              </div>
-            )}
-          </div>
+            );
+            return slug ? <a href={`/games/${year}/${slug}`} class="bracket-final-link">{finalContent}</a> : finalContent;
+          })()}
         </div>
 
         <!-- RIGHT SIDE: semis → round1 (DOM order matches display order with flex-direction: row) -->
@@ -429,84 +558,167 @@ const { Content: SeasonSummary } = seasonEntry ? await render(seasonEntry) : { C
 
           <!-- Semis (right) -->
           <div class="bracket-round bracket-round-semis">
-            <div class="bracket-matchup">
-              <div class="bracket-slot semi-slot top">
-                {rightSemiTop && (
-                  <>
-                    <img src={`/images/logos/${rightSemiTop.effectiveAbbr}.png`} alt="" width="20" height="20" onerror="this.style.display='none'" />
-                    <span class="slot-seed">{rightSemiTop.seed}</span>
-                    <span class="slot-name">{rightSemiTop.effectiveAbbr}</span>
-                  </>
-                )}
-              </div>
-              <div class="bracket-connector-v"></div>
-              <div class="bracket-slot semi-slot bottom">
-                {rightSemiBottom && (
-                  <>
-                    <img src={`/images/logos/${rightSemiBottom.effectiveAbbr}.png`} alt="" width="20" height="20" onerror="this.style.display='none'" />
-                    <span class="slot-seed">{rightSemiBottom.seed}</span>
-                    <span class="slot-name">{rightSemiBottom.effectiveAbbr}</span>
-                  </>
-                )}
-              </div>
-            </div>
+            {(() => {
+              const slug = buildSlug(rightSemiTop, rightSemiBottom, 16);
+              const matchupContent = (
+                <div class="bracket-matchup">
+                  <div class="bracket-slot semi-slot top">
+                    {rightSemiTop && (
+                      <>
+                        <img src={`/images/logos/${rightSemiTop.effectiveAbbr}.png`} alt="" width="20" height="20" onerror="this.style.display='none'" />
+                        <span class="slot-seed">{rightSemiTop.seed}</span>
+                        <span class="slot-name">{rightSemiTop.effectiveAbbr}</span>
+                      </>
+                    )}
+                  </div>
+                  <div class="bracket-connector-v"></div>
+                  <div class="bracket-slot semi-slot bottom">
+                    {rightSemiBottom && (
+                      <>
+                        <img src={`/images/logos/${rightSemiBottom.effectiveAbbr}.png`} alt="" width="20" height="20" onerror="this.style.display='none'" />
+                        <span class="slot-seed">{rightSemiBottom.seed}</span>
+                        <span class="slot-name">{rightSemiBottom.effectiveAbbr}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+              return slug ? <a href={`/games/${year}/${slug}`} class="bracket-matchup-link">{matchupContent}</a> : matchupContent;
+            })()}
           </div>
 
           <!-- Round 1 (right) -->
           <div class="bracket-round">
             <!-- Top matchup -->
-            <div class="bracket-matchup">
-              <div class="bracket-slot top">
-                {rightTop[0] && (
-                  <>
-                    <img src={`/images/logos/${rightTop[0].effectiveAbbr}.png`} alt="" width="20" height="20" onerror="this.style.display='none'" />
-                    <span class="slot-seed">{rightTop[0].seed}</span>
-                    <span class="slot-name">{rightTop[0].effectiveAbbr}</span>
-                  </>
-                )}
-              </div>
-              <div class="bracket-connector-v"></div>
-              <div class="bracket-slot bottom">
-                {rightTop[1] && (
-                  <>
-                    <img src={`/images/logos/${rightTop[1].effectiveAbbr}.png`} alt="" width="20" height="20" onerror="this.style.display='none'" />
-                    <span class="slot-seed">{rightTop[1].seed}</span>
-                    <span class="slot-name">{rightTop[1].effectiveAbbr}</span>
-                  </>
-                )}
-              </div>
-            </div>
+            {(() => {
+              const slug = buildSlug(rightTop[0], rightTop[1], 15);
+              const matchupContent = (
+                <div class="bracket-matchup">
+                  <div class="bracket-slot top">
+                    {rightTop[0] && (
+                      <>
+                        <img src={`/images/logos/${rightTop[0].effectiveAbbr}.png`} alt="" width="20" height="20" onerror="this.style.display='none'" />
+                        <span class="slot-seed">{rightTop[0].seed}</span>
+                        <span class="slot-name">{rightTop[0].effectiveAbbr}</span>
+                      </>
+                    )}
+                  </div>
+                  <div class="bracket-connector-v"></div>
+                  <div class="bracket-slot bottom">
+                    {rightTop[1] && (
+                      <>
+                        <img src={`/images/logos/${rightTop[1].effectiveAbbr}.png`} alt="" width="20" height="20" onerror="this.style.display='none'" />
+                        <span class="slot-seed">{rightTop[1].seed}</span>
+                        <span class="slot-name">{rightTop[1].effectiveAbbr}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+              return slug ? <a href={`/games/${year}/${slug}`} class="bracket-matchup-link">{matchupContent}</a> : matchupContent;
+            })()}
             <!-- Bottom matchup -->
-            <div class="bracket-matchup">
-              <div class="bracket-slot top">
-                {rightBottom[0] && (
-                  <>
-                    <img src={`/images/logos/${rightBottom[0].effectiveAbbr}.png`} alt="" width="20" height="20" onerror="this.style.display='none'" />
-                    <span class="slot-seed">{rightBottom[0].seed}</span>
-                    <span class="slot-name">{rightBottom[0].effectiveAbbr}</span>
-                  </>
-                )}
-              </div>
-              <div class="bracket-connector-v"></div>
-              <div class="bracket-slot bottom">
-                {rightBottom[1] && (
-                  <>
-                    <img src={`/images/logos/${rightBottom[1].effectiveAbbr}.png`} alt="" width="20" height="20" onerror="this.style.display='none'" />
-                    <span class="slot-seed">{rightBottom[1].seed}</span>
-                    <span class="slot-name">{rightBottom[1].effectiveAbbr}</span>
-                  </>
-                )}
-              </div>
-            </div>
+            {(() => {
+              const slug = buildSlug(rightBottom[0], rightBottom[1], 15);
+              const matchupContent = (
+                <div class="bracket-matchup">
+                  <div class="bracket-slot top">
+                    {rightBottom[0] && (
+                      <>
+                        <img src={`/images/logos/${rightBottom[0].effectiveAbbr}.png`} alt="" width="20" height="20" onerror="this.style.display='none'" />
+                        <span class="slot-seed">{rightBottom[0].seed}</span>
+                        <span class="slot-name">{rightBottom[0].effectiveAbbr}</span>
+                      </>
+                    )}
+                  </div>
+                  <div class="bracket-connector-v"></div>
+                  <div class="bracket-slot bottom">
+                    {rightBottom[1] && (
+                      <>
+                        <img src={`/images/logos/${rightBottom[1].effectiveAbbr}.png`} alt="" width="20" height="20" onerror="this.style.display='none'" />
+                        <span class="slot-seed">{rightBottom[1].seed}</span>
+                        <span class="slot-name">{rightBottom[1].effectiveAbbr}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+              return slug ? <a href={`/games/${year}/${slug}`} class="bracket-matchup-link">{matchupContent}</a> : matchupContent;
+            })()}
           </div>
 
         </div><!-- end bracket-right -->
 
       </div><!-- end bracket-wrap -->
+
+      {draftBoards.length > 0 && (
+        <div class="section-rule draft-section">
+          <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; margin-bottom: 1.25rem;">
+            Draft Board{draftBoards.length > 1 ? 's' : ''}
+          </h2>
+
+          {draftBoards.length > 1 && (
+            <div class="draft-tabs">
+              {draftBoards.map((b, i) => (
+                <button class={`draft-tab${i === 0 ? ' active' : ''}`} data-type={b.type}>
+                  {b.type.charAt(0).toUpperCase() + b.type.slice(1)}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {draftBoards.map((board, bi) => (
+            <div class="draft-board" style="margin: auto -5rem;" data-draft-type={board.type} style={bi > 0 ? 'display:none' : ''}>
+              <div class="draft-grid" style={`grid-template-columns: 2.5rem repeat(${board.numSlots}, minmax(5rem, 1fr));`}>
+                {/* Header row */}
+                <div class="draft-corner"></div>
+                {board.headers.map(h => (
+                  <div class="draft-col-header">
+                    <img src={`/images/logos/${h.abbr}.png`} alt={h.abbr} width="28" height="28" onerror="this.style.display='none'" />
+                    <span class="draft-col-abbr">{h.abbr}</span>
+                  </div>
+                ))}
+                {/* Round rows */}
+                {board.grid.map((row, ri) => (
+                  <>
+                    <div class="draft-round-label">Rd {ri + 1}</div>
+                    {row.map(cell => cell ? (
+                      <div class="draft-cell-wrap">
+                        <div class="draft-cell" style={`--cell-surface:var(--color-${cell.colorVar}-surface);--cell-glow:var(--color-${cell.colorVar}-glow);`}>
+                          <span class="cell-player">{cell.playerName}</span>
+                          <span class="cell-pick-no">{cell.pickLabel}</span>
+                          <span class="cell-pos">{cell.position}</span>
+                        </div>
+                        <div class="cell-bar">{cell.isTrade && cell.tradeToAbbr ? `→ ${cell.tradeToAbbr}` : ''}</div>
+                      </div>
+                    ) : (
+                      <div class="draft-cell-empty"></div>
+                    ))}
+                  </>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
 
   </div>
 </Layout>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('.draft-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const section = btn.closest('.draft-section');
+      if (!section) return;
+      section.querySelectorAll('.draft-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      section.querySelectorAll<HTMLElement>('.draft-board').forEach(board => {
+        board.style.display = board.dataset.draftType === btn.dataset.type ? '' : 'none';
+      });
+    });
+  });
+</script>
 
 <style>
   /* ── Season summary ──────────────────────────────── */
@@ -557,6 +769,13 @@ const { Content: SeasonSummary } = seasonEntry ? await render(seasonEntry) : { C
   .bracket-round-semis {
     flex: 1;
     padding: 0.5rem;
+  }
+
+  .bracket-matchup-link {
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    text-decoration: none;
   }
 
   .bracket-matchup {
@@ -656,6 +875,14 @@ const { Content: SeasonSummary } = seasonEntry ? await render(seasonEntry) : { C
   }
 
   /* ── Final / Championship ─────────────────────── */
+  .bracket-final-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
   .bracket-center {
     flex-shrink: 0;
     display: flex;
@@ -715,6 +942,136 @@ const { Content: SeasonSummary } = seasonEntry ? await render(seasonEntry) : { C
     padding: 0.15rem 0;
   }
 
+  /* ── Draft board ──────────────────────────────────── */
+  .draft-section {
+    margin-top: 2.5rem;
+  }
+
+  .draft-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .draft-tab {
+    padding: 0.35rem 1rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+  }
+
+  .draft-tab.active {
+    border-color: var(--color-gold);
+    color: var(--color-gold);
+  }
+
+  .draft-board {
+    /* responsive, no scroll */
+  }
+
+  .draft-grid {
+    display: grid;
+    gap: 1px;
+    background: var(--color-border);
+    border: 1px solid var(--color-border);
+  }
+
+  .draft-corner,
+  .draft-col-header,
+  .draft-round-label {
+    background: var(--color-surface);
+  }
+
+  .draft-col-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.5rem 0.25rem;
+    gap: 0.3rem;
+  }
+
+  .draft-col-abbr {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    letter-spacing: 0.05em;
+  }
+
+  .draft-round-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    color: var(--color-text-muted);
+    font-weight: 600;
+    writing-mode: vertical-lr;
+    text-orientation: mixed;
+  }
+
+  .draft-cell-wrap {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .draft-cell {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 0.4rem 1.2rem 0.4rem 0.4rem;
+    background: var(--cell-surface, var(--color-surface));
+    border: 1px solid var(--cell-glow, var(--color-border));
+    min-height: 4rem;
+  }
+
+  .cell-player {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    line-height: 1.25;
+    word-break: break-word;
+  }
+
+  .cell-pick-no {
+    position: absolute;
+    top: 0.2rem;
+    right: 0.25rem;
+    font-size: 0.6rem;
+    color: var(--color-text-muted);
+    font-family: var(--font-body);
+  }
+
+  .cell-pos {
+    position: absolute;
+    bottom: 0.2rem;
+    right: 0.25rem;
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+  }
+
+  .cell-bar {
+    height: 1.1rem;
+    background: var(--color-surface);
+    display: flex;
+    align-items: center;
+    justify-content: right;
+    padding: 0 0.35rem;
+    font-size: 0.6rem;
+    color: var(--color-text-primary);
+  }
+
+  .draft-cell-empty {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    min-height: 4rem;
+    opacity: 0.25;
+  }
+
   /* ── Mobile ──────────────────────────────────────── */
   @media (max-width: 768px) {
     /* Standings: stack SCC above HCC */
@@ -736,6 +1093,11 @@ const { Content: SeasonSummary } = seasonEntry ? await render(seasonEntry) : { C
     .bracket-side {
       flex: none !important;
       width: 100%;
+    }
+
+    /* Draft board: hide on mobile */
+    .draft-section {
+      display: none !important;
     }
   }
 </style>

@@ -34,8 +34,8 @@ npm run fetch -- --all  # fetch all seasons from Sleeper API
 | `/history` | `src/pages/history.astro` |
 | `/franchises` | `src/pages/franchises/index.astro` |
 | `/franchises/[abbr]` | `src/pages/franchises/[abbr].astro` |
-| `/bowl-games` | `src/pages/bowl-games/index.astro` |
-| `/bowl-games/[slug]` | `src/pages/bowl-games/[slug].astro` |
+| `/spotlight-games` | `src/pages/spotlight-games/index.astro` |
+| `/spotlight-games/[slug]` | `src/pages/spotlight-games/[slug].astro` |
 | `/scores` | `src/pages/scores.astro` |
 | `/games/[year]/[slug]` | `src/pages/games/[year]/[slug].astro` |
 | `/content` | `src/pages/content.astro` |
@@ -52,6 +52,7 @@ npm run fetch -- --all  # fetch all seasons from Sleeper API
 | `config.json` | Sleeper league IDs per season; `current: true` flags the active season |
 | `raw/[year]-rosters.json` | Raw Sleeper roster data — written by fetch script |
 | `raw/[year]-matchups.json` | Raw Sleeper matchup data keyed by week number — written by fetch script |
+| `raw/[year]-transactions.json` | Raw Sleeper transaction data (waivers, free agents, trades) keyed by week — written by fetch script |
 | `raw/nfl-state.json` | Raw NFL state (current week, season type) — written by fetch script |
 
 ---
@@ -170,6 +171,17 @@ Transforms consecutive `**bold**` + `*italic*` paragraph pairs in writeup markdo
 
 ---
 
+## Historical Matchup Lookup (`src/lib/get-historical-matchups.ts`)
+
+Scans all `/data/raw/*-matchups.json` files at build time to find historical instances of two teams playing. Used by `/spotlight-games/[slug].astro` to populate the "Historical Results" table.
+
+- `getHistoricalMatchups(teamAAbbr, teamBAbbr)` takes abbreviations, returns array of matchups sorted newest-first (year desc, week desc)
+- Matchup lookup: both teams' `roster_id` values appear in same week with matching `matchup_id`
+- Each result includes: `year`, `week`, `teamAScore`, `teamBScore` (from `custom_points` field, coalesced with `points`)
+- Handles bye weeks correctly (entries with null `matchup_id` are skipped, ensuring valid matchups only)
+
+---
+
 ## Sleeper API Fetch Scripts (`scripts/`)
 
 ```
@@ -199,6 +211,34 @@ All matchup data is embedded at build time as a JSON blob via `define:vars`. Cli
 
 ---
 
+## Playoff Bracket (`/history/[year]`) — Clickable Matchups
+
+The playoff bracket on season history pages is fully clickable. Each matchup links to its game recap page:
+
+- **Round 1 matchups** (week 15): All first-round playoff games
+- **Semifinal matchups** (week 16): Conference/division semifinals
+- **Championship matchup** (week 17): Dynasty Bowl final
+
+Clicking any matchup navigates to `/games/[year]/[slug]` where the slug is built using `buildSlug(teamA, teamB, week)`:
+```
+[week_zero_padded]-[abbr_a_sorted_lowercase]-[abbr_b_sorted_lowercase]
+```
+
+Example: `/games/2025/15-bkb-low` (BKB vs. LOW, week 15)
+
+**Implementation details:**
+- Each matchup div is wrapped in an `<a>` tag with no visual changes
+- Teams are alphabetized before building the slug
+- Matchups with missing team data (byes, incomplete brackets) gracefully render without links
+- Replaces the previous playoff format text with "Click a matchup for more details →"
+
+---
+
 ## `getStaticPaths` Rule
 
 Astro's `getStaticPaths` runs in an isolated scope — module-level variables are NOT accessible inside it. All data loading (`import.meta.glob`, imports) must be re-initialized inside the function body. Vite deduplicates actual file reads at build time so there is no performance cost.
+
+
+## Closing Claude Code Sessions
+
+In most cases, if development is being done with AI assistance, all CLAUDE.md files should be reviewed, updated, and/or created to reflect the recent changes in the project. If work is being done in a focused environment, i.e. subdirectory, a CLAUDE.md file should be initialized or updated. The user will generally prompt this behavior. 
