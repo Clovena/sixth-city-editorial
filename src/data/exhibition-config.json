@@ -4,15 +4,25 @@
       "year": 2025,
       "week": 4,
       "league_id": "1263323796526333952",
-      "team_a": "BKBWPG",
-      "team_b": "NFDNNY"
+      "title": "2025 Tag Team Title",
+      "team_a_id": 2,
+      "team_a_members": ["BKB", "WPG"],
+      "team_a_slug": "BKBWPG",
+      "team_b_id": 1,
+      "team_b_members": ["NFD", "NNY"],
+      "team_b_slug": "NFDNNY"
     },
     {
       "year": 2025,
       "week": 13,
       "league_id": "1263323796526333952",
-      "team_a": "PEI",
-      "team_b": "WORLD"
+      "title": "2025 PEI vs the World",
+      "team_a_id": 1,
+      "team_a_members": ["PEI"],
+      "team_a_slug": "PEI",
+      "team_b_id": 3,
+      "team_b_members": [],
+      "team_b_slug": "WORLD"
     }
   ]
 }
