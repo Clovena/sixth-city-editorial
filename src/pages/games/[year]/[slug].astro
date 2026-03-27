@@ -36,7 +36,18 @@ export async function getStaticPaths() {
 
         const weekNum = parseInt(weekStr);
         const weekPad = String(weekNum).padStart(2, '0');
-        const [t1, t2] = [fA.abbr.toLowerCase(), fB.abbr.toLowerCase()].sort();
+
+        // Use predecessor abbreviations if franchise was adopted before this year
+        const getEffectiveAbbr = (franchise: any, yr: number) => {
+          if (franchise.founded !== 2021 && yr < franchise.founded) {
+            return franchise.predecessor_abbr;
+          }
+          return franchise.abbr;
+        };
+
+        const abbr1 = getEffectiveAbbr(fA, parseInt(yearStr));
+        const abbr2 = getEffectiveAbbr(fB, parseInt(yearStr));
+        const [t1, t2] = [abbr1.toLowerCase(), abbr2.toLowerCase()].sort();
         const slug = `${weekPad}-${t1}-${t2}`;
 
         paths.push({
