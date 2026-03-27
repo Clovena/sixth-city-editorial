@@ -1,0 +1,18 @@
+{
+  "exhibitions": [
+    {
+      "year": 2025,
+      "week": 4,
+      "league_id": "1263323796526333952",
+      "team_a": "BKBWPG",
+      "team_b": "NFDNNY"
+    },
+    {
+      "year": 2025,
+      "week": 13,
+      "league_id": "1263323796526333952",
+      "team_a": "PEI",
+      "team_b": "WORLD"
+    }
+  ]
+}
