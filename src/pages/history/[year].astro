@@ -451,6 +451,7 @@ const { Content: SeasonSummary } = seasonEntry ? await render(seasonEntry) : { C
                 <th>W</th>
                 <th>L</th>
                 <th>PF</th>
+                <th>PA</th>
                 <th style="text-align: right;">Finish</th>
               </tr>
             </thead>
@@ -467,9 +468,10 @@ const { Content: SeasonSummary } = seasonEntry ? await render(seasonEntry) : { C
                       </a>
                     </div>
                   </td>
-                  <td style="text-align: center;">{row.wins}</td>
-                  <td style="text-align: center;">{row.losses}</td>
-                  <td style="text-align: center; font-size: 0.8rem;">{row.points_for.toFixed(1)}</td>
+                  <td style="text-align: left;">{row.wins}</td>
+                  <td style="text-align: left;">{row.losses}</td>
+                  <td style="text-align: left; font-size: 0.8rem;">{row.points_for.toFixed(2)}</td>
+                  <td style="text-align: left; font-size: 0.8rem;">{row.points_against.toFixed(2)}</td>
                   <td style="text-align: right;">
                     <span style={`font-size: 0.75rem; ${row.finish === 'Champion' ? 'color: var(--color-gold); font-weight: 700;' : row.finish === 'Runner-up' ? 'color: var(--color-text-primary);' : row.playoff ? 'color: var(--color-text-secondary);' : 'color: var(--color-text-muted);'}`}>
                       {row.finish}
@@ -491,6 +493,7 @@ const { Content: SeasonSummary } = seasonEntry ? await render(seasonEntry) : { C
                 <th>W</th>
                 <th>L</th>
                 <th>PF</th>
+                <th>PA</th>
                 <th style="text-align: right;">Finish</th>
               </tr>
             </thead>
@@ -507,9 +510,10 @@ const { Content: SeasonSummary } = seasonEntry ? await render(seasonEntry) : { C
                       </a>
                     </div>
                   </td>
-                  <td style="text-align: center;">{row.wins}</td>
-                  <td style="text-align: center;">{row.losses}</td>
-                  <td style="text-align: center; font-size: 0.8rem;">{row.points_for.toFixed(1)}</td>
+                  <td style="text-align: left;">{row.wins}</td>
+                  <td style="text-align: left;">{row.losses}</td>
+                  <td style="text-align: left; font-size: 0.8rem;">{row.points_for.toFixed(2)}</td>
+                  <td style="text-align: left; font-size: 0.8rem;">{row.points_against.toFixed(2)}</td>
                   <td style="text-align: right;">
                     <span style={`font-size: 0.75rem; ${row.finish === 'Champion' ? 'color: var(--color-gold); font-weight: 700;' : row.finish === 'Runner-up' ? 'color: var(--color-text-primary);' : row.playoff ? 'color: var(--color-text-secondary);' : 'color: var(--color-text-muted);'}`}>
                       {row.finish}
