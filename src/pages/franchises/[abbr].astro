@@ -97,13 +97,12 @@ const { data: allFranchiseRows, error: afErr } = await supabase
 
 if (afErr) throw new Error(`All franchises query failed: ${afErr.message}`);
 
-const activeFranchises = allFranchiseRows.filter(f => f.to === null);
-const franchises = activeFranchises;
+const activeFranchises = allFranchiseRows;
 const activeBySleeperId = new Map(activeFranchises.map(f => [f.sleeper_id, f]));
 
 // Resolve franchise identity for a given year
 function franchiseForYear(sid: string, yr: number) {
-  return franchises.find(f =>
+  return activeFranchises.find(f =>
     f.sleeper_id === sid && f.from <= yr && (f.to === null || f.to >= yr)
   );
 }
