@@ -422,7 +422,7 @@ const { Content: SeasonSummary } = seasonEntry ? await render(seasonEntry) : { C
       <h1 class="page-title">{yearNum} Season</h1>
       <p style="font-size: 0.9rem; color: var(--color-text-muted); margin-top: 0.5rem;">
         {dynastyBowlLabel} &bull;
-        Won by <strong style="color: var(--color-text-primary);">{champion?.effectiveAbbr === 'MTL' ? 'MTL (SAR)' : champion?.effectiveAbbr}</strong>
+        Won by <strong style="color: var(--color-text-primary);">{champion?.effectiveAbbr}</strong>
         {' '}over <strong style="color: var(--color-text-primary);">{runnerUp?.effectiveAbbr}</strong>
       </p>
     </div>
