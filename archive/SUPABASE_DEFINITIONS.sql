@@ -347,6 +347,33 @@ create table scdfl.spotlight_game_years (
 ) TABLESPACE pg_default;
 
 
+-- -- -- PLAYER STARTS
+
+create view scdfl.v_player_starts as (
+    select
+  m.year, m.week,
+  m.roster_id_a as roster_id,
+  s.player_id,
+  p.points
+  from scdfl.matchups m
+  cross join lateral unnest(m.starters_a) with ordinality as s(player_id, idx)
+  cross join lateral unnest(m.starter_points_a) with ordinality as p(points, idx)
+  where s.idx = p.idx
+
+      union all
+
+  select
+  m.year, m.week,
+  m.roster_id_b AS roster_id,
+  s.player_id,
+  p.points
+  from scdfl.matchups m
+  cross join lateral unnest(m.starters_b) with ordinality as s(player_id, idx)
+  cross join lateral unnest(m.starter_points_b) with ordinality as p(points, idx)
+  where s.idx = p.idx
+);
+
+
 -- -- -- NFL STATS
 -- External csv; `npm run sync:stats`
 
