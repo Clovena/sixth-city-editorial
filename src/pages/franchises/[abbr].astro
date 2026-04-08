@@ -98,7 +98,6 @@ const { data: allFranchiseRows, error: afErr } = await supabase
 if (afErr) throw new Error(`All franchises query failed: ${afErr.message}`);
 
 const activeFranchises = allFranchiseRows;
-const activeBySleeperId = new Map(activeFranchises.map(f => [f.sleeper_id, f]));
 
 // Resolve franchise identity for a given year
 function franchiseForYear(sid: string, yr: number) {
@@ -503,18 +502,20 @@ const defaultSeasonYear = availableYears[0] ?? (seasonRows?.[seasonRows.length -
             <p class="section-label">Dynasty Bowl History</p>
             <div style="display: flex; flex-direction: column; gap: 0.75rem;">
               {dynastyBowlAppearances.map(a => {
-                const oppActive = activeBySleeperId.get(a.opponentSleeperId);
                 const oppDisplay = franchiseForYear(a.opponentSleeperId, a.year);
+                const myDisplay = franchiseForYear(franchise.sleeper_id, a.year);
+                const slugAbbrs = [myDisplay?.abbr ?? franchise.abbr, oppDisplay?.abbr ?? a.opponentAbbr].sort().map(s => s.toLowerCase());
+                const recapSlug = `17-${slugAbbrs[0]}-${slugAbbrs[1]}`;
                 return (
-                  <div style={`padding: 0.75rem; border-left: 3px solid ${a.won ? 'var(--color-gold)' : 'var(--color-border-light)'}; background-color: var(--color-surface-alt);`}>
+                  <a href={`/games/${a.year}/${recapSlug}`} style={`display: block; text-decoration: none; padding: 0.75rem; border-left: 3px solid ${a.won ? 'var(--color-gold)' : 'var(--color-border-light)'}; background-color: var(--color-surface-alt); transition: border-color 0.15s ease;`} onmouseover="this.style.borderColor='var(--color-border-light)'" onmouseout={`this.style.borderColor='${a.won ? 'var(--color-gold)' : 'var(--color-border-light)'}'`}>
                     <p style={`font-size: 0.8rem; font-weight: 700; margin: 0 0 0.2rem; color: ${a.won ? 'var(--color-gold)' : 'var(--color-text-muted)'};`}>
                       {a.won ? 'Champion' : 'Runner-Up'} · {a.year}
                     </p>
                     <p style="font-size: 0.8rem; color: var(--color-text-secondary); margin: 0;">{a.label}</p>
                     <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0.2rem 0 0;">
-                      vs. <a href={`/franchises/${oppActive?.abbr ?? a.opponentAbbr}`} style="color: var(--color-text-muted);">{oppDisplay?.abbr !== oppActive?.abbr ? `${oppDisplay?.abbr} (${oppActive?.abbr})` : a.opponentAbbr}</a>
+                      vs. {oppDisplay?.abbr ?? a.opponentAbbr}
                     </p>
-                  </div>
+                  </a>
                 );
               })}
             </div>
