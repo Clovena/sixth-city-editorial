@@ -65,6 +65,49 @@ if (rosterRow) {
   }
 }
 
+// ── Draft info from Supabase ───────────────────────────────────────────────
+let draftInfo: { year: number; pick: string; draftedByAbbr: string; draftedByActiveAbbr: string } | null = null;
+
+const { data: draftRow } = await supabase
+  .schema('scdfl').from('draft_results')
+  .select('draft_id, round, pick_no, roster_id')
+  .eq('player_id', pid)
+  .limit(1)
+  .single();
+
+if (draftRow) {
+  const { data: draftMeta } = await supabase
+    .schema('scdfl').from('drafts')
+    .select('year')
+    .eq('draft_id', draftRow.draft_id)
+    .single();
+
+  if (draftMeta) {
+    const { data: drafter } = await supabase
+      .schema('scdfl').from('franchises')
+      .select('abbr')
+      .eq('id', draftRow.roster_id)
+      .lte('from', draftMeta.year)
+      .or(`to.gte.${draftMeta.year},to.is.null`)
+      .single();
+
+    // Also fetch the current active abbr for linking
+    const { data: activeFranchise } = await supabase
+      .schema('scdfl').from('franchises')
+      .select('abbr')
+      .eq('id', draftRow.roster_id)
+      .is('to', null)
+      .single();
+
+    draftInfo = {
+      year: draftMeta.year,
+      pick: `${draftRow.round}.${String(draftRow.pick_no).padStart(2, '0')}`,
+      draftedByAbbr: drafter?.abbr ?? '—',
+      draftedByActiveAbbr: activeFranchise?.abbr ?? '—',
+    };
+  }
+}
+
 // ── Accolades (placeholder — to be replaced with real data later) ───────────
 const accolades: { year: number; label: string; icon: string; color: string }[] = [];
 
@@ -423,20 +466,27 @@ const headshotUrl = player.espnId
         <!-- Dynasty draft card -->
         <div style="background-color: var(--color-surface); border: 1px solid var(--color-border); padding: 1.25rem 1.5rem; margin-top: 1rem;">
           <p class="section-label" style="margin-bottom: 0.75rem;">Dynasty Draft</p>
-          <div style="display: flex; flex-direction: column; gap: 0.6rem;">
-            <div style="display: flex; justify-content: space-between; align-items: baseline;">
-              <span style="font-size: 0.75rem; color: var(--color-text-muted);">Drafted</span>
-              <span style="font-size: 0.85rem; color: var(--color-text-secondary);">—</span>
+          {draftInfo ? (
+            <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <span style="font-size: 0.75rem; color: var(--color-text-muted);">Year</span>
+                <span style="font-size: 0.85rem; color: var(--color-text-secondary);">{draftInfo.year}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <span style="font-size: 0.75rem; color: var(--color-text-muted);">Pick</span>
+                <span style="font-size: 0.85rem; color: var(--color-text-secondary);">{draftInfo.pick}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <span style="font-size: 0.75rem; color: var(--color-text-muted);">Drafted By</span>
+                {draftInfo.draftedByAbbr !== '—'
+                  ? <a href={`/franchises/${draftInfo.draftedByActiveAbbr}`} style="font-size: 0.85rem; font-weight: 600;">{draftInfo.draftedByAbbr}</a>
+                  : <span style="font-size: 0.85rem; color: var(--color-text-muted);">—</span>
+                }
+              </div>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: baseline;">
-              <span style="font-size: 0.75rem; color: var(--color-text-muted);">Pick</span>
-              <span style="font-size: 0.85rem; color: var(--color-text-secondary);">—</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: baseline;">
-              <span style="font-size: 0.75rem; color: var(--color-text-muted);">Drafted By</span>
-              <span style="font-size: 0.85rem; color: var(--color-text-secondary);">—</span>
-            </div>
-          </div>
+          ) : (
+            <p style="font-size: 0.8rem; color: var(--color-text-muted); font-style: italic; margin: 0;">Undrafted</p>
+          )}
         </div>
 
         <!-- Transaction history card (placeholder) -->
