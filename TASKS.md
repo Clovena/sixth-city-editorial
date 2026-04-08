@@ -1,8 +1,10 @@
 # SCDFL Site — Task Board
 
 ## TODO
+1. More content 
+    - Game recaps
+    - Better rivalry blurbs
 1. Hall of Fame - Player awards, HOF awards, trophies
-1. Player profile pages, a la pro-football-reference?
 1. Low priority QOL cleanup
     - Color refactoring to surface and glow
     - Season recap brackets on mobile
@@ -49,3 +51,4 @@
   - Display on score pages and year recap pages
 - Supabase migration
 - Remove various locations of hardcoding logic to convert between SAR and MTL
+- Player profile pages, a la pro-football-reference
