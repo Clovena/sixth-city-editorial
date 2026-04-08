@@ -5,9 +5,10 @@ import { supabase } from '../../lib/supabase';
 // ── Static paths: one page per rostered player ─────────────────────────────
 export async function getStaticPaths() {
   const { supabase: sb } = await import('../../lib/supabase');
-  const { data: rows } = await sb.schema('scdfl').from('v_player_starts')
-    .select('player_id');
-  
+  const { data: rows } = await sb.schema('scdfl').from('v_player_season_stats')
+    .select('player_id')
+    .limit(10000);
+
   // Deduplicate by creating a Set, then map back to params
   const uniqueIds = [...new Set((rows ?? []).map(r => r.player_id))];
   return uniqueIds.map(id => ({ params: { id } }));
@@ -68,28 +69,71 @@ if (rosterRow) {
   }
 }
 
-// ── Dummy data (accolades & stats — to be replaced with real data later) ────
-const accolades = [
-  { year: 2024, label: 'League Champion', icon: '&#11042;', color: 'var(--color-gold)' },
-  { year: 2023, label: 'WR Medalist', icon: '&#9733;', color: 'var(--color-gold)' },
-];
+// ── Accolades (placeholder — to be replaced with real data later) ───────────
+const accolades: { year: number; label: string; icon: string; color: string }[] = [];
 
-const statsByYear = [
-  { year: 2022, gp: 6, rec: 13, recYds: 163, recTd: 1, rushAtt: 2, rushYds: 14, rushTd: 0, fpts: 28.7 },
-  { year: 2023, gp: 12, rec: 24, recYds: 361, recTd: 3, rushAtt: 5, rushYds: 38, rushTd: 0, fpts: 72.9 },
-  { year: 2024, gp: 17, rec: 68, recYds: 1107, recTd: 10, rushAtt: 8, rushYds: 61, rushTd: 1, fpts: 228.8 },
-  { year: 2025, gp: 15, rec: 59, recYds: 985, recTd: 8, rushAtt: 6, rushYds: 42, rushTd: 0, fpts: 194.7 },
-];
+// ── Season stats from Supabase ─────────────────────────────────────────────
+const { data: statsRows } = await supabase
+  .schema('scdfl').from('v_player_season_stats')
+  .select('*')
+  .eq('player_id', pid)
+  .order('year', { ascending: true });
 
+const statsByYear = (statsRows ?? []).map(r => ({
+  year: r.year as number,
+  gs: r.games_started as number,
+  fpts: Number(r.fpts),
+  // passing
+  passAtt: r.pass_att as number,
+  passComp: r.pass_comp as number,
+  passYds: r.pass_yds as number,
+  passTds: r.pass_tds as number,
+  // rushing
+  rushAtt: r.rush_att as number,
+  rushYds: r.rush_yds as number,
+  rushTds: r.rush_tds as number,
+  // receiving
+  rec: r.receptions as number,
+  recYds: r.rec_yds as number,
+  recTds: r.rec_tds as number,
+  // kicking
+  fgAtt: r.fg_att as number,
+  fgMade: r.fg_made as number,
+  fgYds: r.fg_yds as number,
+  // IDP
+  soloTkl: r.solo_tkl as number,
+  asstTkl: r.asst_tkl as number,
+  tfl: Number(r.tfl),
+  qbHit: r.qb_hit as number,
+  passDefended: r.pass_defended as number,
+  sack: Number(r.sack),
+  interception: r.interception as number,
+  forcedFumble: r.forced_fumble as number,
+  fumbleRecovery: r.fumble_recovery as number,
+  idpTd: r.idp_td as number,
+}));
+
+// ── Position group for conditional column display ──────────────────────────
+type PosGroup = 'qb' | 'skill' | 'k' | 'idp';
+const posGroup: PosGroup = (['DL', 'LB', 'DB'].includes(player.position) ? 'idp'
+  : player.position === 'K' ? 'k'
+  : player.position === 'QB' ? 'qb'
+  : 'skill') as PosGroup;
+
+// ── Career totals ──────────────────────────────────────────────────────────
+const sum = (fn: (r: typeof statsByYear[0]) => number) => statsByYear.reduce((s, r) => s + fn(r), 0);
 const careerTotals = {
-  gp: statsByYear.reduce((s, r) => s + r.gp, 0),
-  rec: statsByYear.reduce((s, r) => s + r.rec, 0),
-  recYds: statsByYear.reduce((s, r) => s + r.recYds, 0),
-  recTd: statsByYear.reduce((s, r) => s + r.recTd, 0),
-  rushAtt: statsByYear.reduce((s, r) => s + r.rushAtt, 0),
-  rushYds: statsByYear.reduce((s, r) => s + r.rushYds, 0),
-  rushTd: statsByYear.reduce((s, r) => s + r.rushTd, 0),
-  fpts: statsByYear.reduce((s, r) => s + r.fpts, 0),
+  gs: sum(r => r.gs),
+  fpts: sum(r => r.fpts),
+  passAtt: sum(r => r.passAtt), passComp: sum(r => r.passComp),
+  passYds: sum(r => r.passYds), passTds: sum(r => r.passTds),
+  rushAtt: sum(r => r.rushAtt), rushYds: sum(r => r.rushYds), rushTds: sum(r => r.rushTds),
+  rec: sum(r => r.rec), recYds: sum(r => r.recYds), recTds: sum(r => r.recTds),
+  fgAtt: sum(r => r.fgAtt), fgMade: sum(r => r.fgMade), fgYds: sum(r => r.fgYds),
+  soloTkl: sum(r => r.soloTkl), asstTkl: sum(r => r.asstTkl), tfl: sum(r => r.tfl),
+  qbHit: sum(r => r.qbHit), passDefended: sum(r => r.passDefended), sack: sum(r => r.sack),
+  interception: sum(r => r.interception), forcedFumble: sum(r => r.forcedFumble),
+  fumbleRecovery: sum(r => r.fumbleRecovery), idpTd: sum(r => r.idpTd),
 };
 
 const headshotUrl = player.espnId
@@ -196,42 +240,126 @@ const headshotUrl = player.espnId
             <thead>
               <tr>
                 <th>Year</th>
-                <th style="text-align: center;">GP</th>
-                <th style="text-align: center;">Rec</th>
-                <th style="text-align: right;">Rec Yds</th>
-                <th style="text-align: center;">Rec TD</th>
-                <th style="text-align: center;">Rush</th>
-                <th style="text-align: right;">Rush Yds</th>
-                <th style="text-align: center;">Rush TD</th>
+                <th style="text-align: center;">GS</th>
                 <th style="text-align: right;">FPTS</th>
+                {posGroup === 'qb' && (<>
+                  <th style="text-align: center;">Comp</th>
+                  <th style="text-align: center;">Att</th>
+                  <th style="text-align: right;">Pass Yds</th>
+                  <th style="text-align: center;">Pass TD</th>
+                  <th style="text-align: center;">Rush</th>
+                  <th style="text-align: right;">Rush Yds</th>
+                  <th style="text-align: center;">Rush TD</th>
+                </>)}
+                {posGroup === 'skill' && (<>
+                  <th style="text-align: center;">Rush</th>
+                  <th style="text-align: right;">Rush Yds</th>
+                  <th style="text-align: center;">Rush TD</th>
+                  <th style="text-align: center;">Rec</th>
+                  <th style="text-align: right;">Rec Yds</th>
+                  <th style="text-align: center;">Rec TD</th>
+                </>)}
+                {posGroup === 'k' && (<>
+                  <th style="text-align: center;">FG Att</th>
+                  <th style="text-align: center;">FG Made</th>
+                  <th style="text-align: right;">FG Yds</th>
+                </>)}
+                {posGroup === 'idp' && (<>
+                  <th style="text-align: center;">Solo</th>
+                  <th style="text-align: center;">Ast</th>
+                  <th style="text-align: right;">TFL</th>
+                  <th style="text-align: center;">QB Hit</th>
+                  <th style="text-align: center;">PD</th>
+                  <th style="text-align: right;">Sack</th>
+                  <th style="text-align: center;">INT</th>
+                  <th style="text-align: center;">FF</th>
+                  <th style="text-align: center;">FR</th>
+                  <th style="text-align: center;">TD</th>
+                </>)}
               </tr>
             </thead>
             <tbody>
               {statsByYear.map(row => (
                 <tr>
                   <td style="font-weight: 600;">{row.year}</td>
-                  <td style="text-align: center;">{row.gp}</td>
-                  <td style="text-align: center;">{row.rec}</td>
-                  <td style="text-align: right;">{row.recYds.toLocaleString()}</td>
-                  <td style="text-align: center;">{row.recTd}</td>
-                  <td style="text-align: center;">{row.rushAtt}</td>
-                  <td style="text-align: right;">{row.rushYds}</td>
-                  <td style="text-align: center;">{row.rushTd}</td>
+                  <td style="text-align: center;">{row.gs}</td>
                   <td style="text-align: right; font-weight: 600; color: var(--color-gold);">{row.fpts.toFixed(1)}</td>
+                  {posGroup === 'qb' && (<>
+                    <td style="text-align: center;">{row.passComp}</td>
+                    <td style="text-align: center;">{row.passAtt}</td>
+                    <td style="text-align: right;">{row.passYds.toLocaleString()}</td>
+                    <td style="text-align: center;">{row.passTds}</td>
+                    <td style="text-align: center;">{row.rushAtt}</td>
+                    <td style="text-align: right;">{row.rushYds}</td>
+                    <td style="text-align: center;">{row.rushTds}</td>
+                  </>)}
+                  {posGroup === 'skill' && (<>
+                    <td style="text-align: center;">{row.rushAtt}</td>
+                    <td style="text-align: right;">{row.rushYds.toLocaleString()}</td>
+                    <td style="text-align: center;">{row.rushTds}</td>
+                    <td style="text-align: center;">{row.rec}</td>
+                    <td style="text-align: right;">{row.recYds.toLocaleString()}</td>
+                    <td style="text-align: center;">{row.recTds}</td>
+                  </>)}
+                  {posGroup === 'k' && (<>
+                    <td style="text-align: center;">{row.fgAtt}</td>
+                    <td style="text-align: center;">{row.fgMade}</td>
+                    <td style="text-align: right;">{row.fgYds}</td>
+                  </>)}
+                  {posGroup === 'idp' && (<>
+                    <td style="text-align: center;">{row.soloTkl}</td>
+                    <td style="text-align: center;">{row.asstTkl}</td>
+                    <td style="text-align: right;">{row.tfl}</td>
+                    <td style="text-align: center;">{row.qbHit}</td>
+                    <td style="text-align: center;">{row.passDefended}</td>
+                    <td style="text-align: right;">{row.sack}</td>
+                    <td style="text-align: center;">{row.interception}</td>
+                    <td style="text-align: center;">{row.forcedFumble}</td>
+                    <td style="text-align: center;">{row.fumbleRecovery}</td>
+                    <td style="text-align: center;">{row.idpTd}</td>
+                  </>)}
                 </tr>
               ))}
             </tbody>
             <tfoot>
               <tr>
                 <td style="font-weight: 700; border-top: 2px solid var(--color-border);">Career</td>
-                <td style="text-align: center; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.gp}</td>
-                <td style="text-align: center; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.rec}</td>
-                <td style="text-align: right; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.recYds.toLocaleString()}</td>
-                <td style="text-align: center; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.recTd}</td>
-                <td style="text-align: center; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.rushAtt}</td>
-                <td style="text-align: right; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.rushYds}</td>
-                <td style="text-align: center; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.rushTd}</td>
+                <td style="text-align: center; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.gs}</td>
                 <td style="text-align: right; font-weight: 700; color: var(--color-gold); border-top: 2px solid var(--color-border);">{careerTotals.fpts.toFixed(1)}</td>
+                {posGroup === 'qb' && (<>
+                  <td style="text-align: center; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.passComp}</td>
+                  <td style="text-align: center; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.passAtt}</td>
+                  <td style="text-align: right; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.passYds.toLocaleString()}</td>
+                  <td style="text-align: center; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.passTds}</td>
+                  <td style="text-align: center; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.rushAtt}</td>
+                  <td style="text-align: right; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.rushYds}</td>
+                  <td style="text-align: center; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.rushTds}</td>
+                </>)}
+                {posGroup === 'skill' && (<>
+                  <td style="text-align: center; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.rushAtt}</td>
+                  <td style="text-align: right; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.rushYds.toLocaleString()}</td>
+                  <td style="text-align: center; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.rushTds}</td>
+                  <td style="text-align: center; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.rec}</td>
+                  <td style="text-align: right; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.recYds.toLocaleString()}</td>
+                  <td style="text-align: center; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.recTds}</td>
+                </>)}
+                {posGroup === 'k' && (<>
+                  <td style="text-align: center; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.fgAtt}</td>
+                  <td style="text-align: center; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.fgMade}</td>
+                  <td style="text-align: right; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.fgYds}</td>
+                </>)}
+                {posGroup === 'idp' && (<>
+                  <td style="text-align: center; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.soloTkl}</td>
+                  <td style="text-align: center; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.asstTkl}</td>
+                  <td style="text-align: right; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.tfl.toFixed(1)}</td>
+                  <td style="text-align: center; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.qbHit}</td>
+                  <td style="text-align: center; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.passDefended}</td>
+                  <td style="text-align: right; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.sack.toFixed(1)}</td>
+                  <td style="text-align: center; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.interception}</td>
+                  <td style="text-align: center; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.forcedFumble}</td>
+                  <td style="text-align: center; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.fumbleRecovery}</td>
+                  <td style="text-align: center; font-weight: 700; border-top: 2px solid var(--color-border);">{careerTotals.idpTd}</td>
+                </>)}
               </tr>
             </tfoot>
           </table>
