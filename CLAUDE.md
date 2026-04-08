@@ -57,6 +57,7 @@ All sync scripts live in `scripts/lib/` and write directly to Supabase (schema `
 | `/scores` | `src/pages/scores.astro` |
 | `/games/[year]/[slug]` | `src/pages/games/[year]/[slug].astro` |
 | `/content` | `src/pages/content.astro` |
+| `/players/[id]` | `src/pages/players/[id].astro` |
 
 ---
 
@@ -90,6 +91,8 @@ All league data is stored in the `scdfl` schema in Supabase. See `SUPABASE_DEFIN
 | View | Purpose |
 |------|---------|
 | `v_players` | Joins `players` + `player_ids`; coalesces ESPN/Rotowire/Yahoo IDs from both sources |
+| `v_player_starts` | Unnests matchup starter arrays into one row per player-start with `year`, `week`, `roster_id`, `player_id`, `points` |
+| `v_player_season_stats` | Aggregates `v_player_starts` + `player_ids` + `nfl_stats` by player/year; all stat columns (passing, rushing, receiving, kicking, IDP) + `games_started` and `fpts` |
 
 ### Key Identifiers
 

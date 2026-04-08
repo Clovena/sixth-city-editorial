@@ -319,7 +319,8 @@ if (recap) {
           if (!slotA.visible) return null;
           return (
             <>
-              <div
+              <a
+                href={`/players/${slotA.playerId}`}
                 class="lineup-row lineup-row-a"
                 style={`--slot-surface: var(--color-${slotA.colorVar}-surface); --slot-glow: var(--color-${slotA.colorVar}-glow);`}
               >
@@ -331,8 +332,9 @@ if (recap) {
                 </span>
                 <span class="lineup-name">{playerName(slotA.playerId)}</span>
                 <span class="lineup-score">{slotA.points.toFixed(2)}</span>
-              </div>
-              <div
+              </a>
+              <a
+                href={`/players/${slotB.playerId}`}
                 class="lineup-row lineup-row-b"
                 style={`--slot-surface: var(--color-${slotB.colorVar}-surface); --slot-glow: var(--color-${slotB.colorVar}-glow);`}
               >
@@ -344,7 +346,7 @@ if (recap) {
                 </span>
                 <span class="lineup-name">{playerName(slotB.playerId)}</span>
                 <span class="lineup-score">{slotB.points.toFixed(2)}</span>
-              </div>
+              </a>
             </>
           );
         })}
@@ -458,6 +460,8 @@ if (recap) {
     padding: 0.3rem 0.75rem;
     background: var(--slot-surface);
     border-bottom: 1px solid var(--slot-glow);
+    text-decoration: none;
+    color: inherit;
   }
 
   .lineup-row-a {
