@@ -374,6 +374,48 @@ create view scdfl.v_player_starts as (
 );
 
 
+-- -- -- PLAYER SEASON STATS
+
+create view scdfl.v_player_season_stats as
+select
+  vps.player_id,
+  vps.year,
+  count(*)::integer as games_started,
+  round(sum(vps.points), 1) as fpts,
+  COALESCE(sum(ns.pass_att), 0::bigint)::integer as pass_att,
+  COALESCE(sum(ns.pass_comp), 0::bigint)::integer as pass_comp,
+  round(COALESCE(sum(ns.pass_yds), 0::numeric), 0)::integer as pass_yds,
+  COALESCE(sum(ns.pass_tds), 0::bigint)::integer as pass_tds,
+  COALESCE(sum(ns.rush_att), 0::bigint)::integer as rush_att,
+  round(COALESCE(sum(ns.rush_yds), 0::numeric), 0)::integer as rush_yds,
+  COALESCE(sum(ns.rush_tds), 0::bigint)::integer as rush_tds,
+  COALESCE(sum(ns.receptions), 0::bigint)::integer as receptions,
+  round(COALESCE(sum(ns.rec_yds), 0::numeric), 0)::integer as rec_yds,
+  COALESCE(sum(ns.rec_tds), 0::bigint)::integer as rec_tds,
+  COALESCE(sum(ns.fg_att), 0::bigint)::integer as fg_att,
+  COALESCE(sum(ns.fg_made), 0::bigint)::integer as fg_made,
+  COALESCE(sum(ns.fg_yds), 0::bigint)::integer as fg_yds,
+  COALESCE(sum(ns.solo_tkl), 0::bigint)::integer as solo_tkl,
+  COALESCE(sum(ns.asst_tkl), 0::bigint)::integer as asst_tkl,
+  round(COALESCE(sum(ns.tfl), 0::numeric), 1) as tfl,
+  COALESCE(sum(ns.qb_hit), 0::bigint)::integer as qb_hit,
+  COALESCE(sum(ns.pass_defended), 0::bigint)::integer as pass_defended,
+  round(COALESCE(sum(ns.sack), 0::numeric), 1) as sack,
+  COALESCE(sum(ns.interception), 0::bigint)::integer as interception,
+  COALESCE(sum(ns.forced_fumble), 0::bigint)::integer as forced_fumble,
+  COALESCE(sum(ns.fumble_recovery), 0::bigint)::integer as fumble_recovery,
+  COALESCE(sum(ns.idp_td), 0::bigint)::integer as idp_td
+from
+  scdfl.v_player_starts vps
+  join scdfl.player_ids pids on pids.sleeper_id = vps.player_id
+  join scdfl.nfl_stats ns on ns.gsis_id = pids.gsis_id
+  and ns.season = vps.year
+  and ns.week = vps.week
+group by
+  vps.player_id,
+  vps.year;
+
+
 -- -- -- NFL STATS
 -- External csv; `npm run sync:stats`
 
