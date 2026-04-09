@@ -109,6 +109,40 @@ if (draftRow) {
   }
 }
 
+// ── UDFA acquisition info (only for undrafted players) ────────────────────
+let udfaInfo: { type: 'waiver' | 'free_agent'; waiverBid: number | null; acquiredByAbbr: string; acquiredByActiveAbbr: string; date: string } | null = null;
+
+if (!draftInfo) {
+  const { data: firstTx } = await supabase
+    .schema('scdfl').from('transactions')
+    .select('type, waiver_bid, roster_id, transaction_id, created')
+    .eq('player_id', pid)
+    .eq('action', 'add')
+    .eq('asset', 'player')
+    .in('type', ['waiver', 'free_agent'])
+    .order('created', { ascending: true })
+    .limit(1)
+    .single();
+
+  if (firstTx) {
+    const { data: eraFranchise } = await supabase
+      .schema('scdfl').from('franchises')
+      .select('abbr')
+      .eq('id', firstTx.roster_id)
+      .is('to', null)
+      .single();
+
+    const txDate = new Date(Number(firstTx.created));
+    udfaInfo = {
+      type: firstTx.type as 'waiver' | 'free_agent',
+      waiverBid: firstTx.waiver_bid,
+      acquiredByAbbr: eraFranchise?.abbr ?? '—',
+      acquiredByActiveAbbr: eraFranchise?.abbr ?? '—',
+      date: txDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    };
+  }
+}
+
 // ── Accolades & Medals from Supabase ───────────────────────────────────────
 const { data: medalRows } = await supabase
   .schema('scdfl').from('v_medals')
@@ -496,7 +530,26 @@ const headshotUrl = player.espnId
               </div>
             </div>
           ) : (
-            <p style="font-size: 0.8rem; color: var(--color-text-muted); font-style: italic; margin: 0;">Undrafted</p>
+            <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+              {udfaInfo?.type === 'waiver' ? (
+                <>
+                  <p style="font-size: 0.8rem; color: var(--color-text-muted); font-style: italic; margin: 0;">UDFA; claimed on waivers</p>
+                  <p style="font-size: 0.8rem; color: var(--color-text-secondary); margin: 0;">
+                    ${udfaInfo.waiverBid} by <a href={`/franchises/${udfaInfo.acquiredByActiveAbbr}`} style="font-weight: 600;">{udfaInfo.acquiredByAbbr}</a>
+                  </p>
+                  <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0;">{udfaInfo.date}</p>
+                </>
+              ) : udfaInfo?.type === 'free_agent' ? (
+                <>
+                  <p style="font-size: 0.8rem; color: var(--color-text-muted); font-style: italic; margin: 0;">
+                    UDFA; acquired by <a href={`/franchises/${udfaInfo.acquiredByActiveAbbr}`} style="font-weight: 600;">{udfaInfo.acquiredByAbbr}</a>
+                  </p>
+                  <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0;">{udfaInfo.date}</p>
+                </>
+              ) : (
+                <p style="font-size: 0.8rem; color: var(--color-text-muted); font-style: italic; margin: 0;">Undrafted</p>
+              )}
+            </div>
           )}
         </div>
 
