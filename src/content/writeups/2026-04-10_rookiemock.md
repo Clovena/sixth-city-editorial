@@ -4,7 +4,7 @@ date: 2026-04-10
 type: mock_draft
 ---
 
-The rookie draft large. Combine is in the books, our draft picks are on the move, and up more and more by the day. 
+The NFL Draft is only two weeks away, and we haven't seen an officialy Zacalytics rookie draft in about a month. Not much intel has surfaced across Sixth City; this is typically a quiet period in the offseason, with the MLB season beginning and the NBA playoffs around the corner. But it's never a bad time to re-assess how the first round might shake out.  
 
 ---
 
@@ -52,7 +52,7 @@ The previous mock had Jordyn Tyson landing in Queensland, but the Sharks would p
 
 *Mississauga Mastodons*
 
-Mississauga's lineup is starting to become quite stale, with guys like Gainwell, Njoku, and Keon Coleman shedding value in dynasty formats. The 6th overall pick is not going to be quite early enough to land them a bona fide difference maker, but conventional wisdom would have them entering this full-scale rebuild with a wide receiver. Tyson is going to be a stronger prospect than all other WRs left here, and as long as he’s healthy he can be a blue-chip piece for the Mastodons. 
+Mississauga's lineup is starting to become quite stale, with guys like Gainwell, Njoku, and Keon Coleman shedding value in dynasty formats. The 6th overall pick is not going to be quite early enough to land them a bona fide difference maker, but conventional wisdom would have them entering this full-scale rebuild with a wide receiver. As long as he’s healthy, Tyson can be a blue-chip piece for the Mastodons. 
 
 ---
 
@@ -66,11 +66,9 @@ Fresh off the most successful season in Sarnia's history, the SeaSnakes will be 
 
 **1.08: KC Concepcion, WR-TAM**
 
-*Lower City Lasercats via WPG*
+*Lower City Lasercats (mock trade with NNY) via WPG*
 
-This is a mock trade between NNY and LOW, where the Benders trade out of this pick and tack on a 2027-1st to acquire De’Von Achane. 
-
-With no sure thing at RB available here, the Benders are better off pulling the trigger on an elite asset like Achane to complete their roster overhaul. Meanwhile, Lower City adds a young receiver to the roster as a long-term plan after Davante and McLaurin age out of fantasy prominence. 
+This is a mock trade between NNY and LOW, where the Benders trade out of this pick and tack on a 2027-1st to acquire De’Von Achane. With no sure thing at RB available here, the Benders are better off pulling the trigger on an elite asset like Achane to complete their roster overhaul. Meanwhile, Lower City adds a young receiver to the roster as a long-term plan after Davante and McLaurin age out of fantasy prominence. 
 
 ---
 
