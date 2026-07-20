@@ -1,6 +1,7 @@
 # SCDFL Site — Task Board
 
 ## TODO
+1. WIDGETS.md
 1. More content 
     - Game recaps
     - Better rivalry blurbs
