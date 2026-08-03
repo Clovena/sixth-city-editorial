@@ -1,0 +1,44 @@
+/* ============================================================
+   SIXTH CITY DFL — MOTION
+   Organic, weighted, no bounce-y spring, no neon flicker.
+   Think: a heavy ledger page turning, an enamel sign settling.
+   Fades + short translates. Restrained.
+   ============================================================ */
+
+:root {
+  /* ---- Durations ---- */
+  --dur-instant: 80ms;
+  --dur-fast:    140ms;
+  --dur-base:    220ms;
+  --dur-slow:    360ms;
+  --dur-slower:  560ms;
+
+  /* ---- Easing ---- */
+  --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --ease-out:      cubic-bezier(0.16, 0.8, 0.3, 1);
+  --ease-in:       cubic-bezier(0.5, 0, 0.85, 0.3);
+  --ease-felt:     cubic-bezier(0.32, 0.72, 0.24, 1);
+
+  /* ---- Semantic transitions ---- */
+  --transition-color: color var(--dur-fast) var(--ease-standard),
+                      background-color var(--dur-fast) var(--ease-standard),
+                      border-color var(--dur-fast) var(--ease-standard);
+  --transition-transform: transform var(--dur-base) var(--ease-felt);
+  --transition-shadow: box-shadow var(--dur-base) var(--ease-standard);
+  --transition-all: all var(--dur-base) var(--ease-standard);
+
+  /* ---- Interaction deltas ---- */
+  --press-scale: 0.97;
+  --hover-lift: -1px;
+  --hover-darken: 0.06;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-instant: 0ms;
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+    --dur-slow: 0ms;
+    --dur-slower: 0ms;
+  }
+}

@@ -1,0 +1,15 @@
+/* ============================================================
+   SIXTH CITY DFL — WEBFONTS
+   ------------------------------------------------------------
+   Open-license Google Fonts standing in for the licensed faces.
+   For production/offline use, self-host the licensed binaries
+   and replace the @import below with local @font-face rules.
+
+   Mapping:
+     Display  → Big Shoulders Display  (industrial woodtype)
+     Serif    → Spectral               (literary almanac)
+     Sans/UI  → Archivo                (clean tabular grotesque)
+     Mono     → Spline Sans Mono       (box scores / stat blocks)
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Big+Shoulders+Display:wght@500;600;700;800;900&family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Spline+Sans+Mono:wght@400;500;600&display=swap');

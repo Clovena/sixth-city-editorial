@@ -103,7 +103,7 @@ const hccFranchises = activeFranchises.filter(f => f.conf === 'HCC');
           the game is changing.
         </p>
       </div>
-      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1px; background-color: var(--color-border);">
+      <div class="franchise-grid">
         {sccFranchises.map(franchise => {
           const primaryColor = franchise.colors[0];
           return (
@@ -127,7 +127,7 @@ const hccFranchises = activeFranchises.filter(f => f.conf === 'HCC');
                   </div>
                   <div style="display: flex; flex-direction: column;">
                     <div style="display: inline-flex; align-items: center; gap: 10px; justify-content: flex-end; margin: 0.75rem 0.25rem;">
-                      {franchise.colors.map(color => (
+                      {franchise.colors.map((color: string) => (
                         <span style={`display: inline-flex; width: 0.75rem; height: 0.75rem; background-color: ${color}; border-radius: 50%; line-height: 1;`}></span>
                       ))}
                     </div>
@@ -174,7 +174,7 @@ const hccFranchises = activeFranchises.filter(f => f.conf === 'HCC');
           representative of what their cities want in a football team.
         </p>
       </div>
-      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1px; background-color: var(--color-border);">
+      <div class="franchise-grid">
         {hccFranchises.map(franchise => {
           const champs = champCounts[franchise.abbr] || 0;
           const primaryColor = franchise.colors[0];
@@ -199,7 +199,7 @@ const hccFranchises = activeFranchises.filter(f => f.conf === 'HCC');
                   </div>
                   <div style="display: flex; flex-direction: column;">
                     <div style="display: inline-flex; align-items: center; gap: 10px; justify-content: flex-end; margin: 0.75rem 0.25rem;">
-                      {franchise.colors.map(color => (
+                      {franchise.colors.map((color: string) => (
                         <span style={`display: inline-flex; width: 0.75rem; height: 0.75rem; background-color: ${color}; border-radius: 50%; line-height: 1;`}></span>
                       ))}
                     </div>
@@ -233,4 +233,35 @@ const hccFranchises = activeFranchises.filter(f => f.conf === 'HCC');
     </div>
 
   </div>
+
+  <style>
+    /* 2-3-2 layout: 6-col grid, each tile spans 2 cols, empty 1-col gutters
+       (= half a tile) center the rows of two. Exactly 7 tiles per conference. */
+    .franchise-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 1px;
+    }
+    .franchise-grid > a {
+      grid-column: span 2;
+      display: block;
+      text-decoration: none;
+    }
+    /* Top row of two — centered */
+    .franchise-grid > a:nth-child(1) { grid-row: 1; grid-column: 2 / span 2; }
+    .franchise-grid > a:nth-child(2) { grid-row: 1; grid-column: 4 / span 2; }
+    /* Middle row of three */
+    .franchise-grid > a:nth-child(3) { grid-row: 2; grid-column: 1 / span 2; }
+    .franchise-grid > a:nth-child(4) { grid-row: 2; grid-column: 3 / span 2; }
+    .franchise-grid > a:nth-child(5) { grid-row: 2; grid-column: 5 / span 2; }
+    /* Bottom row of two — centered */
+    .franchise-grid > a:nth-child(6) { grid-row: 3; grid-column: 2 / span 2; }
+    .franchise-grid > a:nth-child(7) { grid-row: 3; grid-column: 4 / span 2; }
+
+    /* Mobile: single column, reset all explicit placement */
+    @media (max-width: 768px) {
+      .franchise-grid { grid-template-columns: 1fr; }
+      .franchise-grid > a { grid-column: 1 / -1 !important; grid-row: auto !important; }
+    }
+  </style>
 </Layout>

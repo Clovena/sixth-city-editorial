@@ -1,0 +1,60 @@
+/* ============================================================
+   SIXTH CITY DFL — ELEVATION & SURFACE TEXTURE
+   Soft, warm-tinted shadows. No neon, no colored glow.
+   Shadows lean toward "printed almanac / pressed felt" —
+   short, low-spread, warm umbra. Borders do most of the work.
+   ============================================================ */
+
+:root {
+  /* Warm shadow base (charcoal, not pure black) */
+  --shadow-color: 28, 26, 23;
+
+  /* ---- Elevation ramp ---- */
+  --shadow-0: none;
+  --shadow-1:
+    0 1px 1px rgba(var(--shadow-color), 0.06),
+    0 1px 2px rgba(var(--shadow-color), 0.08);
+  --shadow-2:
+    0 1px 2px rgba(var(--shadow-color), 0.07),
+    0 2px 6px rgba(var(--shadow-color), 0.10);
+  --shadow-3:
+    0 2px 4px rgba(var(--shadow-color), 0.08),
+    0 6px 14px rgba(var(--shadow-color), 0.12);
+  --shadow-4:
+    0 4px 8px rgba(var(--shadow-color), 0.10),
+    0 14px 28px rgba(var(--shadow-color), 0.16);
+  --shadow-5:
+    0 8px 16px rgba(var(--shadow-color), 0.12),
+    0 24px 48px rgba(var(--shadow-color), 0.20);
+
+  /* Inset (pressed / sunken paper) */
+  --shadow-inset: inset 0 1px 2px rgba(var(--shadow-color), 0.12);
+  --shadow-inset-deep: inset 0 2px 6px rgba(var(--shadow-color), 0.18);
+
+  /* Letterpress text emboss for cream surfaces (subtle) */
+  --emboss-up: 0 1px 0 rgba(255, 253, 247, 0.6);
+  --emboss-down: 0 -1px 0 rgba(28, 26, 23, 0.12);
+
+  /* ---- Semantic elevation ---- */
+  --elevation-card:    var(--shadow-2);
+  --elevation-raised:  var(--shadow-3);
+  --elevation-popover: var(--shadow-4);
+  --elevation-modal:   var(--shadow-5);
+
+  /* ---- Hairline ring (paired with shadows on cream) ---- */
+  --ring-hairline: 0 0 0 1px var(--border-hairline);
+  --ring-default:  0 0 0 1px var(--border-default);
+
+  /* ---- Focus ---- */
+  --shadow-focus: 0 0 0 3px rgba(67, 101, 120, 0.45);  /* slate, no glow */
+
+  /* ---- Paper grain overlay ---- */
+  --grain-opacity: 0.05;
+
+  /* ---- Card recipe tokens ---- */
+  --card-bg: var(--surface-card);
+  --card-border: 1px solid var(--border-hairline);
+  --card-radius: var(--radius-md);
+  --card-shadow: var(--shadow-2);
+  --card-pad: var(--space-5);
+}

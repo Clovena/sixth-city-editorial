@@ -1,224 +1,256 @@
-@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+/* ============================================================
+   SIXTH CITY DFL — SITE STYLES
+   Brand: "Rust Belt almanac × Northern heritage"
+   Cream ground · warm-charcoal ink · ember primary
+   Foundations live in ./tokens/*. This file wires them into
+   Tailwind, sets base element styling, bridges the legacy
+   --color-* names to the new palette, and defines the shared
+   component classes used across pages.
+   ============================================================ */
+
+/* Fonts first (must precede other @imports) */
+@import "./tokens/fonts.css";
+
 @import "tailwindcss";
 
+/* Design-system foundations */
+@import "./tokens/colors.css";
+@import "./tokens/typography.css";
+@import "./tokens/spacing.css";
+@import "./tokens/elevation.css";
+@import "./tokens/motion.css";
+@import "./tokens/base.css";
+
+/* Expose the type families to Tailwind's theme */
 @theme {
-  --font-display: "Playfair Display", Georgia, serif;
-  --font-body: "Lato", "Helvetica Neue", sans-serif;
-
-  --color-bg: #0f0f0d;
-  --color-surface: #1a1a17;
-  --color-surface-alt: #222220;
-  --color-border: #2e2e2a;
-  --color-border-light: #3d3d38;
-
-  --color-text-primary: #e8e4d9;
-  --color-text-secondary: #a09a8c;
-  --color-text-muted: #6b6660;
-
-  --color-gold-light: #ffca5c;
-  --color-gold-dim: #b47e0f;
-
+  --font-display: "Big Shoulders Display", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Spectral", Georgia, "Times New Roman", serif;
+  --font-mono: "Spline Sans Mono", ui-monospace, Menlo, monospace;
 }
 
-/* ROYGBIV Neon Noir Color Variables
-   Kept outside @theme so Tailwind's tree-shaker does not drop variables
-   that are only referenced via dynamic CSS custom property names at runtime. */
-:root {
-  --color-red: #f22e3d;
-  --color-red-surface: #f22e3d33; /* alpha of 33 = 20% opacity*/
-  --color-red-glow: #f22e3d66; /* alpha of 66 = 40% opacity*/
-
-  --color-pink: #ff7cb7;
-  --color-pink-surface: #ff7cb733;
-  --color-pink-glow: #ff7cb766;
-
-  --color-hcc: #e67e22;
-  --color-hcc-surface: #e67e2233;
-  --color-hcc-glow: #e67e2266;
-
-  --color-gold: #f2b22e;
-  --color-gold-surface: #f2b22e33;
-  --color-gold-glow: #f2b22e66;
-
-  --color-green: #27ae60;
-  --color-green-surface: #27ae6033;
-  --color-green-glow: #27ae6066;
-
-  --color-scc: #7eb8d8;
-  --color-scc-surface: #7eb8d833;
-  --color-scc-glow: #7eb8d866;
-
-  --color-purple: #6d7ef5;
-  --color-purple-surface: #6d7ef533;
-  --color-purple-glow: #6d7ef566;
-
-  --color-grey: #a2bcd3;
-  --color-grey-surface: #a2bcd333;
-  --color-grey-glow: #a2bcd366;
-
-  --color-white: #e8e8f0;
-  --color-white-surface: #e8e8f033;
-  --color-white-glow: #e8e8f066;
-}
-
+/* ============================================================
+   BASE ELEMENTS  (ordered against Tailwind preflight)
+   ============================================================ */
 @layer base {
   html {
-    background-color: var(--color-bg);
-    color: var(--color-text-primary);
-    font-family: var(--font-body);
+    background-color: var(--surface-page);
+    color: var(--text-body);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--surface-page);
+    color: var(--text-body);
+    font-family: var(--font-serif);
+    font-size: var(--text-base);
+    line-height: var(--lh-relaxed);
+    font-feature-settings: "kern" 1, "liga" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
+    font-weight: var(--fw-bold);
+    line-height: var(--lh-snug);
+    letter-spacing: var(--ls-tight);
+    color: var(--text-strong);
   }
 
-  a {
-    color: var(--color-gold);
-    text-decoration: none;
-  }
+  a { color: var(--text-link); text-decoration: none; transition: var(--transition-color); }
+  a:hover { color: var(--text-link-hover); text-decoration: underline; text-underline-offset: 2px; }
 
-  a:hover {
-    color: var(--color-gold-light);
-  }
+  hr { border: 0; border-top: 1px solid var(--border-hairline); }
 
-  hr {
-    border-color: var(--color-border);
-  }
+  ::selection { background-color: var(--ember-200); color: var(--ink-900); }
 
-  ::selection {
-    background-color: var(--color-gold-dim);
-    color: var(--color-text-primary);
-  }
+  :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 }
 
+/* ============================================================
+   LEGACY VARIABLE BRIDGE
+   Remaps the retired dark-theme --color-* names onto the new
+   palette so any inline style not yet rewritten resolves to a
+   coherent cream/ink/ember value (no neon, no glow).
+   ============================================================ */
+:root {
+  /* legacy font alias — pages reference var(--font-body) directly */
+  --font-body: var(--font-sans);
+
+  --color-bg:            var(--surface-page);
+  --color-surface:       var(--surface-card);
+  --color-surface-alt:   var(--surface-sunken);
+  --color-border:        var(--border-hairline);
+  --color-border-light:  var(--border-default);
+
+  --color-text-primary:   var(--text-strong);
+  --color-text-secondary: var(--text-body);
+  --color-text-muted:     var(--text-faint);
+
+  /* "gold" was the site's pervasive accent → readable wheat-gold.
+     Reserve ember for intentional emphasis placed per-page. */
+  --color-gold:         var(--gold-700);
+  --color-gold-light:   var(--gold-500);
+  --color-gold-dim:     var(--gold-800);
+  --color-gold-surface: var(--gold-100);
+  --color-gold-glow:    var(--gold-100);
+
+  /* Retired ROYGBIV neon set → organic remaps, glow flattened to tint */
+  --color-red:         var(--ember-600); --color-red-surface: var(--ember-100); --color-red-glow: var(--ember-100);
+  --color-pink:        var(--ember-400); --color-pink-surface: var(--ember-100); --color-pink-glow: var(--ember-100);
+  --color-hcc:         var(--ember-600); --color-hcc-surface: var(--ember-100); --color-hcc-glow: var(--ember-100);
+  --color-green:       var(--pine-600);  --color-green-surface: var(--pine-100); --color-green-glow: var(--pine-100);
+  --color-scc:         var(--slate-600); --color-scc-surface: var(--slate-100); --color-scc-glow: var(--slate-100);
+  --color-purple:      var(--indigo-600);--color-purple-surface: var(--slate-100); --color-purple-glow: var(--slate-100);
+  --color-grey:        var(--slate-400); --color-grey-surface: var(--slate-100); --color-grey-glow: var(--slate-100);
+  --color-white:       var(--ink-800);   --color-white-surface: var(--paper-200); --color-white-glow: var(--paper-200);
+
+  /* Lineup / medal position palette (game recaps + player medals).
+     -surface = row tint (per brief); -glow = chip border + label + medal icon,
+     a legible darker shade from the same family. */
+  --color-qb:   var(--ember-300);  --color-qb-surface:   var(--ember-100);  --color-qb-glow:   var(--ember-300);
+  --color-rb:   var(--pine-400);   --color-rb-surface:   var(--pine-200);   --color-rb-glow:   var(--pine-400);
+  --color-wr:   var(--slate-400);  --color-wr-surface:   var(--slate-200);  --color-wr-glow:   var(--slate-400);
+  --color-te:   var(--gold-500);   --color-te-surface:   var(--gold-200);   --color-te-glow:   var(--gold-500);
+  --color-flex: var(--ink-300);    --color-flex-surface: var(--paper-200);  --color-flex-glow: var(--ink-300);
+  --color-pk:   var(--ink-400);    --color-pk-surface:   var(--ink-200);    --color-pk-glow:   var(--ink-400);
+  --color-idp:  var(--aurora-400); --color-idp-surface:  var(--aurora-200); --color-idp-glow:  var(--aurora-400);
+}
+
+/* ============================================================
+   SHARED COMPONENT CLASSES
+   ============================================================ */
 @layer components {
-  .section-rule {
-    margin-top: 3rem;
-  }
+  .section-rule { margin-top: 3rem; }
 
   .label-badge {
+    font-family: var(--font-sans);
     font-size: 0.6875rem;
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     padding: 0.2rem 0.55rem;
-    border-radius: 2px;
+    border-radius: var(--radius-xs);
   }
 
   .badge-scc {
-    background-color: rgba(74, 127, 165, 0.2);
-    color: #7eb8d8;
-    border: 1px solid rgba(74, 127, 165, 0.4);
+    background-color: var(--slate-100);
+    color: var(--slate-700);
+    border: 1px solid var(--slate-300);
   }
 
   .badge-hcc {
-    background-color: rgba(165, 99, 74, 0.2);
-    color: #d4906e;
-    border: 1px solid rgba(165, 99, 74, 0.4);
+    background-color: var(--ember-100);
+    color: var(--ember-800);
+    border: 1px solid var(--ember-300);
   }
 
   .data-table {
     width: 100%;
     border-collapse: collapse;
+    font-family: var(--font-sans);
     font-size: 0.9rem;
   }
 
   .data-table th {
-    font-family: var(--font-body);
+    font-family: var(--font-sans);
     font-size: 0.7rem;
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--color-text-muted);
-    border-bottom: 1px solid var(--color-border);
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-default);
     padding: 0.5rem 1rem 0.6rem;
     text-align: left;
   }
 
   .data-table td {
     padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--color-border);
-    color: var(--color-text-primary);
+    border-bottom: 1px solid var(--border-hairline);
+    color: var(--text-body);
     vertical-align: middle;
+    font-variant-numeric: tabular-nums lining-nums;
   }
 
-  .data-table tr:last-child td {
-    border-bottom: none;
-  }
+  .data-table tr:last-child td { border-bottom: none; }
 
-  .data-table tbody tr:hover td {
-    background-color: rgba(255,255,255,0.025);
-  }
+  .data-table tbody tr:hover td { background-color: rgba(28, 26, 23, 0.04); }
 
   .winner-cell {
-    color: var(--color-gold);
-    font-weight: 600;
+    color: var(--pine-700);
+    font-weight: 700;
   }
 
   .franchise-card {
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
+    background-color: var(--surface-card);
+    border: 1px solid var(--border-hairline);
+    box-shadow: var(--shadow-1);
     padding: 1rem;
     position: relative;
-    transition: border-color 0.15s ease, background-color 0.15s ease;
+    transition: border-color var(--dur-fast) var(--ease-standard),
+                box-shadow var(--dur-base) var(--ease-standard),
+                transform var(--dur-base) var(--ease-felt);
   }
 
   .franchise-card:hover {
-    border-color: var(--color-border-light);
-    background-color: var(--color-surface-alt);
+    border-color: var(--border-default);
+    box-shadow: var(--shadow-3);
+    transform: translateY(-1px);
   }
 
   .section-label {
-    font-family: var(--font-body);
+    font-family: var(--font-sans);
     font-size: 0.7rem;
     font-weight: 700;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--color-gold-dim);
+    color: var(--slate-600);
     margin-bottom: 0.75rem;
   }
 
   .page-title {
     font-family: var(--font-display);
     font-size: clamp(2rem, 5vw, 3.5rem);
-    font-weight: 700;
-    line-height: 1.1;
-    color: var(--color-text-primary);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--text-strong);
   }
 
-  .page-subtitle, 
+  .page-subtitle,
   .page-subheader {
-    font-family: var(--font-body);
-    font-size: 1rem;
-    text-align: justify;
-    color: var(--color-text-secondary);
-    line-height: 1.65;
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    color: var(--text-body);
+    line-height: var(--lh-relaxed);
   }
 
-  .page-subtitle {
-      max-width: 60ch;
-  }
+  .page-subtitle { max-width: 60ch; }
 
   .page-whisper {
-    color: var(--color-text-secondary);
+    font-family: var(--font-serif);
+    color: var(--text-muted);
     font-style: italic;
   }
 
   .bowl-card {
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
+    background-color: var(--surface-card);
+    border: 1px solid var(--border-hairline);
+    box-shadow: var(--shadow-1);
     padding: 1.75rem;
-    transition: border-color 0.15s ease;
+    transition: border-color var(--dur-fast) var(--ease-standard),
+                box-shadow var(--dur-base) var(--ease-standard);
   }
 
   .bowl-card:hover {
-    border-color: var(--color-border-light);
+    border-color: var(--border-default);
+    box-shadow: var(--shadow-3);
   }
 
   .inner-section {
-    border-top: 1px solid var(--color-border);
+    border-top: 1px solid var(--border-default);
     padding-top: 2rem;
     margin-top: 2rem;
   }
