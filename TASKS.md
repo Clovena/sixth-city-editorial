@@ -1,15 +1,13 @@
 # SCDFL Site — Task Board
 
 ## TODO
+1. Low priority QOL cleanup
+    - Season recap brackets on mobile
 1. WIDGETS.md
 1. More content 
     - Game recaps
     - Better rivalry blurbs
 1. Hall of Fame - Player awards, HOF awards, trophies
-1. Low priority QOL cleanup
-    - Color refactoring to surface and glow
-    - Season recap brackets on mobile
-    - Franchises arranged as 2-3-2 on desktop, not 3-3-1
 
 ## Dev
 - Consolation bracket
@@ -55,3 +53,4 @@
 - Mobile display for player pages
 - Replace accolades key on franchise pages with actual accolades mimicking player pages
 - If player undrafted, replace with first waiver claim / FA add 
+  - Franchises arranged as 2-3-2 on desktop, not 3-3-1
