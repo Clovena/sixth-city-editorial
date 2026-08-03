@@ -215,11 +215,18 @@ const exhibitionsData: ExhibEntry[] = (exhibRows ?? []).map((e: any) => {
 
   :global(.matchup-card) {
     display: block;
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
+    background-color: var(--surface-card);
+    border: 1px solid var(--border-hairline);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-1);
     overflow: hidden;
     text-decoration: none;
     color: inherit;
+    transition: box-shadow var(--dur-base) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
+  }
+  :global(.matchup-card:hover) {
+    box-shadow: var(--shadow-3);
+    border-color: var(--border-default);
   }
 
   :global(.matchup-body) {
@@ -236,15 +243,16 @@ const exhibitionsData: ExhibEntry[] = (exhibRows ?? []).map((e: any) => {
     display: flex;
     align-items: center;
     padding: 0 1.1rem;
-    background-color: color-mix(in srgb, var(--color-surface) 80%, transparent);
-    border-left: 1px solid var(--color-border);
-    color: var(--color-gold);
-    font-family: var(--font-body);
-    font-size: 0.78rem;
+    background-color: var(--surface-sunken);
+    border-left: 1px solid var(--border-hairline);
+    color: var(--text-link);
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
     font-weight: 600;
+    text-transform: uppercase;
     white-space: nowrap;
     flex-shrink: 0;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.1em;
   }
 
   :global(.team-row) {
@@ -260,7 +268,7 @@ const exhibitionsData: ExhibEntry[] = (exhibRows ?? []).map((e: any) => {
   }
 
   :global(.team-row.winner) {
-    background-color: color-mix(in srgb, var(--color-surface) 80%, transparent);
+    background-color: var(--pine-100);
   }
 
   :global(.team-row.loser) {
@@ -290,29 +298,32 @@ const exhibitionsData: ExhibEntry[] = (exhibRows ?? []).map((e: any) => {
   }
 
   :global(.team-score) {
-    font-family: var(--font-body);
+    font-family: var(--font-mono);
     font-size: 1rem;
-    font-weight: 700;
-    color: var(--color-text-primary);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums lining-nums;
+    color: var(--text-strong);
     min-width: 3.5rem;
     text-align: right;
     flex-shrink: 0;
   }
 
   :global(.winner .team-score) {
-    color: var(--color-gold);
+    color: var(--pine-700);
+    font-weight: 700;
   }
 
   :global(.dynasty-bowl-banner) {
-    background-color: var(--color-gold-surface);
-    border-bottom: 1px solid var(--color-gold-glow);
-    color: var(--color-gold);
+    background-color: var(--gold-100);
+    border-bottom: 1px solid var(--gold-300);
+    color: var(--gold-800);
     font-family: var(--font-display);
     font-size: 1rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
+    font-weight: 700;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     padding: 0.35rem 4rem;
+    text-align: center;
   }
 
   :global(.no-data) {
