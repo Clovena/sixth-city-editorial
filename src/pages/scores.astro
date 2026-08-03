@@ -71,6 +71,14 @@ type ClientMatchup = {
 };
 const matchupsData: Record<string, Record<string, ClientMatchup[]>> = {};
 for (const m of matchupRows ?? []) {
+  // Skip not-yet-started postseason games. Sleeper seeds the playoff/consolation
+  // bracket with placeholder (random) opponents before the postseason begins;
+  // these show up as 0–0 and don't reflect the real slate, so exclude them.
+  // Regular-season games (game_type 0) are always kept, even at 0–0.
+  const isPostseason = m.game_type !== 0;
+  const notStarted = (m.score_a ?? 0) === 0 && (m.score_b ?? 0) === 0;
+  if (isPostseason && notStarted) continue;
+
   const yr = String(m.year);
   const wk = String(m.week);
   if (!matchupsData[yr]) matchupsData[yr] = {};
@@ -99,6 +107,8 @@ function toRoman(n: number): string {
 const dynastyBowls: Record<string, { winner: string; loser: string; label: string }> = {};
 for (const m of matchupRows ?? []) {
   if (m.week !== 17 || m.game_type !== 1) continue;
+  // Skip not-yet-played championship placeholders (0–0) — no real winner yet.
+  if ((m.score_a ?? 0) === 0 && (m.score_b ?? 0) === 0) continue;
   const aWins = m.score_a > m.score_b;
   const winnerSleeperId = String(aWins ? m.roster_id_a : m.roster_id_b);
   const loserSleeperId = String(aWins ? m.roster_id_b : m.roster_id_a);
@@ -123,10 +133,49 @@ const defaultSeasonYear = sortedSeasons
   .find((yr: number) => Object.keys(matchupsData[String(yr)] ?? {}).length > 0)
   ?? sortedSeasons[0];
 
-// ── Determine default week (max numeric week in default season) ──────────────
-const defaultWeekNum = Math.max(
-  ...Object.keys(matchupsData[String(defaultSeasonYear)] ?? {}).map(Number)
-);
+// ── Fetch the live NFL state (current season + week) from Sleeper ────────────
+// Used to default the active season's view to the live week rather than the
+// last week for which (future) data happens to exist in Supabase.
+let activeSeason: number | null = null;
+let activeWeek: number | null = null;
+try {
+  const stateRes = await fetch('https://api.sleeper.app/v1/state/nfl');
+  if (stateRes.ok) {
+    const state = await stateRes.json();
+    activeSeason = Number(state.season);
+    activeWeek = Number(state.week);
+    if (!Number.isFinite(activeSeason)) activeSeason = null;
+    if (!Number.isFinite(activeWeek)) activeWeek = null;
+  }
+} catch {
+  // Network failure / offline build — fall back to latest-week behavior below.
+}
+
+// ── Determine default week ───────────────────────────────────────────────────
+// For the active season, default to the live NFL week (floored at 1 — the
+// Sleeper state reports week 0 during the preseason, which is not a real week).
+// For any other (historical) season, default to the latest week with data.
+const defaultSeasonWeeks = Object.keys(matchupsData[String(defaultSeasonYear)] ?? {})
+  .map(Number)
+  .sort((a, b) => a - b);
+
+let defaultWeekNum: number;
+if (defaultSeasonWeeks.length === 0) {
+  defaultWeekNum = 1;
+} else if (activeSeason !== null && activeWeek !== null && defaultSeasonYear === activeSeason) {
+  const target = Math.max(activeWeek, 1);
+  if (defaultSeasonWeeks.includes(target)) {
+    defaultWeekNum = target;
+  } else if (target < defaultSeasonWeeks[0]) {
+    defaultWeekNum = defaultSeasonWeeks[0];
+  } else {
+    // Clamp to the nearest available week at or below the target (else the max).
+    defaultWeekNum = defaultSeasonWeeks.filter(w => w <= target).pop()
+      ?? defaultSeasonWeeks[defaultSeasonWeeks.length - 1];
+  }
+} else {
+  defaultWeekNum = defaultSeasonWeeks[defaultSeasonWeeks.length - 1];
+}
 
 // ── Exhibition data (compact form for client) ─────────────────────────────────
 type ExhibEntry = {
@@ -335,7 +384,7 @@ const exhibitionsData: ExhibEntry[] = (exhibRows ?? []).map((e: any) => {
   }
 </style>
 
-<script define:vars={{ matchupsData, franchiseIdentities, dynastyBowls, recapSlugsArr, defaultSeasonYear, defaultWeekNum, exhibitionsData, sortedSeasons }}>
+<script define:vars={{ matchupsData, franchiseIdentities, dynastyBowls, recapSlugsArr, defaultSeasonYear, defaultWeekNum, exhibitionsData, sortedSeasons, activeSeason, activeWeek }}>
   const seasonSelect = document.getElementById('season-select');
   const weekSelect = document.getElementById('week-select');
   const grid = document.getElementById('scores-grid');
@@ -354,6 +403,23 @@ const exhibitionsData: ExhibEntry[] = (exhibRows ?? []).map((e: any) => {
     if (!identities) return { abbr: 'UNKNOWN', name: `Roster ${sleeperId}` };
     return identities.find(f => f.from <= year && (f.to === null || f.to >= year))
       ?? identities[identities.length - 1]; // fallback to latest identity
+  }
+
+  // ── Default week for a season ────────────────────────────────────────────
+  // Mirrors the build-time logic: the active season defaults to the live NFL
+  // week (floored at 1); every other season defaults to its latest week.
+  function defaultWeekFor(year) {
+    const weeks = Object.keys(matchupsData[String(year)] ?? {})
+      .map(Number)
+      .sort((a, b) => a - b);
+    if (weeks.length === 0) return 1;
+    if (activeSeason !== null && activeWeek !== null && year === activeSeason) {
+      const target = Math.max(activeWeek, 1);
+      if (weeks.includes(target)) return target;
+      if (target < weeks[0]) return weeks[0];
+      return weeks.filter(w => w <= target).pop() ?? weeks[weeks.length - 1];
+    }
+    return weeks[weeks.length - 1];
   }
 
   // ── Populate week dropdown for a given season ────────────────────────────
@@ -484,10 +550,9 @@ const exhibitionsData: ExhibEntry[] = (exhibRows ?? []).map((e: any) => {
   // ── Wire up event listeners ──────────────────────────────────────────────
   seasonSelect.addEventListener('change', () => {
     const year = Number(seasonSelect.value);
-    const weeks = Object.keys(matchupsData[String(year)] ?? {}).map(Number).sort((a, b) => a - b);
-    const latestWeek = weeks[weeks.length - 1] ?? 1;
-    populateWeeks(year, latestWeek);
-    renderScores(year, latestWeek);
+    const week = defaultWeekFor(year);
+    populateWeeks(year, week);
+    renderScores(year, week);
   });
 
   weekSelect.addEventListener('change', () => {

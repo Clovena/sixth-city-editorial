@@ -106,6 +106,17 @@
   --color-purple:      var(--indigo-600);--color-purple-surface: var(--slate-100); --color-purple-glow: var(--slate-100);
   --color-grey:        var(--slate-400); --color-grey-surface: var(--slate-100); --color-grey-glow: var(--slate-100);
   --color-white:       var(--ink-800);   --color-white-surface: var(--paper-200); --color-white-glow: var(--paper-200);
+
+  /* Lineup / medal position palette (game recaps + player medals).
+     -surface = row tint (per brief); -glow = chip border + label + medal icon,
+     a legible darker shade from the same family. */
+  --color-qb:   var(--ember-300);  --color-qb-surface:   var(--ember-100);  --color-qb-glow:   var(--ember-300);
+  --color-rb:   var(--pine-400);   --color-rb-surface:   var(--pine-200);   --color-rb-glow:   var(--pine-400);
+  --color-wr:   var(--slate-400);  --color-wr-surface:   var(--slate-200);  --color-wr-glow:   var(--slate-400);
+  --color-te:   var(--gold-500);   --color-te-surface:   var(--gold-200);   --color-te-glow:   var(--gold-500);
+  --color-flex: var(--ink-300);    --color-flex-surface: var(--paper-200);  --color-flex-glow: var(--ink-300);
+  --color-pk:   var(--ink-400);    --color-pk-surface:   var(--ink-200);    --color-pk-glow:   var(--ink-400);
+  --color-idp:  var(--aurora-400); --color-idp-surface:  var(--aurora-200); --color-idp-glow:  var(--aurora-400);
 }
 
 /* ============================================================

@@ -25,6 +25,8 @@
   --ink-500: #5F574B;  /* muted text */
   --ink-400: #847A69;  /* faint text */
   --ink-300: #A89C86;  /* disabled */
+  --ink-200: #C3BBAC;  /* hsl(39,16%,72%) — light warm greige */
+  --ink-100: #DFDBD3;  /* hsl(39,16%,85%) — lightest warm greige */
 
   /* ---- EMBER (primary brand — rust/Rust-Belt red) ---- */
   --ember-900: #5E2012;
@@ -74,6 +76,8 @@
   --aurora-600: #1C625C;
   --aurora-500: #2C7A72;
   --aurora-400: #4E988F;
+  --aurora-300: #7ABAB5;  /* soft light teal — IDP lineup surface */
+  --aurora-200: #ABD4D0;  /* hsl(175,32%,75%) — pale teal */
 
   /* ---- INDIGO (deep blanket stripe — used in stripe only) ---- */
   --indigo-700: #20283F;
