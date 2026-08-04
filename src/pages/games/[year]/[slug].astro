@@ -212,7 +212,10 @@ function espnHeadshotUrl(id: string) {
 
 // ── Recap ─────────────────────────────────────────────────────────────────────
 const allRecaps = await getCollection('recaps');
-const recap = allRecaps.find(r => r.id === `${year}/${slug}`) ?? null;
+// Placeholder recaps (empty title) count as not-yet-written — skip the recap block
+// and keep the "Team A vs Team B" page title
+const recapEntry = allRecaps.find(r => r.id === `${year}/${slug}`) ?? null;
+const recap = recapEntry?.data.title.trim() ? recapEntry : null;
 let Content: any = null;
 if (recap) {
   const rendered = await render(recap);
