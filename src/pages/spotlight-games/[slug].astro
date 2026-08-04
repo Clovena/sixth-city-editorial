@@ -82,30 +82,48 @@ export async function getStaticPaths() {
     }
   }
 
-  // Fetch active franchises
-  const { data: franchiseRows, error: fError } = await sb
+  // Fetch active franchises for display
+  const { data: activeFranchises, error: afError } = await sb
     .schema('scdfl')
     .from('franchises')
     .select('id, abbr, name, owner, conf, colors')
     .is('to', null);
 
-  if (fError) throw new Error(`Franchises query failed: ${fError.message}`);
+  if (afError) throw new Error(`Active franchises query failed: ${afError.message}`);
+
+  // Fetch ALL franchises (including historical) for year-appropriate slug building
+  const { data: allFranchises, error: allError } = await sb
+    .schema('scdfl')
+    .from('franchises')
+    .select('id, sleeper_id, abbr, "from", "to"');
+
+  if (allError) throw new Error(`All franchises query failed: ${allError.message}`);
 
   return Array.from(gameMap.values()).map(game => ({
     params: { slug: game.slug },
-    props: { game, franchises: franchiseRows },
+    props: { game, franchises: activeFranchises, allFranchises },
   }));
 }
 
-const { game, franchises } = Astro.props;
+const { game, franchises, allFranchises } = Astro.props;
 
 const teamA = franchises.find((f: any) => f.abbr === game.team_a);
 const teamB = franchises.find((f: any) => f.abbr === game.team_b);
 const historicalMatchups = await getHistoricalMatchups(game.team_a, game.team_b);
 
-// Helper function to build game recap URL
-function buildGameUrl(year: number, week: number, teamA: string, teamB: string): string {
-  const teams = [teamA, teamB].sort();
+// Resolve franchise identity for a roster_id at a given year
+function getHistoricalAbbr(rosterId: number, year: number): string {
+  const identity = allFranchises.find((f: any) =>
+    f.id === rosterId && f.from <= year && (f.to === null || f.to >= year)
+  );
+  return identity?.abbr ?? 'UNK';
+}
+
+// Helper function to build game recap URL using historical abbreviations
+function buildGameUrl(year: number, week: number, rosterIdA: number, rosterIdB: number): string {
+  const abbrA = getHistoricalAbbr(rosterIdA, year);
+  const abbrB = getHistoricalAbbr(rosterIdB, year);
+  const teams = [abbrA, abbrB].sort();
   const weekPadded = String(week).padStart(2, '0');
   const slug = `${weekPadded}-${teams[0].toLowerCase()}-${teams[1].toLowerCase()}`;
   return `/games/${year}/${slug}`;
@@ -207,7 +225,7 @@ function buildGameUrl(year: number, week: number, teamA: string, teamB: string):
             {historicalMatchups.map((matchup) => {
               const isTeamAWinner = matchup.teamAScore > matchup.teamBScore;
               const isTeamBWinner = matchup.teamBScore > matchup.teamAScore;
-              const gameUrl = buildGameUrl(matchup.year, matchup.week, game.team_a, game.team_b);
+              const gameUrl = buildGameUrl(matchup.year, matchup.week, matchup.teamAId, matchup.teamBId);
               return (
                 <a href={gameUrl} style="text-decoration: none; display: block;">
                   <div style="display: grid; grid-template-columns: auto auto 1fr auto auto 1fr; gap: 0.75rem; align-items: center; padding: 0.75rem; background-color: var(--color-surface); border: 1px solid var(--color-border); border-radius: 4px;">
@@ -220,10 +238,10 @@ function buildGameUrl(year: number, week: number, teamA: string, teamB: string):
                     <div style={`color: ${isTeamAWinner ? 'var(--color-text-primary)' : 'var(--color-text-muted)'}; text-align: right; font-weight: 600;`}>
                       {game.team_a}
                     </div>
-                    <div style={`background-color: ${isTeamAWinner ? 'var(--color-gold)' : 'rgba(255, 255, 255, 0.1)'}; color: ${isTeamAWinner ? '#000' : 'var(--color-text-muted)'}; padding: 0.4rem 0.6rem; border-radius: 3px; font-weight: 600; font-size: 0.85rem; min-width: 50px; text-align: center;`}>
+                    <div class="sc-tabular" style={`background-color: ${isTeamAWinner ? 'var(--pine-600)' : 'var(--surface-inset)'}; color: ${isTeamAWinner ? 'var(--text-on-ink)' : 'var(--text-muted)'}; padding: 0.4rem 0.6rem; border-radius: var(--radius-xs); font-family: var(--font-mono); font-weight: 600; font-size: 0.85rem; min-width: 50px; text-align: center;`}>
                       {matchup.teamAScore.toFixed(1)}
                     </div>
-                    <div style={`background-color: ${isTeamBWinner ? 'var(--color-gold)' : 'rgba(255, 255, 255, 0.1)'}; color: ${isTeamBWinner ? '#000' : 'var(--color-text-muted)'}; padding: 0.4rem 0.6rem; border-radius: 3px; font-weight: 600; font-size: 0.85rem; min-width: 50px; text-align: center;`}>
+                    <div class="sc-tabular" style={`background-color: ${isTeamBWinner ? 'var(--pine-600)' : 'var(--surface-inset)'}; color: ${isTeamBWinner ? 'var(--text-on-ink)' : 'var(--text-muted)'}; padding: 0.4rem 0.6rem; border-radius: var(--radius-xs); font-family: var(--font-mono); font-weight: 600; font-size: 0.85rem; min-width: 50px; text-align: center;`}>
                       {matchup.teamBScore.toFixed(1)}
                     </div>
                     <div style={`color: ${isTeamBWinner ? 'var(--color-text-primary)' : 'var(--color-text-muted)'}; font-weight: 600;`}>

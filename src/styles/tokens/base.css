@@ -1,0 +1,69 @@
+/* ============================================================
+   SIXTH CITY DFL — BRAND UTILITY HELPERS
+   Element-level base rules live in global.css @layer base so
+   they order correctly against Tailwind preflight. This file
+   carries only the brand-level .sc-* helpers + box-sizing.
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* Eyebrow / standings label */
+.sc-eyebrow {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-semibold);
+  font-size: var(--text-xs);
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Tabular figures for scores & standings */
+.sc-tabular { font-variant-numeric: tabular-nums lining-nums; font-feature-settings: var(--nums-tabular); }
+
+/* Mono stat block */
+.sc-data { font-family: var(--font-mono); font-feature-settings: "tnum" 1; }
+
+/* Hudson's Bay point-blanket stripe — horizontal bar */
+.sc-stripe {
+  background: linear-gradient(
+    90deg,
+    var(--stripe-1) 0 25%,
+    var(--stripe-2) 25% 50%,
+    var(--stripe-3) 50% 75%,
+    var(--stripe-4) 75% 100%
+  );
+}
+/* thin top accent rule version */
+.sc-stripe-rule { height: 4px; width: 100%; }
+
+/* Hexagon clip ("Sixth City" geometry) — regular, pointed top & bottom. */
+.sc-hex        { aspect-ratio: 1; clip-path: var(--hex-clip); }
+.sc-hex-pointy { aspect-ratio: 1; clip-path: var(--hex-clip); }
+.sc-chamfer    { clip-path: var(--chamfer-md); }
+
+/* Paper grain — apply to a full-bleed section ground. */
+.sc-paper {
+  position: relative;
+}
+.sc-paper::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Letterpress label on cream */
+.sc-letterpress { text-shadow: var(--emboss-up); }
+
+/* Heavy almanac rule */
+.sc-rule { border: 0; border-top: var(--bw-rule) solid var(--rule-ink); }
+.sc-rule-hair { border: 0; border-top: 1px solid var(--border-hairline); }
+
+/* Visually-hidden (a11y) */
+.sc-sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}

@@ -1,0 +1,57 @@
+/* ============================================================
+   SIXTH CITY DFL — SPACING & LAYOUT
+   4px base grid. Heritage/almanac density: generous gutters,
+   tight data tables. Hexagon geometry exposed as clip-paths.
+   ============================================================ */
+
+:root {
+  /* ---- Spacing scale (4px base) ---- */
+  --space-0:  0;
+  --space-1:  0.25rem;  /* 4 */
+  --space-2:  0.5rem;   /* 8 */
+  --space-3:  0.75rem;  /* 12 */
+  --space-4:  1rem;     /* 16 */
+  --space-5:  1.5rem;   /* 24 */
+  --space-6:  2rem;     /* 32 */
+  --space-7:  2.5rem;   /* 40 */
+  --space-8:  3rem;     /* 48 */
+  --space-9:  4rem;     /* 64 */
+  --space-10: 5rem;     /* 80 */
+  --space-11: 6rem;     /* 96 */
+  --space-12: 8rem;     /* 128 */
+
+  /* ---- Radii — heritage = restrained, squared-ish ---- */
+  --radius-none: 0;
+  --radius-xs: 2px;
+  --radius-sm: 3px;
+  --radius-md: 5px;     /* default card / button */
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-pill: 999px;
+  --radius-disc: 50%;
+
+  /* ---- Border widths ---- */
+  --bw-hair: 1px;
+  --bw-rule: 2px;       /* almanac rule */
+  --bw-heavy: 3px;
+  --bw-frame: 4px;      /* emblem / poster frame */
+
+  /* ---- Container widths ---- */
+  --container-xs: 32rem;
+  --container-sm: 48rem;
+  --container-md: 64rem;
+  --container-lg: 76rem;
+  --container-xl: 88rem;
+  --container-bleed: 100%;
+
+  /* ---- Layout primitives ---- */
+  --gutter: var(--space-5);
+  --gutter-lg: var(--space-8);
+  --section-y: var(--space-10);
+
+  /* ---- Hexagon geometry ("Sixth City" motif) ---- */
+  --hex-clip: polygon(50% 0%, 93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%);
+  --hex-clip-pointy: var(--hex-clip);
+  --chamfer-sm: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  --chamfer-md: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+}

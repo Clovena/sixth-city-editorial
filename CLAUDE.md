@@ -166,27 +166,31 @@ const { Content } = rendered;
 
 ---
 
-## CSS Design Tokens (`src/styles/global.css`)
+## Design System — "Rust Belt Almanac × Northern Heritage"
+
+The site was rebranded from the old dark "neon-noir" look to the **Sixth City DFL design system** (imported from the `claude_design` MCP project `SCDFL Design System`). Identity in one line: **cream/parchment ground (never white), warm-charcoal ink (never `#000`), a single `ember` primary, supporting `pine / wheat-gold / steel-slate`, unified by a Hudson's Bay point-blanket stripe, hexagon geometry, industrial + almanac type. No neon, no glow, no emoji.**
+
+### Token files (`src/styles/tokens/`, imported by `global.css`)
+`fonts.css` · `colors.css` · `typography.css` · `spacing.css` · `elevation.css` · `motion.css` · `base.css` (the `.sc-*` helpers). Copied largely verbatim from the design project — treat them as the source of truth and edit sparingly.
 
 ```css
---color-bg: #0f0f0d
---color-surface: /* slightly lighter bg */
---color-border: /* subtle border */
---color-text-primary: /* main text */
---color-text-muted: /* secondary text */
-
---color-gold: #f2b22e
---color-gold-light: #ffca5c
---color-gold-dim: #b47e0f
---color-gold-surface: #f2b22e33   /* gold with alpha — used for winner highlight, dynasty bowl banner bg */
---color-gold-glow: #f2b22e66     /* gold with more alpha — used for dynasty bowl banner text/border */
-
---color-scc: #4a7fa5              /* SCC conference — blue tones */
---color-hcc: #e16a3b              /* HCC conference — orange/rust tones */
-
---font-display: "Playfair Display"
---font-body: "Inter"
+/* Surfaces (cream) */          --surface-page  #F4ECD8   --surface-card  #FAF5E9
+/* Ink (warm charcoal) */       --text-strong   #23201C   --text-muted    #5F574B
+/* Brand roles */               --brand-primary ember(#C84B28)  --brand-secondary pine(#1C5B3A)
+                                --brand-tertiary gold(#CCA52C)   --brand-cool slate(#335060)
+/* Palette ramps */             --ember-*  --pine-*  --gold-*  --slate-*  --paper-*  --ink-*
+/* Status (organic) */          win = pine · loss = ember · tie = slate
+/* Type */  --font-display "Big Shoulders Display"  --font-serif "Spectral"
+            --font-sans "Archivo"  --font-mono "Spline Sans Mono"
+/* Signature */  .sc-stripe (HBC blanket)  .sc-eyebrow  .sc-tabular  .sc-data
+                 .sc-chamfer  .sc-hex  .sc-paper (grain)  [data-theme="ink"] (broadcast band)
 ```
+
+### Legacy `--color-*` bridge (important)
+`global.css` keeps a **bridge** that remaps every retired dark-theme `--color-*` name onto the new palette (e.g. `--color-bg → --surface-page`, `--color-text-primary → --text-strong`, `--color-gold → --gold-700`, all `*-glow → *` flat tint). This inverts dark→light automatically, so pages authored against the old variables render correctly in the new brand. When touching a page, prefer the new semantic tokens directly; the bridge is a safety net, not the target.
+
+### Brand assets (`public/brand/`)
+`emblem.svg` (header/favicon), `emblem_white.svg`. The Hudson's Bay stripe is a CSS gradient (`.sc-stripe`), not an asset. Real franchise logos stay in `public/images/logos/` — the design project's `assets/franchises/*` (a fictional demo world) are intentionally NOT used. **The emblem is a placeholder** pending the real league mark. Fonts + Phosphor icons load via CDN (open-license substitutions).
 
 ---
 

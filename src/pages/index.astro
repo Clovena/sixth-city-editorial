@@ -75,17 +75,17 @@ for (const m of champMatchups) {
 
 <Layout title="SCDFL" description="Sixth City Dynasty Fantasy Football League. 14 franchises, 5 seasons, 4 champions. Est. 2021.">
 
-  <!-- Hero -->
-  <div style="max-width: 1200px; margin: 0 auto; padding: 0 1.5rem;">
-    <div style="padding: 5rem 0 4rem; border-bottom: 1px solid var(--color-border);">
+  <!-- Hero — parchment ground -->
+  <section class="home-hero sc-paper">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 5rem 1.5rem 4.5rem;">
 
-      <h1 style="font-family: var(--font-display); font-size: clamp(2.5rem, 7vw, 5rem); font-weight: 700; line-height: 1.05; letter-spacing: -0.02em; color: var(--color-text-primary); margin: 0 0 1.5rem; max-width: 14ch;">
+      <p class="sc-eyebrow" style="color: var(--gold-700); margin-bottom: 1.25rem;">Est. 2021 &bull; Cleveland, Ohio</p>
+
+      <h1 style="font-family: var(--font-display); font-size: clamp(2.75rem, 8vw, 5.5rem); font-weight: 900; line-height: 0.98; letter-spacing: -0.02em; color: var(--text-strong); margin: 0 0 1.5rem; max-width: 15ch; text-transform: uppercase;">
         Sixth City Dynasty Football League
       </h1>
 
-      <p style="font-family: var(--font-body); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--color-gold-dim); margin-bottom: 1.25rem;">Est. 2021 &bull; Cleveland, Ohio</p>
-
-      <p class="page-subtitle" style="font-size: 1.05rem; color: var(--color-text-secondary); line-height: 1.65; max-width: 58ch; margin: 0 0 2.5rem;">
+      <p style="font-family: var(--font-serif); font-size: 1.1rem; color: var(--text-body); line-height: 1.62; max-width: 58ch; margin: 0 0 2.25rem;">
         The Sixth City Dynasty Football League was founded in 2021 as a
         branch off of a standard redraft league with origins in the Sigma
         Phi Epsilon Ohio Zeta chapter. Rooted in Cleveland, Sixth City is
@@ -93,26 +93,30 @@ for (const m of champMatchups) {
       </p>
 
       <!-- Season status -->
-      <div style="margin-top: 2rem; display: inline-flex; align-items: center; gap: 0.75rem; padding: 0.6rem 1rem; background-color: var(--color-surface); border: 1px solid var(--color-border);">
-        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: var(--color-gold); opacity: 0.6;"></span>
-        <span style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-secondary); letter-spacing: 0.04em;">Season 6 begins September 9th, 2026</span>
+      <div style="display: inline-flex; align-items: center; gap: 0.7rem; padding: 0.55rem 1rem; background-color: var(--surface-sunken); border: 1px solid var(--border-hairline);">
+        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: var(--ember-500);"></span>
+        <span class="sc-tabular" style="font-family: var(--font-sans); font-size: 0.8rem; font-weight: 600; color: var(--text-muted); letter-spacing: 0.03em;">Season 6 begins September 9th, 2026</span>
       </div>
-      
-      <!-- Primary section nav -->
-      <div class="section-nav-grid" style="margin-top: 2rem; display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background-color: var(--color-border); margin-bottom: 0;">
 
-        <a href="/scores" style="text-decoration: none; display: block; background-color: var(--color-surface); padding: 2rem; transition: background-color 0.15s ease;" onmouseover="this.style.backgroundColor='var(--color-surface-alt)'" onmouseout="this.style.backgroundColor='var(--color-surface)'">
-          <h3 style="font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; color: var(--color-text-primary); margin: 0 0 0.5rem; line-height: 1.25;">Scoreboard</h3>
-          <p style="font-size: 0.85rem; color: var(--color-text-secondary); line-height: 1.5; margin: 0 0 1rem;">Scores and recaps of every game across the season. Check on this week's matchups, revisit historical showdowns, and explore the way history was made.</p>
-          <span style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-gold);">View Scores &#8594;</span>
-        </a>
+    </div>
+    <div class="sc-stripe" style="height: 4px; width: 100%;" aria-hidden="true"></div>
+  </section>
 
-        <a href="/content" style="text-decoration: none; display: block; background-color: var(--color-surface); padding: 2rem; transition: background-color 0.15s ease;" onmouseover="this.style.backgroundColor='var(--color-surface-alt)'" onmouseout="this.style.backgroundColor='var(--color-surface)'">
-          <h3 style="font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; color: var(--color-text-primary); margin: 0 0 0.5rem; line-height: 1.25;">Content</h3>
-          <p style="font-size: 0.85rem; color: var(--color-text-secondary); line-height: 1.5; margin: 0 0 1rem;">Power Rankings, mock drafts, schedule previews, and more. Written by the commissioner and other league members.</p>
-          <span style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-gold);">View Content &#8594;</span>
-        </a>
-      </div>
+  <!-- Primary section nav -->
+  <div style="max-width: 1200px; margin: 0 auto; padding: 0 1.5rem;">
+    <div class="section-nav-grid" style="margin-top: 3rem; display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background-color: var(--border-hairline);">
+
+      <a href="/scores" class="section-nav-card">
+        <h3 class="section-nav-title">Scoreboard</h3>
+        <p class="section-nav-desc">Scores and recaps of every game across the season. Check on this week's matchups, revisit historical showdowns, and explore the way history was made.</p>
+        <span class="section-nav-cta">View Scores &#8594;</span>
+      </a>
+
+      <a href="/content" class="section-nav-card">
+        <h3 class="section-nav-title">Content</h3>
+        <p class="section-nav-desc">Power Rankings, mock drafts, schedule previews, and more. Written by the commissioner and other league members.</p>
+        <span class="section-nav-cta">View Content &#8594;</span>
+      </a>
     </div>
   </div>
 
@@ -120,38 +124,38 @@ for (const m of champMatchups) {
   <!-- Recent Dynasty Bowls -->
   <div style="max-width: 1200px; margin: 0 auto; padding: 0 1.5rem;">
     <div style="margin-top: 4rem;">
-      <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1.75rem; flex-wrap: wrap; gap: 0.75rem;">
-        <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; margin: 0; color: var(--color-text-primary);">Recent Dynasty Bowls</h2>
-        <a href="/history" style="font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-gold-dim);">Full History &#8594;</a>
+      <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem; border-bottom: 2px solid var(--rule-ink); padding-bottom: 0.75rem;">
+        <h2 style="font-family: var(--font-display); font-size: 1.75rem; font-weight: 700; margin: 0; color: var(--text-strong); letter-spacing: -0.01em;">Recent Dynasty Bowls</h2>
+        <a href="/history" class="sc-eyebrow" style="color: var(--text-link);">Full History &#8594;</a>
       </div>
 
-      <div style="display: flex; flex-direction: column; gap: 1px; background-color: var(--color-border);">
+      <div style="display: flex; flex-direction: column; gap: 1px; background-color: var(--border-hairline); border: 1px solid var(--border-hairline);">
         {recentBowls.map(bowl => {
           const winner = bowl.winner;
           const loser = bowl.loser;
           return (
-            <div class="dynasty-bowl-row" style="background-color: var(--color-surface); padding: 1.5rem 1.75rem; display: grid; grid-template-columns: 80px 1fr 1fr; gap: 2rem; align-items: center;">
+            <div class="dynasty-bowl-row" style="background-color: var(--surface-card); padding: 1.5rem 1.75rem; display: grid; grid-template-columns: 90px 1fr 1fr; gap: 2rem; align-items: center;">
 
               <div>
-                <p style="font-family: var(--font-display); font-size: 1.75rem; font-weight: 700; color: var(--color-gold); line-height: 1; margin: 0;">{bowl.year}</p>
-                <p style="font-size: 0.7rem; color: var(--color-text-muted); margin: 0.2rem 0 0;">{bowl.label}</p>
+                <p class="sc-tabular" style="font-family: var(--font-display); font-size: 2rem; font-weight: 900; color: var(--gold-700); line-height: 1; margin: 0;">{bowl.year}</p>
+                <p class="sc-eyebrow" style="font-size: 0.62rem; color: var(--text-muted); margin: 0.35rem 0 0;">{bowl.label}</p>
               </div>
 
               <div style={`border-left: 3px solid ${winner?.colors[0]}; padding-left: 1.25rem; display: flex; align-items: center; gap: 0.9rem;`}>
                 <img
                   src={`/images/logos/${winner?.abbr}.png`}
                   alt=""
-                  width="32"
-                  height="32"
+                  width="34"
+                  height="34"
                   style="object-fit: contain; flex-shrink: 0;"
                   onerror="this.style.display='none'"
                 />
                 <div>
-                  <p style="font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-gold-dim); margin: 0 0 0.2rem;">Champion</p>
-                  <a href={`/franchises/${winner?.abbr}`} style="font-family: var(--font-display); font-size: 1.05rem; font-weight: 700; color: var(--color-gold); text-decoration: none; line-height: 1.2; display: block;">
+                  <p class="sc-eyebrow" style="font-size: 0.6rem; color: var(--gold-700); margin: 0 0 0.2rem;">Champion</p>
+                  <a href={`/franchises/${winner?.abbr}`} style="font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; color: var(--text-strong); text-decoration: none; line-height: 1.2; display: block;">
                     {winner?.name}
                   </a>
-                  <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0.2rem 0 0;">{winner?.abbr} &bull; {winner?.owner}</p>
+                  <p style="font-family: var(--font-sans); font-size: 0.75rem; color: var(--text-muted); margin: 0.2rem 0 0;">{winner?.abbr} &bull; {winner?.owner}</p>
                 </div>
               </div>
 
@@ -159,17 +163,17 @@ for (const m of champMatchups) {
                 <img
                   src={`/images/logos/${loser?.abbr}.png`}
                   alt=""
-                  width="32"
-                  height="32"
-                  style="object-fit: contain; flex-shrink: 0; opacity: 0.6;"
+                  width="34"
+                  height="34"
+                  style="object-fit: contain; flex-shrink: 0; opacity: 0.55;"
                   onerror="this.style.display='none'"
                 />
                 <div>
-                  <p style="font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-muted); margin: 0 0 0.2rem;">Runner-Up</p>
-                  <a href={`/franchises/${loser?.abbr}`} style="font-family: var(--font-display); font-size: 1.05rem; font-weight: 600; color: var(--color-text-secondary); text-decoration: none; line-height: 1.2; display: block;">
+                  <p class="sc-eyebrow" style="font-size: 0.6rem; color: var(--text-faint); margin: 0 0 0.2rem;">Runner-Up</p>
+                  <a href={`/franchises/${loser?.abbr}`} style="font-family: var(--font-display); font-size: 1.2rem; font-weight: 600; color: var(--text-muted); text-decoration: none; line-height: 1.2; display: block;">
                     {loser?.name}
                   </a>
-                  <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0.2rem 0 0;">{loser?.abbr} &bull; {loser?.owner}</p>
+                  <p style="font-family: var(--font-sans); font-size: 0.75rem; color: var(--text-faint); margin: 0.2rem 0 0;">{loser?.abbr} &bull; {loser?.owner}</p>
                 </div>
               </div>
 
@@ -182,30 +186,68 @@ for (const m of champMatchups) {
 
   <!-- Secondary section nav -->
   <div style="max-width: 1200px; margin: 0 auto; padding: 0 1.5rem;">
-    <div class="section-nav-grid" style="margin-top: 4rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background-color: var(--color-border); margin-bottom: 0;">
+    <div class="section-nav-grid" style="margin-top: 4rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background-color: var(--border-hairline);">
 
-      <a href="/history" style="text-decoration: none; display: block; background-color: var(--color-surface); padding: 2rem; transition: background-color 0.15s ease;" onmouseover="this.style.backgroundColor='var(--color-surface-alt)'" onmouseout="this.style.backgroundColor='var(--color-surface)'">
-        <h3 style="font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; color: var(--color-text-primary); margin: 0 0 0.5rem; line-height: 1.25;">History &amp; Records</h3>
-        <p style="font-size: 0.85rem; color: var(--color-text-secondary); line-height: 1.5; margin: 0 0 1rem;">Season results, the championship roll of honor, narrative recaps, and the full statistical record.</p>
-        <span style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-gold);">View History &#8594;</span>
+      <a href="/history" class="section-nav-card">
+        <h3 class="section-nav-title">History &amp; Records</h3>
+        <p class="section-nav-desc">Season results, the championship roll of honor, narrative recaps, and the full statistical record.</p>
+        <span class="section-nav-cta">View History &#8594;</span>
       </a>
 
-      <a href="/franchises" style="text-decoration: none; display: block; background-color: var(--color-surface); padding: 2rem; transition: background-color 0.15s ease;" onmouseover="this.style.backgroundColor='var(--color-surface-alt)'" onmouseout="this.style.backgroundColor='var(--color-surface)'">
-        <h3 style="font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; color: var(--color-text-primary); margin: 0 0 0.5rem; line-height: 1.25;">Franchises</h3>
-        <p style="font-size: 0.85rem; color: var(--color-text-secondary); line-height: 1.5; margin: 0 0 1rem;">All 14 franchises across the SCC and HCC. Ownership, history, colors, and individual franchise records.</p>
-        <span style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-gold);">View Franchises &#8594;</span>
+      <a href="/franchises" class="section-nav-card">
+        <h3 class="section-nav-title">Franchises</h3>
+        <p class="section-nav-desc">All 14 franchises across the SCC and HCC. Ownership, history, colors, and individual franchise records.</p>
+        <span class="section-nav-cta">View Franchises &#8594;</span>
       </a>
 
-      <a href="/spotlight-games" style="text-decoration: none; display: block; background-color: var(--color-surface); padding: 2rem; transition: background-color 0.15s ease;" onmouseover="this.style.backgroundColor='var(--color-surface-alt)'" onmouseout="this.style.backgroundColor='var(--color-surface)'">
-        <h3 style="font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; color: var(--color-text-primary); margin: 0 0 0.5rem; line-height: 1.25;">Spotlight Games</h3>
-        <p style="font-size: 0.85rem; color: var(--color-text-secondary); line-height: 1.5; margin: 0 0 1rem;">The 2026 bowl game slate, Rivalry Week, and the institutional pairings that define the regular season.</p>
-        <span style="font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-gold);">View Spotlight Games &#8594;</span>
+      <a href="/spotlight-games" class="section-nav-card">
+        <h3 class="section-nav-title">Spotlight Games</h3>
+        <p class="section-nav-desc">The 2026 bowl game slate, Rivalry Week, and the institutional pairings that define the regular season.</p>
+        <span class="section-nav-cta">View Spotlight Games &#8594;</span>
       </a>
     </div>
   </div>
 </Layout>
 
 <style>
+  .home-hero { background-color: var(--surface-page); }
+
+  .section-nav-card {
+    text-decoration: none;
+    display: block;
+    background-color: var(--surface-card);
+    padding: 2rem;
+    transition: background-color var(--dur-fast) var(--ease-standard);
+  }
+  .section-nav-card:hover {
+    background-color: var(--surface-sunken);
+    text-decoration: none;
+  }
+  .section-nav-title {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-strong);
+    margin: 0 0 0.5rem;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+  .section-nav-desc {
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    color: var(--text-body);
+    line-height: 1.55;
+    margin: 0 0 1rem;
+  }
+  .section-nav-cta {
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-link);
+  }
+
   @media (max-width: 768px) {
     /* Quick stats: 2×2 grid filling full width */
     .quick-stats-grid {

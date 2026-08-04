@@ -8,6 +8,14 @@ interface Props {
 
 const { title, description = "Official archive of the Sixth City Dynasty Fantasy Football League. Est. 2021." } = Astro.props;
 const pageTitle = title === 'SCDFL' ? title : `${title} — SCDFL`;
+
+const navLinks = [
+  { href: '/history', label: 'History' },
+  { href: '/franchises', label: 'Franchises' },
+  { href: '/spotlight-games', label: 'Spotlight Games' },
+  { href: '/scores', label: 'Scores' },
+  { href: '/content', label: 'Content' },
+];
 ---
 
 <!doctype html>
@@ -16,78 +24,54 @@ const pageTitle = title === 'SCDFL' ? title : `${title} — SCDFL`;
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
+    <meta name="theme-color" content="#F4ECD8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" />
+    <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" />
     <title>{pageTitle}</title>
   </head>
-  <body style="background-color: #0f0f0d; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden;">
+  <body>
 
-    <header style="border-bottom: 1px solid var(--color-border); position: sticky; top: 0; z-index: 50; background-color: rgba(15,15,13,0.95); backdrop-filter: blur(8px);">
-      <div style="max-width: 1200px; margin: 0 auto; padding: 0 1.5rem;">
-        <div style="display: flex; align-items: center; justify-content: space-between; height: 60px;">
+    <header class="site-header">
+      <div class="sc-stripe site-header-stripe" aria-hidden="true"></div>
+      <div class="site-header-inner">
 
-          <a href="/" style="display: flex; flex-direction: column; gap: 0; color: var(--color-text-primary); text-decoration: none;">
-            <span style="font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; line-height: 1.1; letter-spacing: -0.01em;">Sixth City</span>
-            <span class="header-subtitle" style="font-family: var(--font-body); font-size: 0.6rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--color-gold-dim);">Dynasty Football League</span>
-          </a>
+        <a href="/" class="brand-lockup">
+          <img src="/brand/emblem.svg" width="40" height="40" alt="" class="brand-emblem" />
+          <span class="brand-text">
+            <span class="brand-name">Sixth City</span>
+            <span class="brand-sub">Dynasty Fantasy League</span>
+          </span>
+        </a>
 
-          <button id="hamburger-btn" aria-label="Toggle navigation" aria-expanded="false">
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
+        <button id="hamburger-btn" aria-label="Toggle navigation" aria-expanded="false">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
 
-          <nav id="main-nav">
-            <ul style="display: flex; align-items: center; gap: 0; list-style: none; margin: 0; padding: 0;">
-              <li>
-                <a href="/history"
-                   style="font-family: var(--font-body); font-size: 0.8rem; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-secondary); padding: 0.5rem 0.9rem; display: block; transition: color 0.15s ease;"
-                   onmouseover="this.style.color='var(--color-text-primary)'"
-                   onmouseout="this.style.color='var(--color-text-secondary)'">History</a>
-              </li>
-              <li>
-                <a href="/franchises"
-                   style="font-family: var(--font-body); font-size: 0.8rem; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-secondary); padding: 0.5rem 0.9rem; display: block; transition: color 0.15s ease;"
-                   onmouseover="this.style.color='var(--color-text-primary)'"
-                   onmouseout="this.style.color='var(--color-text-secondary)'">Franchises</a>
-              </li>
-              <li>
-                <a href="/spotlight-games"
-                   style="font-family: var(--font-body); font-size: 0.8rem; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-secondary); padding: 0.5rem 0.9rem; display: block; transition: color 0.15s ease;"
-                   onmouseover="this.style.color='var(--color-text-primary)'"
-                   onmouseout="this.style.color='var(--color-text-secondary)'">Spotlight Games</a>
-              </li>
-              <li>
-                <a href="/scores"
-                   style="font-family: var(--font-body); font-size: 0.8rem; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-secondary); padding: 0.5rem 0.9rem; display: block; transition: color 0.15s ease;"
-                   onmouseover="this.style.color='var(--color-text-primary)'"
-                   onmouseout="this.style.color='var(--color-text-secondary)'">Scores</a>
-              </li>
-              <li>
-                <a href="/content"
-                   style="font-family: var(--font-body); font-size: 0.8rem; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-secondary); padding: 0.5rem 0.9rem; display: block; transition: color 0.15s ease;"
-                   onmouseover="this.style.color='var(--color-text-primary)'"
-                   onmouseout="this.style.color='var(--color-text-secondary)'">Content</a>
-              </li>
-            </ul>
-          </nav>
-
-        </div>
+        <nav id="main-nav">
+          <ul>
+            {navLinks.map(link => (
+              <li><a href={link.href} class="nav-link">{link.label}</a></li>
+            ))}
+          </ul>
+        </nav>
       </div>
     </header>
 
-    <main style="flex: 1;">
+    <main>
       <slot />
     </main>
 
-    <footer style="border-top: 1px solid var(--color-border); margin-top: 6rem; padding: 2.5rem 0;">
-      <div style="max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
-        <div>
-          <p style="font-family: var(--font-display); font-size: 0.95rem; font-weight: 600; color: var(--color-text-secondary); margin: 0;">
-            Sixth City Dynasty Football League
-          </p>
-          <p style="font-family: var(--font-body); font-size: 0.75rem; color: var(--color-text-muted); margin: 0.2rem 0 0;">
-            Est. 2021 &bull; Copyright © Zacalytics &bull; Some rights reserved.
-          </p>
+    <footer class="site-footer">
+      <div class="sc-stripe site-footer-stripe" aria-hidden="true"></div>
+      <div class="site-footer-inner">
+        <div class="footer-brand">
+          <div>
+            <p class="footer-title">Sixth City Dynasty Fantasy League</p>
+            <p class="footer-meta">Est. 2021 &bull; Cleveland, Ohio &bull; Copyright © Zacalytics &bull; Some rights reserved.</p>
+          </div>
         </div>
       </div>
     </footer>
@@ -96,7 +80,157 @@ const pageTitle = title === 'SCDFL' ? title : `${title} — SCDFL`;
 </html>
 
 <style is:global>
-  /* Hamburger button — hidden on desktop */
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+
+  main { flex: 1; }
+
+  /* ---- Header ---- */
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background-color: var(--surface-card);
+    border-bottom: 1px solid var(--border-default);
+    box-shadow: var(--shadow-1);
+  }
+
+  .site-header-stripe { height: 4px; width: 100%; }
+
+  .site-header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    height: 66px;
+  }
+
+  .brand-lockup {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    text-decoration: none;
+    color: var(--text-strong);
+  }
+  .brand-lockup:hover { text-decoration: none; color: var(--text-strong); }
+
+  .brand-emblem { display: block; flex-shrink: 0; }
+
+  .brand-text { line-height: 1; }
+
+  .brand-name {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 900;
+    line-height: 0.95;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    color: var(--text-strong);
+  }
+
+  .brand-sub {
+    display: block;
+    font-family: var(--font-sans);
+    font-size: 0.58rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--slate-600);
+    margin-top: 0.2rem;
+  }
+
+  #main-nav { margin-left: auto; }
+
+  #main-nav ul {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .nav-link {
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 0.5rem 0.85rem;
+    display: block;
+    position: relative;
+    transition: var(--transition-color);
+  }
+  .nav-link:hover {
+    color: var(--text-strong);
+    text-decoration: none;
+  }
+  .nav-link::after {
+    content: "";
+    position: absolute;
+    left: 0.85rem;
+    right: 0.85rem;
+    bottom: 0.15rem;
+    height: 2px;
+    background-color: var(--ember-500);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--dur-fast) var(--ease-standard);
+  }
+  .nav-link:hover::after { transform: scaleX(1); }
+
+  .header-season { flex-shrink: 0; }
+
+  .season-badge {
+    font-family: var(--font-sans);
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--slate-600);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-pill);
+    padding: 0.3rem 0.7rem;
+    white-space: nowrap;
+  }
+
+  /* ---- Footer ---- */
+  .site-footer {
+    margin-top: 6rem;
+    background-color: var(--surface-card);
+    border-top: 1px solid var(--border-hairline);
+  }
+  .site-footer-stripe { height: 3px; width: 100%; }
+  .site-footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2.25rem 1.5rem;
+  }
+  .footer-brand { display: flex; align-items: flex-start; gap: 0.75rem; }
+  .footer-title {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text-strong);
+    margin: 0;
+  }
+  .footer-meta {
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin: 0.25rem 0 0;
+  }
+
+  /* ---- Hamburger (hidden on desktop) ---- */
   #hamburger-btn {
     display: none;
     flex-direction: column;
@@ -108,52 +242,37 @@ const pageTitle = title === 'SCDFL' ? title : `${title} — SCDFL`;
     padding: 0.5rem;
     z-index: 60;
   }
-
   #hamburger-btn span {
     display: block;
     width: 22px;
     height: 2px;
-    background-color: var(--color-text-primary);
+    background-color: var(--text-strong);
     transition: transform 0.2s ease, opacity 0.2s ease;
   }
 
   @media (max-width: 768px) {
-    /* Hide header subtitle */
-    .header-subtitle {
-      display: none;
-    }
+    .brand-sub { display: none; }
+    .header-season { display: none; }
 
-    /* Show hamburger */
-    #hamburger-btn {
-      display: flex;
-    }
+    #hamburger-btn { display: flex; margin-left: auto; }
 
-    /* Nav drawer — hidden until toggled */
     #main-nav {
       display: none;
       position: absolute;
-      top: 60px;
+      top: calc(66px + 4px);
       left: 0;
       right: 0;
-      background-color: rgba(15, 15, 13, 0.98);
-      border-bottom: 1px solid var(--color-border);
+      margin-left: 0;
+      background-color: var(--surface-card);
+      border-bottom: 1px solid var(--border-default);
+      box-shadow: var(--shadow-3);
       padding: 0.5rem 0;
       z-index: 50;
     }
-
-    #main-nav.open {
-      display: block;
-    }
-
-    #main-nav ul {
-      flex-direction: column !important;
-      gap: 0 !important;
-    }
-
-    #main-nav ul li a {
-      padding: 0.75rem 1.5rem !important;
-      display: block;
-    }
+    #main-nav.open { display: block; }
+    #main-nav ul { flex-direction: column !important; gap: 0 !important; align-items: stretch; }
+    .nav-link { padding: 0.85rem 1.5rem !important; }
+    .nav-link::after { display: none; }
   }
 </style>
 

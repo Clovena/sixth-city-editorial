@@ -261,6 +261,53 @@ for (const m of champMatchups ?? []) {
 // ── Determine available seasons for year selector ─────────────────────────
 const availableYears = Object.keys(matchupsData).map(Number).sort((a, b) => b - a);
 const defaultSeasonYear = availableYears[0] ?? (seasonRows?.[seasonRows.length - 1]?.year ?? 2021);
+
+// ── Game-by-game performance chart (Widget A) ─────────────────────────────
+// One row per regular-season game this franchise (all identity eras) has played.
+// roster_id in matchups equals the stable sleeper_id, so predecessor games are
+// already included in matchupRows; franchiseForYear resolves the era's real abbr.
+type GamePerf = {
+  year: number;
+  week: number;
+  pf: number;
+  pa: number;
+  diff: number;
+  result: 'W' | 'L' | 'T';
+  myAbbr: string;
+  oppAbbr: string;
+  oppName: string;
+};
+
+const gamePerf: GamePerf[] = [];
+for (const m of matchupRows ?? []) {
+  if (m.game_type !== 0) continue;               // regular season only
+  const sa = m.score_a ?? 0;
+  const sb = m.score_b ?? 0;
+  if (sa === 0 && sb === 0) continue;            // drop unplayed placeholder weeks
+
+  const iAmA = m.roster_id_a === sleeperId;
+  const pf = iAmA ? sa : sb;
+  const pa = iAmA ? sb : sa;
+  const oppRid = iAmA ? m.roster_id_b : m.roster_id_a;
+  const diff = pf - pa;
+  const result: 'W' | 'L' | 'T' = pf > pa ? 'W' : pf < pa ? 'L' : 'T';
+
+  const myId = franchiseForYear(franchise.sleeper_id, m.year);
+  const oppId = franchiseForYear(String(oppRid), m.year);
+
+  gamePerf.push({
+    year: m.year,
+    week: m.week,
+    pf, pa, diff, result,
+    myAbbr: myId?.abbr ?? franchise.abbr,
+    oppAbbr: oppId?.abbr ?? 'UNK',
+    oppName: oppId?.name ?? 'Unknown',
+  });
+}
+gamePerf.sort((a, b) => a.year - b.year || a.week - b.week);
+
+const perfSeasons = [...new Set(gamePerf.map(g => g.year))].sort((a, b) => a - b);
+const perfDefaultSeason = perfSeasons.length > 0 ? perfSeasons[perfSeasons.length - 1] : defaultSeasonYear;
 ---
 
 <Layout
@@ -577,6 +624,41 @@ const defaultSeasonYear = availableYears[0] ?? (seasonRows?.[seasonRows.length -
       </div>
     </div>
 
+    <!-- Game-by-game performance chart (Widget A) -->
+    {gamePerf.length > 0 && (
+      <div style="margin-top: 4rem;">
+        <div style="padding-bottom: 1.5rem; border-bottom: 1px solid var(--color-border);">
+          <h2 style="font-family: var(--font-display); font-size: 1.75rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--color-text-primary);">Game-by-Game</h2>
+          <p style="font-size: 0.85rem; color: var(--color-text-muted); margin: 0;">
+            Every regular-season game, point differential per week. Click a bar for the recap.
+          </p>
+
+          <!-- Mobile-only season selector -->
+          <div class="perf-season-wrap" style="margin-top: 1.25rem; flex-direction: column; gap: 0.4rem; max-width: 180px;">
+            <label for="perf-season-select" style="font-family: var(--font-body); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-muted);">Season</label>
+            <select id="perf-season-select" style="font-family: var(--font-body); font-size: 0.9rem; color: var(--color-text-primary); background-color: var(--color-surface); border: 1px solid var(--color-border); border-radius: 4px; padding: 0.5rem 2rem 0.5rem 0.75rem; appearance: none; -webkit-appearance: none; background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%226%22 viewBox=%220 0 10 6%22><path d=%22M0 0l5 6 5-6z%22 fill=%22%23888%22/></svg>'); background-repeat: no-repeat; background-position: right 0.6rem center; cursor: pointer;">
+              {perfSeasons.slice().reverse().map(yr => (
+                <option value={yr} selected={yr === perfDefaultSeason}>{yr} Season</option>
+              ))}
+            </select>
+          </div>
+
+          <!-- Legend -->
+          <div style="display: flex; align-items: center; gap: 1.1rem; margin-top: 1rem; flex-wrap: wrap;">
+            <span style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; color: var(--color-text-muted);">
+              <span style="width: 12px; height: 12px; background-color: var(--status-win); display: inline-block; border-radius: 2px;"></span> Win
+            </span>
+            <span style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; color: var(--color-text-muted);">
+              <span style="width: 12px; height: 12px; background-color: var(--status-loss); display: inline-block; border-radius: 2px;"></span> Loss
+            </span>
+          </div>
+        </div>
+
+        <div id="perf-chart-wrap" class="perf-chart-wrap"></div>
+        <div id="perf-tooltip" class="perf-tooltip" hidden></div>
+      </div>
+    )}
+
     <!-- Games section -->
     {availableYears.length > 0 && (
       <div style="margin-top: 4rem;">
@@ -768,6 +850,67 @@ const defaultSeasonYear = availableYears[0] ?? (seasonRows?.[seasonRows.length -
     padding: 3rem 0;
     text-align: center;
   }
+
+  /* ── Game-by-game performance chart (Widget A) ── */
+  /* Season selector is mobile-only; full history renders on desktop. */
+  .perf-season-wrap {
+    display: none;
+  }
+
+  .perf-chart-wrap {
+    position: relative;
+    margin-top: 1.75rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 0.25rem;
+  }
+
+  :global(.perf-bar) {
+    cursor: pointer;
+    transition: opacity 0.1s ease;
+  }
+  :global(.perf-chart-wrap:hover .perf-bar:not(:hover)) {
+    opacity: 0.55;
+  }
+
+  .perf-tooltip {
+    position: fixed;
+    z-index: 50;
+    pointer-events: none;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border-light);
+    border-radius: 5px;
+    padding: 0.55rem 0.7rem;
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: var(--color-text-secondary);
+    box-shadow: 0 6px 20px rgba(28, 26, 23, 0.18);
+    max-width: 220px;
+  }
+  .perf-tooltip[hidden] { display: none; }
+  /* Tooltip contents are injected via innerHTML, so they never receive the
+     Astro scope attribute — target them with :global() or the rules won't match. */
+  :global(.perf-tooltip strong) {
+    display: block;
+    color: var(--color-text-primary);
+    font-weight: 700;
+    margin-bottom: 0.15rem;
+  }
+  :global(.perf-tt-result) { display: block; }
+  :global(.perf-tt-margin) { font-weight: 600; }
+  :global(.perf-tt-win) { color: var(--status-win); }
+  :global(.perf-tt-loss) { color: var(--status-loss); }
+
+  @media (max-width: 768px) {
+    /* On mobile the chart is scoped to one season via the visible selector. */
+    .perf-season-wrap {
+      display: flex !important;
+    }
+    .perf-chart-wrap {
+      overflow-x: hidden;
+    }
+  }
 </style>
 
 <script is:inline define:vars={{ matchupsData, franchiseIdentities, dynastyBowls, recapSlugsArr, defaultSeasonYear, abbr, sleeperId }}>
@@ -904,4 +1047,159 @@ const defaultSeasonYear = availableYears[0] ?? (seasonRows?.[seasonRows.length -
 
   // Initial render
   renderGames(defaultSeasonYear);
+</script>
+
+<!-- Game-by-game performance chart (Widget A) -->
+<script is:inline define:vars={{ gamePerf, perfDefaultSeason }}>
+  const perfWrap = document.getElementById('perf-chart-wrap');
+  const perfTip = document.getElementById('perf-tooltip');
+  const perfSelect = document.getElementById('perf-season-select');
+
+  if (perfWrap && gamePerf.length) {
+    const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
+
+    // Chart geometry
+    const TOP = 18, BOTTOM = 30, CHART_H = 300, LEFT = 34, RIGHT = 8;
+    const SVG_H = TOP + CHART_H + BOTTOM;
+    const HALF = CHART_H / 2;
+    const MIN_SLOT = 9, MAX_SLOT = 44;
+
+    const pad2 = (w) => String(w).padStart(2, '0');
+    function gameUrl(g) {
+      const [a, b] = [g.myAbbr.toLowerCase(), g.oppAbbr.toLowerCase()].sort();
+      return `/games/${g.year}/${pad2(g.week)}-${a}-${b}`;
+    }
+
+    // Desktop → whole history; mobile → one season at a time.
+    function currentGames() {
+      if (isMobile()) {
+        const yr = Number(perfSelect?.value ?? perfDefaultSeason);
+        return gamePerf.filter((g) => g.year === yr);
+      }
+      return gamePerf;
+    }
+
+    function render() {
+      const games = currentGames();
+      perfWrap.innerHTML = '';
+      if (!games.length) return;
+
+      const maxAbs = Math.max(1, ...games.map((g) => Math.abs(g.diff)));
+      const niceMax = Math.max(20, Math.ceil(maxAbs / 20) * 20);
+      const scale = HALF / niceMax;
+      const baseY = TOP + HALF;
+
+      const avail = perfWrap.clientWidth || 900;
+      const n = games.length;
+      const slot = Math.min(MAX_SLOT, Math.max(MIN_SLOT, (avail - LEFT - RIGHT) / n));
+      const svgW = Math.max(avail, LEFT + RIGHT + slot * n);
+      const barW = Math.max(3, slot * 0.66);
+
+      const parts = [];
+
+      // Differential gridlines + zero baseline
+      for (const v of [niceMax, niceMax / 2, 0, -niceMax / 2, -niceMax]) {
+        const y = baseY - v * scale;
+        const zero = v === 0;
+        parts.push(
+          `<line x1="${LEFT}" y1="${y}" x2="${svgW - RIGHT}" y2="${y}" ` +
+          `style="stroke:var(--color-border${zero ? '-light' : ''})" stroke-width="${zero ? 1.5 : 1}"` +
+          `${zero ? '' : ' stroke-dasharray="2 3"'} />`
+        );
+        parts.push(
+          `<text x="${LEFT - 6}" y="${y + 3}" text-anchor="end" font-size="9" ` +
+          `style="fill:var(--color-text-muted)">${v > 0 ? '+' : ''}${v}</text>`
+        );
+      }
+
+      // Bars + per-season dividers/labels
+      let prevYear = null;
+      for (let i = 0; i < n; i++) {
+        const g = games[i];
+        const x = LEFT + i * slot;
+
+        if (g.year !== prevYear) {
+          if (prevYear !== null) {
+            parts.push(
+              `<line x1="${x}" y1="${TOP - 6}" x2="${x}" y2="${TOP + CHART_H + 6}" ` +
+              `style="stroke:var(--color-border)" stroke-width="1" />`
+            );
+          }
+          parts.push(
+            `<text x="${x + 2}" y="${SVG_H - 9}" text-anchor="start" font-size="11" ` +
+            `font-weight="600" style="fill:var(--color-text-secondary)">${g.year}</text>`
+          );
+          prevYear = g.year;
+        }
+
+        const color = g.result === 'W' ? 'var(--status-win)'
+                    : g.result === 'L' ? 'var(--status-loss)'
+                    : 'var(--status-tie)';
+        let h, by;
+        if (g.result === 'T') { h = 2; by = baseY - 1; }
+        else { h = Math.max(1.5, Math.abs(g.diff) * scale); by = g.diff >= 0 ? baseY - h : baseY; }
+
+        const bx = x + (slot - barW) / 2;
+        parts.push(
+          `<rect class="perf-bar" data-idx="${i}" x="${bx.toFixed(1)}" y="${by.toFixed(1)}" ` +
+          `width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="1" style="fill:${color}" />`
+        );
+      }
+
+      perfWrap.innerHTML =
+        `<svg width="${svgW}" height="${SVG_H}" viewBox="0 0 ${svgW} ${SVG_H}" ` +
+        `role="img" aria-label="Regular-season point differential, game by game" ` +
+        `style="display:block;font-family:var(--font-body)">${parts.join('')}</svg>`;
+
+      perfWrap._games = games;
+    }
+
+    function barFromEvent(e) {
+      const el = e.target.closest('.perf-bar');
+      if (!el) return null;
+      return (perfWrap._games || [])[Number(el.dataset.idx)] ?? null;
+    }
+
+    perfWrap.addEventListener('click', (e) => {
+      const g = barFromEvent(e);
+      if (g) window.location.href = gameUrl(g);
+    });
+
+    // Tooltip: desktop / hover-capable pointers only.
+    if (canHover) {
+      perfWrap.addEventListener('mousemove', (e) => {
+        const g = barFromEvent(e);
+        if (!g) { perfTip.hidden = true; return; }
+
+        const resTxt = g.result === 'W' ? 'Win' : g.result === 'L' ? 'Loss' : 'Tie';
+        const cls = g.result === 'W' ? 'perf-tt-win' : g.result === 'L' ? 'perf-tt-loss' : '';
+        const sign = g.diff > 0 ? '+' : '';
+
+        perfTip.innerHTML =
+          `<strong>${g.year} · Wk ${g.week}</strong>` +
+          `<span class="perf-tt-result"><span class="perf-tt-margin ${cls}">${resTxt} ${sign}${g.diff.toFixed(1)}</span> vs ${g.oppAbbr}</span>`;
+        perfTip.hidden = false;
+
+        const GAP = 14;
+        const tw = perfTip.offsetWidth, th = perfTip.offsetHeight;
+        let left = e.clientX + GAP, top = e.clientY + GAP;
+        if (left + tw > window.innerWidth - 8) left = e.clientX - tw - GAP;
+        if (top + th > window.innerHeight - 8) top = e.clientY - th - GAP;
+        perfTip.style.left = `${left}px`;
+        perfTip.style.top = `${top}px`;
+      });
+      perfWrap.addEventListener('mouseleave', () => { perfTip.hidden = true; });
+    }
+
+    perfSelect?.addEventListener('change', render);
+
+    let perfResizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(perfResizeTimer);
+      perfResizeTimer = setTimeout(render, 120);
+    });
+
+    render();
+  }
 </script>

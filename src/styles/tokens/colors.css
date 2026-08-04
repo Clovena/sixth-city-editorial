@@ -1,0 +1,177 @@
+/* ============================================================
+   SIXTH CITY DFL — COLOR SYSTEM
+   "Rust Belt almanac × Northern heritage"
+   Cream ground · charcoal ink · ember primary
+   Supporting trio: pine green · wheat gold · steel slate
+   Unifying logic: a Hudson's Bay point-blanket stripe
+   (green / ember / gold / indigo on cream) bridges the old
+   red-gold-navy with the new northern-wilderness palette.
+   No neon. No glow. Textures may be shiny, never electric.
+   ============================================================ */
+
+:root {
+  /* ---- PARCHMENT / PAPER (light theme ground) ---- */
+  --paper-50:  #FAF5E9;  /* lightest highlight */
+  --paper-100: #F4ECD8;  /* page ground (NOT white) */
+  --paper-200: #ECE2CB;  /* raised card */
+  --paper-300: #E2D6BA;  /* sunken / inset */
+  --paper-400: #D3C4A2;  /* edge / rule on paper */
+
+  /* ---- INK (warm charcoal, near-black) ---- */
+  --ink-900: #1C1A17;  /* deepest, broadcast band ground */
+  --ink-800: #23201C;  /* primary text */
+  --ink-700: #322E28;
+  --ink-600: #4A443B;
+  --ink-500: #5F574B;  /* muted text */
+  --ink-400: #847A69;  /* faint text */
+  --ink-300: #A89C86;  /* disabled */
+  --ink-200: #C3BBAC;  /* hsl(39,16%,72%) — light warm greige */
+  --ink-100: #DFDBD3;  /* hsl(39,16%,85%) — lightest warm greige */
+
+  /* ---- EMBER (primary brand — rust/Rust-Belt red) ---- */
+  --ember-900: #5E2012;
+  --ember-800: #7E2D17;
+  --ember-700: #9C3A1E;
+  --ember-600: #B5431F;
+  --ember-500: #C84B28;  /* PRIMARY */
+  --ember-400: #D9663F;
+  --ember-300: #E68A65;
+  --ember-200: #F0B398;
+  --ember-100: #F6D6C4;
+
+  /* ---- PINE (bottle/forest green — wilderness + HBC stripe) ---- */
+  --pine-900: #0C2A1B;
+  --pine-800: #123524;
+  --pine-700: #18472F;
+  --pine-600: #1C5B3A;  /* SECONDARY */
+  --pine-500: #2A6E48;
+  --pine-400: #3E875C;
+  --pine-300: #6BA585;
+  --pine-200: #A7C9B5;
+  --pine-100: #D6E5DC;
+
+  /* ---- GOLD (wheat/mustard — gold derivative + HBC stripe) ---- */
+  --gold-800: #7E6112;
+  --gold-700: #9C7A18;
+  --gold-600: #B8941F;
+  --gold-500: #CCA52C;  /* TERTIARY */
+  --gold-400: #DCBA4E;
+  --gold-300: #E8CE7E;
+  --gold-200: #F1E0AD;
+  --gold-100: #F8EFD3;
+
+  /* ---- SLATE (steel-navy — navy derivative + lake water + steel) ---- */
+  --slate-900: #16242C;
+  --slate-800: #1E323C;
+  --slate-700: #27414E;
+  --slate-600: #335060;  /* COOL ANCHOR */
+  --slate-500: #436578;
+  --slate-400: #5E8294;
+  --slate-300: #8AA7B6;
+  --slate-200: #BBCED7;
+  --slate-100: #DEE8ED;
+
+  /* ---- AURORA (restrained northern-sky teal — sparing accent, NEVER glowing) ---- */
+  --aurora-700: #154E49;
+  --aurora-600: #1C625C;
+  --aurora-500: #2C7A72;
+  --aurora-400: #4E988F;
+  --aurora-300: #7ABAB5;  /* soft light teal — IDP lineup surface */
+  --aurora-200: #ABD4D0;  /* hsl(175,32%,75%) — pale teal */
+
+  /* ---- INDIGO (deep blanket stripe — used in stripe only) ---- */
+  --indigo-700: #20283F;
+  --indigo-600: #2C3A5C;
+
+  /* ============================================================
+     SEMANTIC ALIASES
+     ============================================================ */
+
+  /* Surfaces */
+  --surface-page:    var(--paper-100);
+  --surface-card:    var(--paper-50);
+  --surface-raised:  #FFFDF7;
+  --surface-inset:   var(--paper-300);
+  --surface-sunken:  var(--paper-200);
+  --surface-ink:     var(--ink-900);   /* dark broadcast band on light page */
+  --surface-overlay: rgba(28, 26, 23, 0.55);
+
+  /* Text */
+  --text-strong:  var(--ink-800);
+  --text-body:    var(--ink-700);
+  --text-muted:   var(--ink-500);
+  --text-faint:   var(--ink-400);
+  --text-disabled:var(--ink-300);
+  --text-on-ink:  var(--paper-100);
+  --text-on-ink-muted: rgba(244, 236, 216, 0.62);
+  --text-on-brand:var(--paper-50);
+  --text-link:    var(--ember-700);
+  --text-link-hover: var(--ember-800);
+
+  /* Brand roles */
+  --brand-primary:   var(--ember-500);
+  --brand-primary-ink: var(--ember-800);
+  --brand-secondary: var(--pine-600);
+  --brand-tertiary:  var(--gold-500);
+  --brand-cool:      var(--slate-600);
+
+  /* Borders & rules */
+  --border-hairline: rgba(28, 26, 23, 0.12);
+  --border-default:  rgba(28, 26, 23, 0.20);
+  --border-strong:   rgba(28, 26, 23, 0.38);
+  --border-on-ink:   rgba(244, 236, 216, 0.16);
+  --rule-ink:        var(--ink-800);   /* heavy almanac hairline */
+
+  /* Status (organic, no neon) */
+  --status-win:     var(--pine-600);
+  --status-loss:    var(--ember-700);
+  --status-tie:     var(--slate-500);
+  --success:        var(--pine-600);
+  --success-surface:var(--pine-100);
+  --warning:        var(--gold-600);
+  --warning-surface:var(--gold-100);
+  --danger:         var(--ember-700);
+  --danger-surface: var(--ember-100);
+  --info:           var(--slate-600);
+  --info-surface:   var(--slate-100);
+
+  /* Focus ring */
+  --focus-ring: var(--slate-600);
+
+  /* Hudson's Bay blanket stripe order (for borrowing in components) */
+  --stripe-1: var(--pine-600);
+  --stripe-2: var(--ember-500);
+  --stripe-3: var(--gold-500);
+  --stripe-4: var(--indigo-600);
+}
+
+/* ============================================================
+   INK THEME — broadcast / dark surfaces
+   Use on dark "broadcast band" sections, score bugs, hero bars.
+   ============================================================ */
+[data-theme="ink"] {
+  --surface-page:    var(--ink-900);
+  --surface-card:    var(--ink-800);
+  --surface-raised:  var(--ink-700);
+  --surface-inset:   #16140F;
+  --surface-sunken:  #16140F;
+  --surface-ink:     var(--ink-900);
+  --surface-overlay: rgba(0, 0, 0, 0.6);
+
+  --text-strong:  var(--paper-50);
+  --text-body:    var(--paper-200);
+  --text-muted:   rgba(244, 236, 216, 0.66);
+  --text-faint:   rgba(244, 236, 216, 0.44);
+  --text-disabled:rgba(244, 236, 216, 0.28);
+  --text-on-ink:  var(--paper-100);
+  --text-link:    var(--gold-400);
+  --text-link-hover: var(--gold-300);
+
+  --border-hairline: rgba(244, 236, 216, 0.12);
+  --border-default:  rgba(244, 236, 216, 0.20);
+  --border-strong:   rgba(244, 236, 216, 0.40);
+  --rule-ink:        var(--paper-200);
+
+  --brand-primary:   var(--ember-400);
+  --brand-primary-ink: var(--ember-300);
+}
