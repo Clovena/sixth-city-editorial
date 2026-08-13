@@ -34,9 +34,10 @@ All sync scripts live in `scripts/lib/` and write directly to Supabase (schema `
 ## Tech Stack
 
 - **Astro 5** — static output, content collections, `import.meta.glob`
+- **`@astrojs/netlify` v6** — adapter required so individual routes can opt into on-demand (SSR) rendering. Pin to the 6.x line: 7.x needs Astro 6, 8.x needs Astro 7.
 - **Tailwind CSS 4** — via `@tailwindcss/vite` (not PostCSS)
 - **Supabase** — PostgreSQL database (schema `scdfl`); all league data lives here
-  - Build-time client: `src/lib/supabase.ts` (uses `SUPABASE_ANON_KEY` via `import.meta.env`)
+  - Build-time / request-time client: `src/lib/supabase.ts` (uses `SUPABASE_ANON_KEY` via `import.meta.env`, falling back to `process.env` for SSR routes)
   - Sync scripts: `scripts/lib/*.ts` (use `SUPABASE_SERVICE_KEY` via `dotenv`)
 - **Remark/Rehype** — custom plugin (`src/lib/remark-team-headers.ts`) for markdown AST transformation
 - **Node 18+** — see `.nvmrc`; also pinned in `netlify.toml` to fix lightningcss binding issue
@@ -45,6 +46,8 @@ All sync scripts live in `scripts/lib/` and write directly to Supabase (schema `
 ---
 
 ## Routes
+
+Every route is pre-rendered at build time (`output: 'static'`) **except** `/players/[id]`, which is rendered on demand — see "Rendering Modes" below.
 
 | URL | File |
 |-----|------|
@@ -57,7 +60,27 @@ All sync scripts live in `scripts/lib/` and write directly to Supabase (schema `
 | `/scores` | `src/pages/scores.astro` |
 | `/games/[year]/[slug]` | `src/pages/games/[year]/[slug].astro` |
 | `/content` | `src/pages/content.astro` |
-| `/players/[id]` | `src/pages/players/[id].astro` |
+| `/players/[id]` | `src/pages/players/[id].astro` (SSR) |
+
+---
+
+## Rendering Modes
+
+The site default is `output: 'static'` — `npm run build` emits plain HTML for every route. `astro.config.mjs` also registers `adapter: netlify()`, which exists solely so a route can opt out of pre-rendering.
+
+**`/players/[id]` is the only on-demand route.** Pre-rendering it meant one HTML file per started player, each firing ~8 Supabase queries at build time, which pushed Netlify builds past 15 minutes. It now carries:
+
+```ts
+export const prerender = false;   // no getStaticPaths — Astro errors if both are present
+```
+
+Consequences worth remembering:
+- **Queries run per request, not per build.** Independent queries in that page are batched with `Promise.all`; only genuinely dependent lookups (roster → franchise, draft → drafts → drafter) stay chained. Keep it that way — each new serial `await` is latency on every pageview.
+- **Supabase credentials are baked in at build, not read at runtime.** `import.meta.env.SUPABASE_URL` / `SUPABASE_ANON_KEY` are compile-time substitutions — Vite emits them as string literals into the SSR function bundle, so no runtime env var is required on Netlify. The `?? process.env` fallback in `src/lib/supabase.ts` only engages if the var was absent *at build time*. **Consequence: rotating the Supabase anon key requires a redeploy** — changing it in Netlify's environment variables alone leaves the old key compiled into the deployed function.
+- **Build output.** The adapter writes a `.netlify/v1/functions/ssr` bundle (gitignored) alongside `dist/`. The function is registered at `/*` with `preferStatic: true`, so static files always win and only unmatched paths (player pages) invoke it.
+- **A failed query degrades silently.** Supabase errors are ignored throughout the page (`.single()` results are read without checking `error`), so a transient network failure renders a player as "Free Agent" / "Undrafted" rather than erroring. At build time this was a one-off; at request time it can vary between pageviews.
+
+To add another on-demand route: add `export const prerender = false`, delete its `getStaticPaths`, and confirm any data it needs is available from the runtime environment.
 
 ---
 
@@ -312,6 +335,8 @@ Example: `/games/2025/15-bkb-low` (BKB vs. LOW, week 15)
 ## `getStaticPaths` Rule
 
 Astro's `getStaticPaths` runs in an isolated scope — module-level variables are NOT accessible inside it. All data loading (`import.meta.glob`, imports) must be re-initialized inside the function body. Vite deduplicates actual file reads at build time so there is no performance cost.
+
+Applies to pre-rendered routes only. On a route with `prerender = false`, `getStaticPaths` is meaningless and Astro errors if it is left in — read `Astro.params` directly instead.
 
 ---
 

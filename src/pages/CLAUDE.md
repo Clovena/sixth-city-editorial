@@ -62,6 +62,7 @@ Breakpoint: `@media (max-width: 768px)`. All mobile overrides use scoped `<style
 - Team A `border-right` removed (no adjacent column on mobile)
 
 ### `players/[id].astro`
+- **Only on-demand (SSR) route on the site** — `export const prerender = false`, no `getStaticPaths`. Data is fetched per request, so independent Supabase queries are batched in one `Promise.all` and only the roster→franchise and draft→drafts→drafter chains stay sequential. Adding a serial `await` here costs every visitor, not the build.
 - Page wrapper (`player-page-wrap`) constrains to screen width with `overflow-x: hidden` and tighter padding
 - Hero section reduces padding/margin
 - Layout grid (`player-layout-grid`) stacks to single column; sidebar moves below stats
