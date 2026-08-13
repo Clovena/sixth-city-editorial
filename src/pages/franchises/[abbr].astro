@@ -99,9 +99,16 @@ const { data: champMatchups, error: cmErr } = await supabase
 
 if (cmErr) throw new Error(`Championship matchups query failed: ${cmErr.message}`);
 
+// Drop not-yet-played championship placeholders (0–0) — Sleeper seeds the
+// bracket with random opponents before the postseason, and those would
+// otherwise register as a Dynasty Bowl appearance with a fabricated winner.
+const playedChampMatchups = (champMatchups ?? []).filter(
+  m => (m.score_a ?? 0) !== 0 || (m.score_b ?? 0) !== 0
+);
+
 // Dynasty Bowl appearances for this franchise
 const sleeperId = parseInt(franchise.sleeper_id);
-const myChampMatchups = (champMatchups ?? []).filter(
+const myChampMatchups = playedChampMatchups.filter(
   m => m.roster_id_a === sleeperId || m.roster_id_b === sleeperId
 );
 
@@ -238,6 +245,15 @@ const matchupsData: Record<string, Record<string, ClientMatchupEntry[]>> = {};
 
 for (const m of matchupRows ?? []) {
   if (!m.matchup_id) continue;
+
+  // Skip not-yet-started postseason games. Sleeper seeds the playoff/consolation
+  // bracket with placeholder (random) opponents before the postseason begins;
+  // these show up as 0–0 and don't reflect the real slate, so exclude them.
+  // Regular-season games (game_type 0) are always kept, even at 0–0.
+  const isPostseason = m.game_type !== 0;
+  const notStarted = (m.score_a ?? 0) === 0 && (m.score_b ?? 0) === 0;
+  if (isPostseason && notStarted) continue;
+
   const yr = String(m.year);
   const wk = String(m.week);
   if (!matchupsData[yr]) matchupsData[yr] = {};
@@ -265,7 +281,7 @@ for (const f of allFranchiseRows) {
 
 // ── Dynasty Bowl lookup for client JS ─────────────────────────────────────
 const dynastyBowls: Record<string, { winnerSleeperId: string; loserSleeperId: string; label: string }> = {};
-for (const m of champMatchups ?? []) {
+for (const m of playedChampMatchups) {
   const aWins = m.score_a > m.score_b;
   dynastyBowls[String(m.year)] = {
     winnerSleeperId: String(aWins ? m.roster_id_a : m.roster_id_b),

@@ -35,7 +35,7 @@ export async function getHistoricalMatchups(
   const { data: matchupRows, error: mError } = await supabase
     .schema('scdfl')
     .from('matchups')
-    .select('year, week, roster_id_a, roster_id_b, score_a, score_b')
+    .select('year, week, game_type, roster_id_a, roster_id_b, score_a, score_b')
     .not('matchup_id', 'is', null)
     .or(
       `and(roster_id_a.eq.${idA},roster_id_b.eq.${idB}),and(roster_id_a.eq.${idB},roster_id_b.eq.${idA})`
@@ -45,7 +45,15 @@ export async function getHistoricalMatchups(
 
   if (mError || !matchupRows) return [];
 
-  return matchupRows.map(row => {
+  return matchupRows.filter(row => {
+    // Drop not-yet-started postseason games. Sleeper seeds the playoff/
+    // consolation bracket with placeholder (random) opponents before the
+    // postseason begins; these show up as 0–0 and don't reflect the real
+    // slate. Regular-season games (game_type 0) are always kept, even at 0–0.
+    const isPostseason = row.game_type !== 0;
+    const notStarted = (row.score_a ?? 0) === 0 && (row.score_b ?? 0) === 0;
+    return !(isPostseason && notStarted);
+  }).map(row => {
     // Normalize so teamA/teamB scores match the caller's abbr order
     const aIsFirst = row.roster_id_a === idA;
     return {
