@@ -128,11 +128,11 @@ function line(n: number | null): string {
           </div>
           {winRows.map(r => (
             <div class="board-row board-row-wins" style={`--team-color: ${r.color};`}>
-              <div class="board-team">
+              <a class="board-team" href={`/franchises/${r.abbr}`}>
                 <img src={`/images/logos/${r.abbr}.png`} alt="" width="28" height="28" class="board-logo" onerror="this.style.display='none'" />
                 <span class="board-abbr">{r.abbr}</span>
                 <span class="board-name">{r.name}</span>
-              </div>
+              </a>
               <div class="wins-callout">{line(r.winOu)}</div>
               <div class="odds-cell">
                 <span class="odds-price">{odds(r.winLine)}</span>
@@ -155,11 +155,11 @@ function line(n: number | null): string {
           </div>
           {playoffRows.map(r => (
             <div class="board-row board-row-two" style={`--team-color: ${r.color};`}>
-              <div class="board-team">
+              <a class="board-team" href={`/franchises/${r.abbr}`}>
                 <img src={`/images/logos/${r.abbr}.png`} alt="" width="28" height="28" class="board-logo" onerror="this.style.display='none'" />
                 <span class="board-abbr">{r.abbr}</span>
                 <span class="board-name">{r.name}</span>
-              </div>
+              </a>
               <div class="odds-cell">
                 <span class="odds-price">{odds(r.playoffLine)}</span>
               </div>
@@ -185,11 +185,11 @@ function line(n: number | null): string {
               </div>
               {group.rows.map(r => (
                 <div class="board-row board-row-conf" style={`--team-color: ${r.color};`}>
-                  <div class="board-team">
+                  <a class="board-team" href={`/franchises/${r.abbr}`}>
                     <img src={`/images/logos/${r.abbr}.png`} alt="" width="28" height="28" class="board-logo" onerror="this.style.display='none'" />
                     <span class="board-abbr">{r.abbr}</span>
                     <span class="board-name">{r.name}</span>
-                  </div>
+                  </a>
                   <div class="odds-cell">
                     <span class="odds-price">{odds(r.confLine)}</span>
                   </div>
@@ -311,7 +311,13 @@ function line(n: number | null): string {
     align-items: center;
     gap: 0.75rem;
     min-width: 0;
+    text-decoration: none;
+    color: inherit;
   }
+
+  .board-team:hover { text-decoration: none; }
+  .board-team:hover .board-abbr { color: var(--ember-600); }
+  .board-team:hover .board-name { color: var(--text-strong); }
 
   .board-logo { object-fit: contain; flex-shrink: 0; }
 
