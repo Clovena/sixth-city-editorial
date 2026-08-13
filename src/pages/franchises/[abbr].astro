@@ -45,8 +45,24 @@ const founded = ownerIdentities.length > 0
   ? Math.min(...ownerIdentities.map(f => f.from))
   : franchise.from;
 
-// Historical (non-current) identities = rebrands
-const historicalIdentities = allIdentities.filter(f => f.to !== null);
+// Identity eras collapsed by name. A pure abbr change (brand refresh with no
+// rename) creates a second `franchises` row, but reads as the same identity to
+// an end user — so consecutive eras sharing a name merge into one entry.
+type IdentityGroup = { name: string; from: number; to: number | null };
+const identityGroups = allIdentities.reduce<IdentityGroup[]>((groups, era) => {
+  const prev = groups[groups.length - 1];
+  if (prev && prev.name === era.name.trim()) {
+    // Extend the run; `to: null` (current era) always wins.
+    prev.to = era.to === null ? null : Math.max(prev.to ?? era.to, era.to);
+  } else {
+    groups.push({ name: era.name.trim(), from: era.from, to: era.to });
+  }
+  return groups;
+}, []);
+
+// Only a genuine rename counts as a rebrand worth listing.
+const historicalIdentities = identityGroups.filter(g => g.to !== null);
+const currentIdentity = identityGroups[identityGroups.length - 1];
 const hasRebrands = historicalIdentities.length > 0;
 
 // Adoption: owner didn't start from year 2021
@@ -425,9 +441,9 @@ const perfDefaultSeason = perfSeasons.length > 0 ? perfSeasons[perfSeasons.lengt
               })}
               <div style="display: flex; align-items: baseline; gap: 0.75rem; margin-top: 0.1rem; padding-top: 0.3rem; border-top: 1px solid var(--color-border);">
                 <span style="font-size: 0.75rem; color: var(--color-text-muted); min-width: 60px;">
-                  {franchise.from}–
+                  {currentIdentity.from}–
                 </span>
-                <span style="font-size: 0.875rem; font-weight: 600; color: var(--color-text-primary);">{franchise.name} <span style="font-weight: 400; color: var(--color-text-muted); font-size: 0.8rem;">(current)</span></span>
+                <span style="font-size: 0.875rem; font-weight: 600; color: var(--color-text-primary);">{currentIdentity.name} <span style="font-weight: 400; color: var(--color-text-muted); font-size: 0.8rem;">(current)</span></span>
               </div>
             </div>
           </div>

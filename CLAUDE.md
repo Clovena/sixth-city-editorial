@@ -153,6 +153,12 @@ This replaces the old `founded`/`predecessor_abbr`/`rebrands[]` pattern. The tem
 
 This affects: franchise pages (`[abbr].astro` season table), scores page team display, game recap pages.
 
+### Identity eras vs. displayed identities
+
+A new era row is created for any `abbr` change, including a pure brand refresh with no rename (e.g. `TOH` → `TOR`, both "Toronto Hogs"). Era rows are the right granularity for *logo/color* resolution by year, but not for *narrative* display — listing "Toronto Hogs 2021–2022" above "Toronto Hogs 2023–present" reads as a rebrand that never happened.
+
+The Identity History block on `franchises/[abbr].astro` therefore collapses **consecutive eras that share a `name`** into one entry (`identityGroups`), and renders nothing when the collapsed list has a single entry. Anything keyed on logos or abbrs (season-record logo column, `franchiseForYear`) must keep using the raw era rows.
+
 ---
 
 ## Slug Format (`/games/[year]/[slug]`)
