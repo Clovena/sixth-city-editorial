@@ -1,0 +1,534 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { supabase } from '../../lib/supabase';
+import {
+  loadFranchises,
+  loadMedals,
+  franchiseForYear,
+  activeFranchise,
+  MEDAL_POSITION_ORDER,
+  MEDAL_POSITION_COLOR,
+} from '../../lib/hall-of-fame';
+
+const [franchises, medals] = await Promise.all([loadFranchises(), loadMedals()]);
+
+const { data: playerRows, error: pErr } = await supabase
+  .schema('scdfl')
+  .from('v_players')
+  .select('player_id, first_name, last_name, position, team, espn_id')
+  .in('player_id', [...new Set(medals.map(m => m.player_id))]);
+
+if (pErr) throw new Error(`Players query failed: ${pErr.message}`);
+
+const playerById = new Map((playerRows ?? []).map(p => [p.player_id, p]));
+
+// ── Roll the per-season medals up into one row per player ─────────────────
+type MedalWin = { year: number; position: string; fpts: number; abbr: string | null; activeAbbr: string | null };
+
+type Medalist = {
+  playerId: string;
+  name: string;
+  position: string;
+  nflTeam: string;
+  espnId: string | null;
+  medals: number;
+  totalFpts: number;
+  mostRecent: number;
+  wins: MedalWin[];
+  positions: string[];
+  franchises: { abbr: string; activeAbbr: string }[];
+};
+
+const byPlayer = new Map<string, Medalist>();
+
+for (const medal of medals) {
+  const player = playerById.get(medal.player_id);
+  const era = franchiseForYear(franchises, medal.sleeper_id, medal.year);
+  const active = activeFranchise(franchises, medal.sleeper_id);
+
+  let entry = byPlayer.get(medal.player_id);
+  if (!entry) {
+    entry = {
+      playerId: medal.player_id,
+      name: player ? `${player.first_name ?? ''} ${player.last_name ?? ''}`.trim() : medal.player_id,
+      position: medal.position,
+      nflTeam: player?.team ?? '—',
+      espnId: player?.espn_id ?? null,
+      medals: 0,
+      totalFpts: 0,
+      mostRecent: 0,
+      wins: [],
+      positions: [],
+      franchises: [],
+    };
+    byPlayer.set(medal.player_id, entry);
+  }
+
+  entry.medals += 1;
+  entry.totalFpts += Number(medal.fpts);
+  entry.mostRecent = Math.max(entry.mostRecent, medal.year);
+  entry.wins.push({
+    year: medal.year,
+    position: medal.position,
+    fpts: Number(medal.fpts),
+    abbr: era?.abbr ?? active?.abbr ?? null,
+    activeAbbr: active?.abbr ?? era?.abbr ?? null,
+  });
+  if (!entry.positions.includes(medal.position)) entry.positions.push(medal.position);
+  if (era || active) {
+    const abbr = era?.abbr ?? active!.abbr;
+    const activeAbbr = active?.abbr ?? abbr;
+    if (!entry.franchises.some(f => f.abbr === abbr)) entry.franchises.push({ abbr, activeAbbr });
+  }
+}
+
+const medalists = [...byPlayer.values()]
+  .map(m => ({ ...m, wins: m.wins.sort((a, b) => a.year - b.year) }))
+  .sort((a, b) => b.medals - a.medals || b.totalFpts - a.totalFpts || a.name.localeCompare(b.name));
+
+// ── Context for the explainer ─────────────────────────────────────────────
+const medalYears = [...new Set(medals.map(m => m.year))].sort();
+const firstYear = medalYears[0];
+const latestYear = medalYears[medalYears.length - 1];
+const idpFirstYear = Math.min(
+  ...medals.filter(m => ['DL', 'LB', 'DB'].includes(m.position)).map(m => m.year),
+);
+const repeatMedalists = medalists.filter(m => m.medals > 1).length;
+
+const positionsInPlay = MEDAL_POSITION_ORDER.filter(p => medals.some(m => m.position === p));
+---
+
+<Layout
+  title="Medals"
+  description="The Sixth City Dynasty medal leaderboard — every player who has led their position in scoring across a season, ranked by career medals."
+>
+  <div style="max-width: 1200px; margin: 0 auto; padding: 0 1.5rem;">
+
+    <!-- Page header -->
+    <div style="border-bottom: 1px solid var(--color-border); padding: 3rem 0 2.5rem; margin-top: 3rem;">
+      <a href="/hall-of-fame" class="hof-back">&#8592; Hall of Fame</a>
+      <p class="section-label" style="margin-top: 1.25rem;">Players Who Reached The Stars</p>
+      <h1 class="page-title">Medals</h1>
+      <p class="page-subtitle" style="margin-top: 0.75rem;">
+        A medal goes to the player who scores the most fantasy points at their
+        position across a regular season, counted only from the weeks they were
+        started in Sixth City. One medal per position, per season &mdash;
+        there is no second place.
+      </p>
+    </div>
+
+    <!-- Summary strip -->
+    <div class="hof-summary">
+      <div class="hof-summary-cell">
+        <p class="hof-summary-label">Medals Awarded</p>
+        <p class="hof-summary-figure">{medals.length}</p>
+      </div>
+      <div class="hof-summary-cell">
+        <p class="hof-summary-label">Medalists</p>
+        <p class="hof-summary-figure">{medalists.length}</p>
+      </div>
+      <div class="hof-summary-cell">
+        <p class="hof-summary-label">Repeat Medalists</p>
+        <p class="hof-summary-figure">{repeatMedalists}</p>
+      </div>
+      <div class="hof-summary-cell">
+        <p class="hof-summary-label">Seasons Contested</p>
+        <p class="hof-summary-figure">{medalYears.length}</p>
+      </div>
+    </div>
+
+    <!-- Leaderboard -->
+    <section class="record-section">
+      <div class="record-head">
+        <div>
+          <h2 class="record-title">Career Medal Leaderboard</h2>
+          <p class="record-sub">{firstYear}&ndash;{latestYear} &bull; sort by any column</p>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table class="data-table" id="medal-table">
+          <thead>
+            <tr>
+              <th class="col-rank">#</th>
+              <th class="sortable" data-sort="name" data-type="text">Player</th>
+              <th class="col-hide-mobile sortable" data-sort="pos" data-type="text">Pos</th>
+              <th class="sortable is-sorted-desc" data-sort="medals" data-type="number">Medals</th>
+              <th class="col-hide-mobile sortable" data-sort="fpts" data-type="number">Medal Pts</th>
+              <th class="col-hide-mobile sortable" data-sort="recent" data-type="number">Seasons</th>
+              <th class="col-hide-mobile">Won With</th>
+            </tr>
+          </thead>
+          <tbody>
+            {medalists.map((medalist, i) => (
+              <tr
+                data-name={medalist.name}
+                data-pos={medalist.position}
+                data-medals={medalist.medals}
+                data-fpts={medalist.totalFpts.toFixed(2)}
+                data-recent={medalist.mostRecent}
+              >
+                <td class="col-rank rank-cell">{i + 1}</td>
+                <td>
+                  <span class="entity">
+                    <img
+                      src={medalist.espnId
+                        ? `https://a.espncdn.com/i/headshots/nfl/players/full/${medalist.espnId}.png`
+                        : '/images/player-placeholder.png'}
+                      alt=""
+                      width="34"
+                      height="34"
+                      loading="lazy"
+                      decoding="async"
+                      class="headshot"
+                      onerror="this.src='/images/player-placeholder.png';this.onerror=null;"
+                    />
+                    <span>
+                      <a href={`/players/${medalist.playerId}`} class="entity-name">{medalist.name}</a>
+                      <span class="entity-meta">{medalist.nflTeam}</span>
+                    </span>
+                  </span>
+                </td>
+                <td class="col-hide-mobile">
+                  <span class="pos-chips">
+                    {medalist.positions.map(position => (
+                      <span
+                        class="pos-chip"
+                        style={`--chip: var(--color-${MEDAL_POSITION_COLOR[position] ?? 'grey'});
+                                --chip-surface: var(--color-${MEDAL_POSITION_COLOR[position] ?? 'grey'}-surface);`}
+                      >{position}</span>
+                    ))}
+                  </span>
+                </td>
+                <td>
+                  <span class="medal-count">
+                    <span class="medal-marks" aria-hidden="true">
+                      {Array.from({ length: medalist.medals }).map(() => (
+                        <span class="medal-mark">&#11042;</span>
+                      ))}
+                    </span>
+                    <span class="medal-number sc-tabular">{medalist.medals}</span>
+                  </span>
+                </td>
+                <td class="col-hide-mobile score-cell">{medalist.totalFpts.toFixed(2)}</td>
+                <td class="col-hide-mobile years-cell">
+                  {medalist.wins.map(win => `${win.year} ${win.position}`).join(', ')}
+                </td>
+                <td class="col-hide-mobile">
+                  <span class="entity">
+                    {medalist.franchises.map(franchise => (
+                      <a href={`/franchises/${franchise.activeAbbr}`} title={franchise.abbr}>
+                        <img
+                          src={`/images/logos/${franchise.abbr}.png`}
+                          alt={franchise.abbr}
+                          width="22"
+                          height="22"
+                          style="object-fit: contain;"
+                          onerror="this.style.display='none'"
+                        />
+                      </a>
+                    ))}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- How medals work -->
+    <section class="explainer">
+      <h2 class="explainer-title">How Medals Are Won</h2>
+      <div class="explainer-grid">
+        <div class="explainer-cell">
+          <p class="foot-label">The Count</p>
+          <p class="explainer-text">
+            Only regular-season weeks count. A player's medal total is the sum
+            of points they scored in the weeks a Sixth City franchise actually
+            started them &mdash; bench weeks and the postseason are excluded.
+          </p>
+        </div>
+        <div class="explainer-cell">
+          <p class="foot-label">Positions Contested</p>
+          <p class="explainer-text">
+            {positionsInPlay.join(' · ')}. Defensive medals
+            (DL, LB, DB) begin in {idpFirstYear}, when IDP slots entered the
+            league &mdash; {firstYear} contested offensive positions and kicker only.
+          </p>
+        </div>
+        <div class="explainer-cell">
+          <p class="foot-label">One Winner</p>
+          <p class="explainer-text">
+            There is no silver or bronze. Each position produces exactly one
+            medalist per season, which makes a second medal genuinely rare
+            &mdash; only {repeatMedalists} players have ever earned one.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <p class="page-whisper hof-footnote">
+      Every medal a player has won also appears on their individual profile.
+      Click through any name above for full career stats.
+    </p>
+  </div>
+</Layout>
+
+<style>
+  .hof-back {
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .hof-back:hover { color: var(--color-text-primary); text-decoration: none; }
+
+  /* ---- Summary strip ---- */
+  .hof-summary {
+    margin-top: 2.5rem;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background-color: var(--color-border);
+    border: 1px solid var(--color-border);
+  }
+  .hof-summary-cell {
+    background-color: var(--color-surface);
+    padding: 1.5rem 1.25rem;
+    text-align: center;
+  }
+  .hof-summary-label {
+    font-family: var(--font-body);
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin: 0 0 0.5rem;
+  }
+  .hof-summary-figure {
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    font-weight: 900;
+    line-height: 1;
+    color: var(--gold-700);
+    margin: 0;
+  }
+
+  /* ---- Leaderboard ---- */
+  .record-section {
+    margin-top: 3rem;
+    background-color: var(--surface-card);
+    border: 1px solid var(--border-hairline);
+    box-shadow: var(--shadow-1);
+  }
+
+  .record-head {
+    padding: 1.5rem 1.5rem 1.25rem;
+    border-bottom: 1px solid var(--border-default);
+  }
+
+  .record-title {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-strong);
+  }
+
+  .record-sub {
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin: 0.35rem 0 0;
+  }
+
+  .table-scroll { overflow-x: auto; }
+
+  .col-rank { width: 3rem; }
+
+  .rank-cell {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: var(--color-text-muted);
+  }
+  tbody tr:nth-child(1) .rank-cell { color: var(--gold-600); }
+  tbody tr:nth-child(2) .rank-cell { color: var(--slate-400); }
+  tbody tr:nth-child(3) .rank-cell { color: var(--ember-400); }
+
+  th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+  th.sortable:hover { color: var(--text-strong); }
+  th.sortable::after {
+    content: "";
+    display: inline-block;
+    margin-left: 0.35rem;
+    opacity: 0.35;
+  }
+  th.sortable.is-sorted-asc::after  { content: "\2191"; opacity: 1; color: var(--ember-600); }
+  th.sortable.is-sorted-desc::after { content: "\2193"; opacity: 1; color: var(--ember-600); }
+
+  .entity { display: inline-flex; align-items: center; gap: 0.55rem; }
+
+  .headshot {
+    object-fit: cover;
+    border-radius: 50%;
+    background-color: var(--surface-sunken);
+    flex-shrink: 0;
+  }
+
+  .entity-name {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--text-strong);
+  }
+  .entity-name:hover { color: var(--ember-700); }
+
+  .entity-meta {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+  }
+
+  .pos-chips { display: inline-flex; gap: 0.25rem; flex-wrap: wrap; }
+  .pos-chip {
+    font-family: var(--font-body);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 0.15rem 0.4rem;
+    border: 1px solid var(--chip);
+    background-color: var(--chip-surface);
+    color: var(--text-strong);
+    border-radius: var(--radius-xs);
+  }
+
+  .medal-count { display: inline-flex; align-items: center; gap: 0.5rem; }
+  .medal-marks { display: inline-flex; gap: 0.1rem; }
+  .medal-mark { color: var(--gold-600); font-size: 0.95rem; line-height: 1; }
+  .medal-number {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-strong);
+  }
+
+  .score-cell {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    color: var(--text-body);
+    white-space: nowrap;
+  }
+
+  .years-cell {
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+  }
+
+  /* ---- Explainer ---- */
+  .explainer { margin-top: 3rem; }
+  .explainer-title {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 1.25rem;
+  }
+  .explainer-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+  }
+  .explainer-cell {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-top: 3px solid var(--gold-500);
+    padding: 1.5rem;
+  }
+  .foot-label {
+    font-family: var(--font-body);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin: 0 0 0.6rem;
+  }
+  .explainer-text {
+    font-family: var(--font-serif);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
+
+  .hof-footnote {
+    font-size: 0.85rem;
+    max-width: 70ch;
+    margin: 2rem 0 5rem;
+  }
+
+  @media (max-width: 768px) {
+    .hof-summary { grid-template-columns: repeat(2, 1fr) !important; }
+    .col-hide-mobile { display: none; }
+    .table-scroll { overflow-x: hidden; }
+    .record-head { padding: 1.25rem 1.25rem 1rem; }
+    .explainer-grid { grid-template-columns: 1fr !important; }
+  }
+</style>
+
+<script>
+  // Sort in place off the row data-* attributes so the markup stays the single
+  // source of truth — no second copy of the leaderboard shipped as JSON.
+  const table = document.getElementById('medal-table') as HTMLTableElement | null;
+  const body = table?.querySelector('tbody');
+
+  if (table && body) {
+    const headers = Array.from(table.querySelectorAll<HTMLTableCellElement>('th.sortable'));
+
+    const renumber = () => {
+      Array.from(body.rows).forEach((row, i) => {
+        const cell = row.querySelector('.rank-cell');
+        if (cell) cell.textContent = String(i + 1);
+      });
+    };
+
+    headers.forEach(header => {
+      header.addEventListener('click', () => {
+        const key = header.dataset.sort!;
+        const numeric = header.dataset.type === 'number';
+        const descending = !header.classList.contains('is-sorted-desc');
+
+        headers.forEach(other => other.classList.remove('is-sorted-asc', 'is-sorted-desc'));
+        header.classList.add(descending ? 'is-sorted-desc' : 'is-sorted-asc');
+
+        const rows = Array.from(body.rows);
+        rows.sort((a, b) => {
+          const rawA = a.dataset[key] ?? '';
+          const rawB = b.dataset[key] ?? '';
+          const compared = numeric
+            ? Number(rawA) - Number(rawB)
+            : rawA.localeCompare(rawB);
+          return descending ? -compared : compared;
+        });
+
+        rows.forEach(row => body.appendChild(row));
+        renumber();
+      });
+    });
+  }
+</script>
