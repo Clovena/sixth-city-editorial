@@ -83,11 +83,27 @@ let allPlayerIds: string[] = [];
 
 if (isExhibition && exhib) {
   // ── Exhibition game ─────────────────────────────────────────────────────────
-  const { data: exhibMatchup } = await supabase
-    .schema('scdfl').from('exhibition_matchups')
-    .select('score_a, score_b, starters_a, starter_points_a, starters_b, starter_points_b')
-    .eq('exhibition_id', exhibitionId)
-    .single();
+  const [{ data: exhibMatchup }, { data: exhibFranchises }] = await Promise.all([
+    supabase
+      .schema('scdfl').from('exhibition_matchups')
+      .select('score_a, score_b, starters_a, starter_points_a, starters_b, starter_points_b')
+      .eq('exhibition_id', exhibitionId)
+      .single(),
+    supabase
+      .schema('scdfl').from('franchises')
+      .select('id, abbr, "to"'),
+  ]);
+
+  // Member abbrs are stored as the identity in use at exhibition time — resolve
+  // each to the franchise's current abbr so links land on a live franchise page
+  const franchises = exhibFranchises ?? [];
+  function memberLinks(members: string[]) {
+    return (members ?? []).map((abbr: string) => {
+      const era = franchises.find((f: any) => f.abbr === abbr);
+      const active = era ? franchises.find((f: any) => f.id === era.id && f.to === null) : null;
+      return { abbr, href: active ? `/franchises/${active.abbr}` : null };
+    });
+  }
 
   scoreA = Number(exhibMatchup?.score_a ?? 0);
   scoreB = Number(exhibMatchup?.score_b ?? 0);
@@ -102,8 +118,22 @@ if (isExhibition && exhib) {
   lineupA = mapExhibitionStartersToSlots(startersA, starterPointsA, exhib.exhib_type);
   lineupB = mapExhibitionStartersToSlots(startersB, starterPointsB, exhib.exhib_type);
 
-  effA = { name: exhib.team_a_display_name, logoAbbr: exhib.team_a_members[0] ?? 'UNKNOWN', members: exhib.team_a_members };
-  effB = { name: exhib.team_b_display_name, logoAbbr: exhib.team_b_members[0] ?? 'UNKNOWN', members: exhib.team_b_members };
+  // Composite exhibition squads have no single franchise page — `href` stays null
+  // and each member logo carries its own link instead
+  effA = {
+    name: exhib.team_a_display_name,
+    logoAbbr: exhib.team_a_members[0] ?? 'UNKNOWN',
+    members: exhib.team_a_members,
+    memberLinks: memberLinks(exhib.team_a_members),
+    href: null,
+  };
+  effB = {
+    name: exhib.team_b_display_name,
+    logoAbbr: exhib.team_b_members[0] ?? 'UNKNOWN',
+    members: exhib.team_b_members,
+    memberLinks: memberLinks(exhib.team_b_members),
+    href: null,
+  };
 
   allPlayerIds = [...startersA, ...startersB].filter(Boolean);
   pageTitle = `${effA.name} vs ${effB.name}`;
@@ -118,10 +148,10 @@ if (isExhibition && exhib) {
       .or(`roster_id_a.eq.${rosterIdA},roster_id_b.eq.${rosterIdA}`)
       .limit(1)
       .single(),
+    // All eras — the page needs the year's identity for display *and* the
+    // current identity for franchise links
     supabase.schema('scdfl').from('franchises')
-      .select('sleeper_id, abbr, name, conf, colors, "from", "to"')
-      .lte('"from"', year)
-      .or(`"to".gte.${year},"to".is.null`),
+      .select('sleeper_id, abbr, name, conf, colors, "from", "to"'),
     supabase.schema('scdfl').from('matchups')
       .select('roster_id_a, roster_id_b, score_a, score_b')
       .eq('year', year).eq('game_type', 0).lte('week', week)
@@ -136,8 +166,14 @@ if (isExhibition && exhib) {
   // Resolve franchise identity for each team
   const sleeperA = String(rosterIdA);
   const sleeperB = String(rosterIdB);
-  fA = franchises.find((f: any) => f.sleeper_id === sleeperA);
-  fB = franchises.find((f: any) => f.sleeper_id === sleeperB);
+  const eraFor = (sleeperId: string) => franchises.find(
+    (f: any) => f.sleeper_id === sleeperId && f.from <= year && (f.to === null || f.to >= year)
+  );
+  const activeFor = (sleeperId: string) => franchises.find(
+    (f: any) => f.sleeper_id === sleeperId && f.to === null
+  );
+  fA = eraFor(sleeperA);
+  fB = eraFor(sleeperB);
 
   // Determine which side of the matchup row corresponds to which roster
   // The matchup row may have roster_id_a = rosterIdA or roster_id_b = rosterIdA
@@ -168,9 +204,19 @@ if (isExhibition && exhib) {
     }
   }
 
-  // Effective identity
-  effA = { name: fA?.name ?? 'Unknown', logoAbbr: fA?.abbr ?? 'UNKNOWN' };
-  effB = { name: fB?.name ?? 'Unknown', logoAbbr: fB?.abbr ?? 'UNKNOWN' };
+  // Effective identity — name/logo from the era, link to the current abbr
+  const activeA = activeFor(sleeperA);
+  const activeB = activeFor(sleeperB);
+  effA = {
+    name: fA?.name ?? 'Unknown',
+    logoAbbr: fA?.abbr ?? 'UNKNOWN',
+    href: activeA ? `/franchises/${activeA.abbr}` : null,
+  };
+  effB = {
+    name: fB?.name ?? 'Unknown',
+    logoAbbr: fB?.abbr ?? 'UNKNOWN',
+    href: activeB ? `/franchises/${activeB.abbr}` : null,
+  };
 
   // Lineups — orient starters to match rosterIdA/rosterIdB
   const startersA: string[] = (aIsFirst ? matchup?.starters_a : matchup?.starters_b) ?? [];
@@ -237,19 +283,33 @@ if (recap) {
     <div style="border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; margin-top: 0.75rem;">
 
       <div class:list={['game-team', aWins ? 'winner' : bWins ? 'loser' : 'tied']}>
-        {isExhibition && effA.members ? (
+        {isExhibition && effA.memberLinks ? (
           <div style="display: flex; gap: 4px; flex-shrink: 0;">
-            {effA.members.map((abbr: string) => (
-              <img src={`/images/logos/${abbr}.png`} alt={abbr} width="36" height="36"
-                   style="object-fit: contain;" onerror="this.style.display='none'" />
+            {effA.memberLinks.map((m: any) => (
+              m.href ? (
+                <a href={m.href} class="team-logo-link" aria-label={m.abbr}>
+                  <img src={`/images/logos/${m.abbr}.png`} alt={m.abbr} width="36" height="36"
+                       style="object-fit: contain;" onerror="this.style.display='none'" />
+                </a>
+              ) : (
+                <img src={`/images/logos/${m.abbr}.png`} alt={m.abbr} width="36" height="36"
+                     style="object-fit: contain;" onerror="this.style.display='none'" />
+              )
             ))}
           </div>
+        ) : effA.href ? (
+          <a href={effA.href} class="team-logo-link" aria-label={effA.name}>
+            <img src={`/images/logos/${effA.logoAbbr}.png`} alt={effA.name} width="52" height="52"
+                 style="object-fit: contain;" onerror="this.style.display='none'" />
+          </a>
         ) : (
           <img src={`/images/logos/${effA.logoAbbr}.png`} alt={effA.name} width="52" height="52"
                style="object-fit: contain; flex-shrink: 0;" onerror="this.style.display='none'" />
         )}
         <div style="flex: 1; min-width: 0;">
-          <div class="game-team-name">{effA.name}</div>
+          <div class="game-team-name">
+            {effA.href ? <a href={effA.href} class="team-name-link">{effA.name}</a> : effA.name}
+          </div>
           {!isExhibition && <div class="game-record">{winsA}–{lossesA}</div>}
         </div>
         <span class:list={['game-score', aWins ? 'winner' : '']}>{scoreA.toFixed(2)}</span>
@@ -258,19 +318,33 @@ if (recap) {
       <div style="height: 1px; background: var(--color-border);"></div>
 
       <div class:list={['game-team', bWins ? 'winner' : aWins ? 'loser' : 'tied']}>
-        {isExhibition && effB.members ? (
+        {isExhibition && effB.memberLinks ? (
           <div style="display: flex; gap: 4px; flex-shrink: 0;">
-            {effB.members.map((abbr: string) => (
-              <img src={`/images/logos/${abbr}.png`} alt={abbr} width="36" height="36"
-                   style="object-fit: contain;" onerror="this.style.display='none'" />
+            {effB.memberLinks.map((m: any) => (
+              m.href ? (
+                <a href={m.href} class="team-logo-link" aria-label={m.abbr}>
+                  <img src={`/images/logos/${m.abbr}.png`} alt={m.abbr} width="36" height="36"
+                       style="object-fit: contain;" onerror="this.style.display='none'" />
+                </a>
+              ) : (
+                <img src={`/images/logos/${m.abbr}.png`} alt={m.abbr} width="36" height="36"
+                     style="object-fit: contain;" onerror="this.style.display='none'" />
+              )
             ))}
           </div>
+        ) : effB.href ? (
+          <a href={effB.href} class="team-logo-link" aria-label={effB.name}>
+            <img src={`/images/logos/${effB.logoAbbr}.png`} alt={effB.name} width="52" height="52"
+                 style="object-fit: contain;" onerror="this.style.display='none'" />
+          </a>
         ) : (
           <img src={`/images/logos/${effB.logoAbbr}.png`} alt={effB.name} width="52" height="52"
                style="object-fit: contain; flex-shrink: 0;" onerror="this.style.display='none'" />
         )}
         <div style="flex: 1; min-width: 0;">
-          <div class="game-team-name">{effB.name}</div>
+          <div class="game-team-name">
+            {effB.href ? <a href={effB.href} class="team-name-link">{effB.name}</a> : effB.name}
+          </div>
           {!isExhibition && <div class="game-record">{winsB}–{lossesB}</div>}
         </div>
         <span class:list={['game-score', bWins ? 'winner' : '']}>{scoreB.toFixed(2)}</span>
@@ -399,6 +473,30 @@ if (recap) {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  /* Franchise links — logo and name both point at the current identity */
+  .team-logo-link {
+    display: flex;
+    flex-shrink: 0;
+    line-height: 0;
+    border-radius: 4px;
+    transition: opacity var(--dur-fast) var(--ease-standard);
+  }
+
+  .team-logo-link:hover {
+    opacity: 0.75;
+  }
+
+  .team-name-link {
+    color: inherit;
+    text-decoration: none;
+    text-underline-offset: 3px;
+  }
+
+  .team-name-link:hover {
+    color: var(--brand-primary);
+    text-decoration: underline;
   }
 
   .game-record {

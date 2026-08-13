@@ -6,11 +6,12 @@ All SCDFL league data lives in the `scdfl` schema in Supabase. This file documen
 
 ## Client Access
 
-**Build-time (Astro pages):** `src/lib/supabase.ts` — uses `SUPABASE_ANON_KEY` via `import.meta.env`
+**Astro pages:** `src/lib/supabase.ts` — uses `SUPABASE_ANON_KEY` via `import.meta.env`, falling back to `process.env` at runtime
 ```ts
 import { supabase } from '../lib/supabase';
 const { data } = await supabase.schema('scdfl').from('franchises').select('*');
 ```
+Queries in static pages run once at build time. Queries in `players/[id].astro` (the site's only SSR route) run on every request — batch independent ones with `Promise.all`. Credentials are inlined into the bundle at build time either way, so rotating the anon key means redeploying, not just updating Netlify's environment variables.
 
 **Sync scripts:** Each script in `scripts/lib/` creates its own client using `SUPABASE_SERVICE_KEY` (write access).
 
