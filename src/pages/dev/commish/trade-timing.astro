@@ -1,0 +1,702 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { supabase } from '../../../lib/supabase';
+
+// ── Widget B — League-wide trade timing heatmap ─────────────────────────────
+// Whole-league, aggregate, deliberately static: "when does trading happen
+// across the calendar, year over year?" The per-team activity view lives on
+// trans-audit.astro; this page never filters by franchise.
+
+type TradeRow = {
+  transaction_id: string;
+  year: number;
+  created: number;
+};
+
+// Sleeper writes one row per asset leg, so a single trade spans several rows
+// sharing a transaction_id. ~2,800 legs today — well past the 1,000-row cap.
+const PAGE_SIZE = 1000;
+const tradeLegs: TradeRow[] = [];
+let offset = 0;
+
+while (true) {
+  const { data: page, error } = await supabase
+    .schema('scdfl')
+    .from('transactions')
+    .select('transaction_id, year, created')
+    .eq('type', 'trade')
+    .not('created', 'is', null)
+    .range(offset, offset + PAGE_SIZE - 1);
+
+  if (error) throw new Error(`Trade transactions query failed: ${error.message}`);
+  tradeLegs.push(...(page as TradeRow[]));
+  if (page.length < PAGE_SIZE) break;
+  offset += PAGE_SIZE;
+}
+
+// Collapse legs → one record per trade. Count distinct transaction_id, never rows.
+type Trade = { transactionId: string; seasonYear: number; created: number };
+const tradeById = new Map<string, Trade>();
+for (const leg of tradeLegs) {
+  if (tradeById.has(leg.transaction_id)) continue;
+  tradeById.set(leg.transaction_id, {
+    transactionId: leg.transaction_id,
+    seasonYear: leg.year,
+    created: Number(leg.created),
+  });
+}
+const trades = [...tradeById.values()];
+
+// ── Bucket by real Eastern-time date ────────────────────────────────────────
+// `created` is a millisecond Unix epoch. Convert to the civil date in
+// America/New_York before bucketing so a 9pm ET trade doesn't slide into the
+// next UTC day (and therefore, occasionally, the next calendar week).
+const etParts = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'America/New_York',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
+function etDate(ms: number): { y: number; m: number; d: number } {
+  const [y, m, d] = etParts.format(new Date(ms)).split('-').map(Number);
+  return { y, m, d };
+}
+
+/** ISO-8601 week-of-year + its owning ISO year, from a civil Y-M-D. */
+function isoWeek(y: number, m: number, d: number): { isoYear: number; isoWeek: number } {
+  const t = new Date(Date.UTC(y, m - 1, d));
+  // Shift to the Thursday of this ISO week — that Thursday's year is the ISO year.
+  t.setUTCDate(t.getUTCDate() - ((t.getUTCDay() + 6) % 7) + 3);
+  const isoYear = t.getUTCFullYear();
+  const jan4 = new Date(Date.UTC(isoYear, 0, 4));
+  const week1Mon = new Date(Date.UTC(isoYear, 0, 4 - ((jan4.getUTCDay() + 6) % 7)));
+  const week = 1 + Math.round((t.getTime() - week1Mon.getTime()) / (7 * 86_400_000));
+  return { isoYear, isoWeek: week };
+}
+
+/** Civil date of the Monday that opens a given ISO week. */
+function isoWeekMonday(isoYear: number, week: number): Date {
+  const jan4 = new Date(Date.UTC(isoYear, 0, 4));
+  const week1Mon = Date.UTC(isoYear, 0, 4 - ((jan4.getUTCDay() + 6) % 7));
+  return new Date(week1Mon + (week - 1) * 7 * 86_400_000);
+}
+
+type Bucketed = Trade & {
+  isoYear: number;
+  week: number;
+  month: number;
+  dateLabel: string;
+};
+
+const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+const bucketed: Bucketed[] = trades.map((t) => {
+  const { y, m, d } = etDate(t.created);
+  const { isoYear, isoWeek: wk } = isoWeek(y, m, d);
+  return {
+    ...t,
+    isoYear,
+    week: wk,
+    month: m,
+    dateLabel: `${MONTH_ABBR[m - 1]} ${d}, ${y}`,
+  };
+});
+
+// Columns: every calendar year that actually has trades. Derived, not hardcoded.
+const years = [...new Set(bucketed.map((b) => b.isoYear))].sort((a, b) => a - b);
+
+// ── Week × year matrix ──────────────────────────────────────────────────────
+const weekCounts = new Map<string, number>();
+for (const b of bucketed) {
+  const key = `${b.isoYear}|${b.week}`;
+  weekCounts.set(key, (weekCounts.get(key) ?? 0) + 1);
+}
+
+// Clamp visible rows to the active range rather than padding out to 52 weeks.
+const activeWeeks = bucketed.map((b) => b.week);
+const minWeek = Math.min(...activeWeeks);
+const maxWeek = Math.max(...activeWeeks);
+
+type WeekRow = {
+  week: number;
+  monthAnchor: string | null;
+  cells: { year: number; count: number; range: string }[];
+};
+
+// Month anchors come off the Monday of each ISO week; label a row only when the
+// month turns over, so the gutter reads Feb · Mar · … Nov instead of 42 numbers.
+const weekRows: WeekRow[] = [];
+let lastAnchorMonth = -1;
+for (let w = minWeek; w <= maxWeek; w++) {
+  // Use the most recent year for anchor math; ISO weeks drift by at most a few
+  // days across years, so the month labels stay accurate for every column.
+  const mon = isoWeekMonday(years[years.length - 1], w);
+  const anchorMonth = mon.getUTCMonth();
+  const isNewMonth = anchorMonth !== lastAnchorMonth;
+  if (isNewMonth) lastAnchorMonth = anchorMonth;
+
+  weekRows.push({
+    week: w,
+    monthAnchor: isNewMonth ? MONTH_ABBR[anchorMonth] : null,
+    cells: years.map((year) => {
+      const start = isoWeekMonday(year, w);
+      const end = new Date(start.getTime() + 6 * 86_400_000);
+      const range =
+        `${MONTH_ABBR[start.getUTCMonth()]} ${start.getUTCDate()}` +
+        `–${MONTH_ABBR[end.getUTCMonth()]} ${end.getUTCDate()}`;
+      return { year, count: weekCounts.get(`${year}|${w}`) ?? 0, range };
+    }),
+  });
+}
+
+// ── Month × year matrix (coarser alternate grain / sanity check) ────────────
+const monthCounts = new Map<string, number>();
+for (const b of bucketed) {
+  const key = `${b.isoYear}|${b.month}`;
+  monthCounts.set(key, (monthCounts.get(key) ?? 0) + 1);
+}
+const activeMonths = bucketed.map((b) => b.month);
+const minMonth = Math.min(...activeMonths);
+const maxMonth = Math.max(...activeMonths);
+
+type MonthRow = { month: number; label: string; cells: { year: number; count: number }[] };
+const monthRows: MonthRow[] = [];
+for (let m = minMonth; m <= maxMonth; m++) {
+  monthRows.push({
+    month: m,
+    label: MONTH_ABBR[m - 1],
+    cells: years.map((year) => ({ year, count: monthCounts.get(`${year}|${m}`) ?? 0 })),
+  });
+}
+
+// ── Sequential ramp ─────────────────────────────────────────────────────────
+// Five slate steps, light → dark. Zero is NOT the palest step — it renders as
+// bare paper with a hairline, so "no trades" and "one trade" never blur.
+const RAMP_STEPS = 5;
+
+function step(count: number, max: number): number {
+  if (count <= 0) return 0;
+  return Math.min(RAMP_STEPS, Math.ceil((count / max) * RAMP_STEPS));
+}
+
+/** Walk 1..max so legend ranges are guaranteed to match what step() renders. */
+function legendFor(max: number) {
+  const bounds = new Map<number, { lo: number; hi: number }>();
+  for (let n = 1; n <= max; n++) {
+    const s = step(n, max);
+    const b = bounds.get(s);
+    if (b) b.hi = n;
+    else bounds.set(s, { lo: n, hi: n });
+  }
+  return [...bounds.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([s, b]) => ({ step: s, label: b.lo === b.hi ? `${b.lo}` : `${b.lo}–${b.hi}` }));
+}
+
+const weekMax = Math.max(...weekCounts.values());
+const monthMax = Math.max(...monthCounts.values());
+const weekLegend = legendFor(weekMax);
+const monthLegend = legendFor(monthMax);
+
+// ── Summary line ────────────────────────────────────────────────────────────
+const yearTotals = years.map((y) => ({
+  year: y,
+  count: bucketed.filter((b) => b.isoYear === y).length,
+}));
+
+let peak = { year: years[0], week: minWeek, count: 0 };
+for (const [key, count] of weekCounts) {
+  if (count > peak.count) {
+    const [y, w] = key.split('|').map(Number);
+    peak = { year: y, week: w, count };
+  }
+}
+const peakMonday = isoWeekMonday(peak.year, peak.week);
+const peakLabel = `${MONTH_ABBR[peakMonday.getUTCMonth()]} ${peakMonday.getUTCDate()}, ${peak.year}`;
+
+// Trades whose Sleeper season year disagrees with their real ET calendar year —
+// February deals that Sleeper still files under the prior league season.
+const seasonYearSkew = bucketed.filter((b) => b.isoYear !== b.seasonYear);
+
+const earliest = bucketed.reduce((a, b) => (a.created <= b.created ? a : b));
+const latest = bucketed.reduce((a, b) => (a.created >= b.created ? a : b));
+---
+
+<Layout title="Trade Timing Heatmap - Commissioner Tools">
+  <div class="tt-page">
+
+    <h1 class="tt-title">Trade Timing Heatmap</h1>
+    <p class="tt-lede">
+      Every accepted trade in league history, placed on the calendar by the moment Sleeper
+      processed it. Read <em>across a row</em> to compare the same stretch of the calendar
+      year over year — mid-October 2022 against mid-October 2025.
+    </p>
+    <p class="tt-lede tt-lede-sub">
+      League-wide and aggregate by design. For "how active is <em>this</em> team,"
+      use the <a href="/dev/commish/trans-audit">Transactions Audit</a>.
+    </p>
+
+    <!-- Grain toggle + legend -->
+    <div class="tt-controls">
+      <div class="tt-grain" role="group" aria-label="Heatmap granularity">
+        <button type="button" class="tt-grain-btn is-active" data-grain="week">Week</button>
+        <button type="button" class="tt-grain-btn" data-grain="month">Month</button>
+      </div>
+
+      <div class="tt-legend" data-grain-panel="week">
+        <span class="tt-legend-label">Trades</span>
+        <span class="tt-legend-item">
+          <span class="tt-swatch" data-step="0"></span><span class="tt-legend-text">0</span>
+        </span>
+        {weekLegend.map((l) => (
+          <span class="tt-legend-item">
+            <span class="tt-swatch" data-step={l.step}></span><span class="tt-legend-text">{l.label}</span>
+          </span>
+        ))}
+      </div>
+
+      <div class="tt-legend" data-grain-panel="month" hidden>
+        <span class="tt-legend-label">Trades</span>
+        <span class="tt-legend-item">
+          <span class="tt-swatch" data-step="0"></span><span class="tt-legend-text">0</span>
+        </span>
+        {monthLegend.map((l) => (
+          <span class="tt-legend-item">
+            <span class="tt-swatch" data-step={l.step}></span><span class="tt-legend-text">{l.label}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+
+    <!-- Week × year -->
+    <div class="tt-grid-scroll" data-grain-panel="week">
+      <div class="tt-grid" style={`--year-count:${years.length}`}>
+        <div class="tt-corner tt-corner-month"></div>
+        <div class="tt-corner">Wk</div>
+        {years.map((y) => <div class="tt-colhead">{y}</div>)}
+
+        {weekRows.map((row) => (
+          <>
+            <div class="tt-month-gutter">{row.monthAnchor}</div>
+            <div class={`tt-rowhead${row.monthAnchor ? ' is-month-start' : ''}`}>{row.week}</div>
+            {row.cells.map((c) => (
+              <div
+                class={`tt-cell${row.monthAnchor ? ' is-month-start' : ''}`}
+                data-step={step(c.count, weekMax)}
+                data-tip={`${c.year} week ${String(row.week).padStart(2, '0')}: ${c.count} ${c.count === 1 ? 'trade' : 'trades'}`}
+                data-tip-sub={c.range}
+              >{c.count > 0 ? c.count : ''}</div>
+            ))}
+          </>
+        ))}
+
+        <div class="tt-month-gutter"></div>
+        <div class="tt-rowhead tt-total-head">Tot</div>
+        {yearTotals.map((t) => <div class="tt-total-cell">{t.count}</div>)}
+      </div>
+    </div>
+
+    <!-- Month × year -->
+    <div class="tt-grid-scroll" data-grain-panel="month" hidden>
+      <div class="tt-grid" style={`--year-count:${years.length}`}>
+        <div class="tt-corner tt-corner-month"></div>
+        <div class="tt-corner">Mo</div>
+        {years.map((y) => <div class="tt-colhead">{y}</div>)}
+
+        {monthRows.map((row) => (
+          <>
+            <div class="tt-month-gutter"></div>
+            <div class="tt-rowhead is-month-start">{row.label}</div>
+            {row.cells.map((c) => (
+              <div
+                class="tt-cell is-month-start"
+                data-step={step(c.count, monthMax)}
+                data-tip={`${c.year} ${row.label}: ${c.count} ${c.count === 1 ? 'trade' : 'trades'}`}
+              >{c.count > 0 ? c.count : ''}</div>
+            ))}
+          </>
+        ))}
+
+        <div class="tt-month-gutter"></div>
+        <div class="tt-rowhead tt-total-head">Tot</div>
+        {yearTotals.map((t) => <div class="tt-total-cell">{t.count}</div>)}
+      </div>
+    </div>
+
+    <!-- Footnotes -->
+    <div class="tt-notes">
+      <h2 class="tt-notes-title">Reading the grid</h2>
+      <ul>
+        <li>
+          <strong>One count per trade, not per asset.</strong> Sleeper writes a row for every
+          player and pick that changes hands, so the {trades.length} trades here come from
+          {' '}{tradeLegs.length} raw rows. Cells count distinct <code>transaction_id</code>.
+        </li>
+        <li>
+          <strong>Columns are calendar years, not Sleeper season years.</strong> Buckets come
+          from the real Eastern-time date in <code>created</code>.
+          {seasonYearSkew.length > 0 && (
+            <>
+              {' '}That splits {seasonYearSkew.length} February {seasonYearSkew[0].isoYear} trade{seasonYearSkew.length === 1 ? '' : 's'}
+              {' '}away from the {seasonYearSkew[0].seasonYear} season Sleeper files
+              {seasonYearSkew.length === 1 ? 's it' : ' them'} under — correct for a calendar
+              view, worth knowing if you cross-check against a season-keyed report.
+            </>
+          )}
+        </li>
+        <li>
+          <strong>Rows are ISO weeks, not NFL weeks.</strong> Week {minWeek} is late February;
+          week {maxWeek} is late November. The month gutter is anchored to each ISO week's Monday.
+        </li>
+        <li>
+          <strong>Zero is not the palest step.</strong> An empty cell is bare paper; a single
+          trade already takes the first ramp step.
+        </li>
+        <li>
+          <strong>On the 2021 startup batch:</strong> the handoff brief warned that the earliest
+          2021 trades shared one identical <code>created</code> timestamp, the signature of a bulk
+          import. That is <em>not</em> present in the current data — all {trades.length} trades carry
+          distinct timestamps, the first three landing {bucketed
+            .slice()
+            .sort((a, b) => a.created - b.created)
+            .slice(0, 3)
+            .map((b) => b.dateLabel)
+            .join(', ')}. The early-{years[0]} cluster is real startup-period trading around the
+          inaugural draft, not an artifact. No correction applied.
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="tt-tooltip" class="tt-tooltip" hidden></div>
+
+  <style>
+    .tt-page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    .tt-title {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      margin: 0 0 0.6rem;
+      color: var(--color-text-primary);
+    }
+
+    .tt-lede {
+      color: var(--color-text-muted);
+      font-size: 0.95rem;
+      line-height: 1.55;
+      max-width: 62ch;
+      margin: 0 0 0.5rem;
+    }
+    .tt-lede-sub { font-size: 0.85rem; margin-bottom: 2rem; }
+    .tt-lede a { color: var(--color-text-primary); }
+
+    /* ── Controls ── */
+    .tt-controls {
+      display: flex;
+      align-items: center;
+      gap: 1.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+
+    .tt-grain {
+      display: inline-flex;
+      border: 1px solid var(--color-border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .tt-grain-btn {
+      font-family: var(--font-body);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.45rem 0.9rem;
+      background-color: var(--color-surface);
+      color: var(--color-text-muted);
+      border: none;
+      border-right: 1px solid var(--color-border);
+      cursor: pointer;
+    }
+    .tt-grain-btn:last-child { border-right: none; }
+    .tt-grain-btn.is-active {
+      background-color: var(--slate-600);
+      color: var(--paper-50);
+    }
+
+    .tt-legend {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      flex-wrap: wrap;
+    }
+    .tt-legend[hidden] { display: none; }
+    .tt-legend-label {
+      font-family: var(--font-body);
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      margin-right: 0.1rem;
+    }
+    .tt-legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .tt-swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 2px;
+      display: inline-block;
+    }
+    .tt-legend-text {
+      font-size: 0.72rem;
+      color: var(--color-text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Sequential ramp (slate, light → dark) ──
+       step 0 is deliberately bare paper + hairline, so an empty cell never
+       reads as "one trade." */
+    .tt-swatch[data-step="0"],
+    .tt-cell[data-step="0"] {
+      background-color: transparent;
+      box-shadow: inset 0 0 0 1px var(--color-border);
+    }
+    .tt-swatch[data-step="1"], .tt-cell[data-step="1"] { background-color: var(--slate-100); }
+    .tt-swatch[data-step="2"], .tt-cell[data-step="2"] { background-color: var(--slate-200); }
+    .tt-swatch[data-step="3"], .tt-cell[data-step="3"] { background-color: var(--slate-400); }
+    .tt-swatch[data-step="4"], .tt-cell[data-step="4"] { background-color: var(--slate-600); }
+    .tt-swatch[data-step="5"], .tt-cell[data-step="5"] { background-color: var(--slate-800); }
+
+    .tt-cell[data-step="1"], .tt-cell[data-step="2"] { color: var(--ink-800); }
+    .tt-cell[data-step="3"],
+    .tt-cell[data-step="4"],
+    .tt-cell[data-step="5"] { color: var(--paper-50); }
+
+    /* ── Grid ── */
+    .tt-grid-scroll {
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+    }
+    .tt-grid-scroll[hidden] { display: none; }
+
+    .tt-grid {
+      display: grid;
+      grid-template-columns: 2.5rem 2.25rem repeat(var(--year-count), minmax(52px, 1fr));
+      gap: 2px;
+      min-width: 480px;
+      align-items: stretch;
+    }
+
+    .tt-corner,
+    .tt-colhead,
+    .tt-rowhead,
+    .tt-month-gutter,
+    .tt-cell,
+    .tt-total-cell {
+      font-family: var(--font-body);
+      font-size: 0.72rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tt-colhead {
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--color-text-primary);
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .tt-corner {
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .tt-corner-month { border-bottom: none; }
+
+    .tt-month-gutter {
+      justify-content: flex-end;
+      padding-right: 0.5rem;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+    }
+
+    .tt-rowhead {
+      color: var(--color-text-muted);
+      font-size: 0.65rem;
+      justify-content: flex-end;
+      padding-right: 0.4rem;
+    }
+    .tt-rowhead.is-month-start { color: var(--color-text-primary); font-weight: 600; }
+
+    .tt-cell {
+      min-height: 19px;
+      border-radius: 2px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      cursor: default;
+    }
+    .tt-cell.is-month-start { box-shadow: inset 0 1.5px 0 0 var(--color-border); }
+    .tt-cell[data-step="0"].is-month-start {
+      box-shadow: inset 0 0 0 1px var(--color-border), inset 0 1.5px 0 0 var(--color-border);
+    }
+    /* No whole-grid dimming on hover — with ~250 cells that reads as flicker.
+       A single outline is enough to mark the cell the tooltip belongs to. */
+    .tt-cell:hover { outline: 1.5px solid var(--color-text-primary); outline-offset: -1px; }
+
+    .tt-total-head,
+    .tt-total-cell {
+      font-weight: 700;
+      color: var(--color-text-primary);
+      padding-top: 0.45rem;
+      margin-top: 0.2rem;
+      border-top: 1px solid var(--color-border);
+    }
+    .tt-total-head {
+      font-size: 0.6rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+    }
+
+    /* ── Tooltip ── */
+    .tt-tooltip {
+      position: fixed;
+      z-index: 50;
+      pointer-events: none;
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border-light);
+      border-radius: 5px;
+      padding: 0.5rem 0.65rem;
+      font-family: var(--font-body);
+      font-size: 0.78rem;
+      line-height: 1.4;
+      color: var(--color-text-secondary);
+      box-shadow: 0 6px 20px rgba(28, 26, 23, 0.18);
+      max-width: 220px;
+    }
+    .tt-tooltip[hidden] { display: none; }
+    /* Injected via innerHTML — no Astro scope attribute, so :global() is required. */
+    :global(.tt-tooltip strong) {
+      display: block;
+      color: var(--color-text-primary);
+      font-weight: 700;
+    }
+    :global(.tt-tooltip span) {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--color-text-muted);
+    }
+
+    /* ── Notes ── */
+    .tt-notes {
+      margin-top: 2.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--color-border);
+    }
+    .tt-notes-title {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      margin: 0 0 0.75rem;
+      color: var(--color-text-primary);
+    }
+    .tt-notes ul {
+      margin: 0;
+      padding-left: 1.1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+    .tt-notes li {
+      font-size: 0.82rem;
+      line-height: 1.55;
+      color: var(--color-text-muted);
+      max-width: 78ch;
+    }
+    .tt-notes strong { color: var(--color-text-primary); font-weight: 600; }
+    .tt-notes code {
+      font-family: var(--font-mono, monospace);
+      font-size: 0.78em;
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 3px;
+      padding: 0.05rem 0.25rem;
+    }
+
+    @media (max-width: 768px) {
+      .tt-page { padding: 1.5rem 1rem 3rem; }
+      .tt-stats { grid-template-columns: repeat(2, 1fr); }
+      .tt-grid {
+        grid-template-columns: 2.1rem 1.9rem repeat(var(--year-count), minmax(38px, 1fr));
+        min-width: 0;
+      }
+      .tt-cell { min-height: 17px; font-size: 0.62rem; }
+    }
+  </style>
+
+  <script is:inline>
+    (() => {
+      const tip = document.getElementById('tt-tooltip');
+      const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+      // Grain toggle — swaps which pre-rendered grid + legend is visible.
+      // Both matrices are built at build time; nothing is recomputed client-side.
+      const buttons = document.querySelectorAll('.tt-grain-btn');
+      const panels = document.querySelectorAll('[data-grain-panel]');
+      buttons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const grain = btn.dataset.grain;
+          buttons.forEach((b) => b.classList.toggle('is-active', b === btn));
+          panels.forEach((p) => { p.hidden = p.dataset.grainPanel !== grain; });
+          if (tip) tip.hidden = true;
+        });
+      });
+
+      if (!tip || !canHover) return;
+
+      // Scoped to the grids rather than document, so idle mouse movement
+      // elsewhere on the page costs nothing.
+      panels.forEach((panel) => {
+        if (!panel.classList.contains('tt-grid-scroll')) return;
+        panel.addEventListener('mousemove', onMove);
+        panel.addEventListener('mouseleave', () => { tip.hidden = true; });
+      });
+
+      function onMove(e) {
+        const cell = e.target.closest('.tt-cell');
+        if (!cell) { tip.hidden = true; return; }
+
+        const sub = cell.dataset.tipSub;
+        tip.innerHTML = `<strong>${cell.dataset.tip}</strong>` + (sub ? `<span>${sub}</span>` : '');
+        tip.hidden = false;
+
+        const GAP = 14;
+        const tw = tip.offsetWidth;
+        const th = tip.offsetHeight;
+        let left = e.clientX + GAP;
+        let top = e.clientY + GAP;
+        if (left + tw > window.innerWidth - 8) left = e.clientX - tw - GAP;
+        if (top + th > window.innerHeight - 8) top = e.clientY - th - GAP;
+        tip.style.left = `${left}px`;
+        tip.style.top = `${top}px`;
+      }
+    })();
+  </script>
+</Layout>
