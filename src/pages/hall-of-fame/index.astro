@@ -214,19 +214,24 @@ if (newestRecord) {
 
     <!-- Wing grid: 2-2-1 -->
     <div class="wing-grid">
-      {wings.map(wing => (
-        <a
-          href={`/hall-of-fame/${wing.slug}`}
-          class={`wing-tile${wing.locked ? ' is-locked' : ''}`}
-        >
-          <div class="wing-tile-inner">
-            <span class="wing-hex sc-hex" aria-hidden="true"></span>
-            <h2 class="wing-name">{wing.name}</h2>
-            <p class="wing-line">{wing.line}</p>
-            {wing.locked && <span class="wing-badge">Not Yet Open</span>}
-          </div>
-        </a>
-      ))}
+      {wings.map(wing => {
+        // A locked wing renders as a plain tile — styled as anticipated and
+        // with no link, since its page is not open to visitors yet.
+        const Tag = wing.locked ? 'div' : 'a';
+        return (
+          <Tag
+            href={wing.locked ? undefined : `/hall-of-fame/${wing.slug}`}
+            class={`wing-tile${wing.locked ? ' is-locked' : ''}`}
+          >
+            <div class="wing-tile-inner">
+              <span class="wing-hex sc-hex" aria-hidden="true"></span>
+              <h2 class="wing-name">{wing.name}</h2>
+              <p class="wing-line">{wing.line}</p>
+              {wing.locked && <span class="wing-badge">Not Yet Open</span>}
+            </div>
+          </Tag>
+        );
+      })}
     </div>
 
     <!-- Recent additions -->
@@ -339,7 +344,7 @@ if (newestRecord) {
     background-color: var(--border-default);
     border: 1px solid var(--border-default);
   }
-  .wing-grid > a:nth-child(5) { grid-column: 1 / -1; }
+  .wing-grid > *:nth-child(5) { grid-column: 1 / -1; }
 
   .wing-tile {
     background-color: var(--surface-card);
@@ -387,13 +392,14 @@ if (newestRecord) {
     margin: 0;
   }
 
-  /* Locked wing reads as anticipated, not broken. */
-  .wing-tile.is-locked { background-color: var(--surface-sunken); }
-  .wing-tile.is-locked:hover { background-color: var(--surface-inset); }
+  /* Locked wing reads as anticipated, not broken — and is inert, so it drops
+     every hover affordance that would suggest it goes somewhere. */
+  .wing-tile.is-locked { background-color: var(--surface-sunken); cursor: default; }
+  .wing-tile.is-locked:hover { background-color: var(--surface-sunken); }
   .wing-tile.is-locked .wing-name { color: var(--color-text-muted); }
   .wing-tile.is-locked .wing-hex { background-color: var(--ink-300); }
-  .wing-tile.is-locked:hover .wing-hex { background-color: var(--ink-400); }
-  .wing-tile.is-locked:hover .wing-tile-inner { border-top-color: var(--ink-300); }
+  .wing-tile.is-locked:hover .wing-hex { background-color: var(--ink-300); }
+  .wing-tile.is-locked:hover .wing-tile-inner { border-top-color: transparent; }
 
   .wing-badge {
     font-family: var(--font-sans);
@@ -506,7 +512,7 @@ if (newestRecord) {
     .hof-hero-counts { gap: 0.5rem 1.25rem; font-size: 0.65rem; }
 
     .wing-grid { grid-template-columns: 1fr !important; }
-    .wing-grid > a:nth-child(5) { grid-column: auto !important; }
+    .wing-grid > *:nth-child(5) { grid-column: auto !important; }
     .wing-tile-inner { padding: 1.75rem 1.25rem; }
     .wing-name { font-size: 1.6rem; }
 

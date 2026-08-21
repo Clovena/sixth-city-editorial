@@ -37,22 +37,26 @@ const steps = [
   {
     number: '01',
     title: 'Eligibility',
-    body: `Induction is a career honour, not a season one. Candidates are judged on the whole of what they have done in Sixth City — sustained production, championships, defining moments, and the mark they left on the league.`,
+    color: 'ember',
+    body: `Induction is a career honor, not a season one. Candidates are judged on the whole of what they have done in Sixth City: sustained production, accolades, defining moments, and the mark they left on the league.`,
   },
   {
     number: '02',
     title: 'Nomination',
-    body: `A ballot is assembled ahead of each vote. The exact size of the ballot, who may nominate, and how many names carry over from year to year are still being settled by the league.`,
+    color: 'pine',
+    body: `A ballot is assembled by a select committee. The exact size of the ballot is fluid from year to year, and candidates can carry over from one year's ballot to the next. The committee membership is still being assembled.`,
   },
   {
     number: '03',
     title: 'The Vote',
+    color: 'slate',
     body: `The league votes, the way it already votes on Superlatives. The threshold required for enshrinement and the maximum size of a single class have not been fixed yet.`,
   },
   {
     number: '04',
     title: 'Enshrinement',
-    body: `Each inductee gets their own page: a career résumé, the numbers behind the case, and an induction write-up. This wing becomes the gallery that links them together.`,
+    color: 'gold',
+    body: `Each inductee gets their own page: a career resume, the numbers behind the case, and an induction write-up. This page becomes the gallery that links them together.`,
   },
 ];
 ---
@@ -69,44 +73,22 @@ const steps = [
       <p class="section-label" style="margin-top: 1.25rem;">The Legends of Sixth City</p>
       <h1 class="page-title">Hall of Famers</h1>
       <p class="page-subtitle" style="margin-top: 0.75rem;">
-        The other four wings record what happened. This one argues about what it
-        meant. Hall of Famers are inducted by a vote of the league on career
-        performance and merit &mdash; and the first class will not be seated
+        The other four wings record what happened. This one records what it meant. Hall of Famers are inducted by a vote of the league on career performance and merit. The first class will not be seated
         until Season {FIRST_CLASS_SEASON} is in the books.
       </p>
-    </div>
-
-    <!-- Status band -->
-    <div class="status-band">
-      <div class="sc-stripe" style="height: 4px; width: 100%;" aria-hidden="true"></div>
-      <div class="status-inner">
-        <div class="status-block">
-          <p class="status-label">First Class</p>
-          <p class="status-figure">After Season {FIRST_CLASS_SEASON}</p>
-          <p class="status-note">The {firstClassYear} season</p>
-        </div>
-        <div class="status-block">
-          <p class="status-label">Currently</p>
-          <p class="status-figure">Season {currentSeasonNumber}</p>
-          <p class="status-note">{currentStatus}</p>
-        </div>
-        <div class="status-block">
-          <p class="status-label">Inducted To Date</p>
-          <p class="status-figure">None yet</p>
-          <p class="status-note">The gallery opens with the first class</p>
-        </div>
-      </div>
     </div>
 
     <!-- How induction will work -->
     <section class="process">
       <div class="award-section-head">
         <h2 class="award-section-title">How Induction Will Work</h2>
-        <p class="award-section-sub">A sketch of the process, not the final rulebook</p>
       </div>
       <div class="process-grid">
         {steps.map(step => (
-          <div class="process-card">
+          <div
+            class="process-card"
+            style={`--step-accent: var(--${step.color}-500); --step-ink: var(--${step.color}-700);`}
+          >
             <p class="process-number">{step.number}</p>
             <h3 class="process-title">{step.title}</h3>
             <p class="process-body">{step.body}</p>
@@ -119,7 +101,6 @@ const steps = [
     <section class="gallery-preview">
       <div class="award-section-head">
         <h2 class="award-section-title">The Gallery</h2>
-        <p class="award-section-sub">What this page becomes once the first class is seated</p>
       </div>
       <div class="gallery-grid" aria-hidden="true">
         {Array.from({ length: 6 }).map(() => (
@@ -131,15 +112,10 @@ const steps = [
         ))}
       </div>
       <p class="page-whisper gallery-caption">
-        Each plaque will open an induction page &mdash; the way a franchise tile
+        Each plaque will open an induction page, the way a franchise tile
         on <a href="/franchises">Franchises</a> opens a franchise page.
       </p>
     </section>
-
-    <p class="page-whisper hof-footnote">
-      Placeholder copy. The eligibility bar, ballot rules, vote threshold, and
-      class size are the commissioner's to set before the first ballot goes out.
-    </p>
   </div>
 </Layout>
 
@@ -158,48 +134,6 @@ const steps = [
   }
   .hof-back:hover { color: var(--color-text-primary); text-decoration: none; }
 
-  /* ---- Status band ---- */
-  .status-band {
-    margin-top: 2.5rem;
-    background-color: var(--surface-card);
-    border: 1px solid var(--border-hairline);
-    box-shadow: var(--shadow-1);
-  }
-  .status-inner {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1px;
-    background-color: var(--border-hairline);
-  }
-  .status-block {
-    background-color: var(--surface-card);
-    padding: 1.75rem 1.5rem;
-  }
-  .status-label {
-    font-family: var(--font-body);
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-    margin: 0 0 0.5rem;
-  }
-  .status-figure {
-    font-family: var(--font-display);
-    font-size: 1.75rem;
-    font-weight: 900;
-    line-height: 1;
-    letter-spacing: -0.01em;
-    color: var(--gold-700);
-    margin: 0;
-  }
-  .status-note {
-    font-family: var(--font-serif);
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
-    margin: 0.45rem 0 0;
-  }
-
   /* ---- Section heads ---- */
   .award-section-head {
     border-bottom: 2px solid var(--rule-ink);
@@ -213,13 +147,6 @@ const steps = [
     margin: 0;
     color: var(--text-strong);
   }
-  .award-section-sub {
-    font-family: var(--font-serif);
-    font-style: italic;
-    font-size: 0.9rem;
-    color: var(--color-text-muted);
-    margin: 0.3rem 0 0;
-  }
 
   /* ---- Process ---- */
   .process { margin-top: 3.5rem; }
@@ -231,7 +158,9 @@ const steps = [
   .process-card {
     background-color: var(--color-surface);
     border: 1px solid var(--color-border);
-    border-top: 3px solid var(--slate-500);
+    /* --step-accent / --step-ink are set per card from `steps[].color`;
+       slate is the fallback for a step with no colour assigned. */
+    border-top: 3px solid var(--step-accent, var(--slate-500));
     padding: 1.5rem;
   }
   .process-number {
@@ -239,7 +168,7 @@ const steps = [
     font-size: 0.8rem;
     font-weight: 600;
     letter-spacing: 0.1em;
-    color: var(--slate-500);
+    color: var(--step-ink, var(--slate-700));
     margin: 0 0 0.6rem;
   }
   .process-title {
@@ -286,12 +215,6 @@ const steps = [
   .plaque-line-wide { width: 80%; }
 
   .gallery-caption { font-size: 0.85rem; margin: 1rem 0 0; }
-
-  .hof-footnote {
-    font-size: 0.85rem;
-    max-width: 70ch;
-    margin: 3rem 0 5rem;
-  }
 
   @media (max-width: 768px) {
     .status-inner { grid-template-columns: 1fr !important; }
