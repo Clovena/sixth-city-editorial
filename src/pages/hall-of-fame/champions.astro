@@ -1,0 +1,379 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { loadFranchises, loadSeasonPodiums, type PodiumEntry, type SeasonPodium } from '../../lib/hall-of-fame';
+
+const franchises = await loadFranchises();
+const podiums = await loadSeasonPodiums(franchises);
+
+// ── Summary strip ──────────────────────────────────────────────────────────
+const distinctChampions = new Set(podiums.map(p => p.champion?.activeAbbr).filter(Boolean)).size;
+const charitiesSupported = new Set(podiums.map(p => p.charity).filter(Boolean)).size;
+
+type Tier = {
+  key: 'gold' | 'silver' | 'bronze';
+  label: string;
+  entry: PodiumEntry | null;
+  /** Mobile stacking order — the champion leads regardless of podium position */
+  order: number;
+};
+
+// Rendered left-to-right as silver / gold / bronze so the champion sits centred
+// and raised; `order` restacks them champion-first once the podium collapses.
+function tiersFor(podium: SeasonPodium): Tier[] {
+  return [
+    { key: 'silver', label: 'Runner-Up', entry: podium.runnerUp, order: 2 },
+    { key: 'gold', label: 'Champion', entry: podium.champion, order: 1 },
+    { key: 'bronze', label: 'Third Place', entry: podium.third, order: 3 },
+  ];
+}
+
+function fmt(score: number | null): string {
+  return score === null ? '—' : score.toFixed(2);
+}
+---
+
+<Layout
+  title="Champions"
+  description="Every Dynasty Bowl podium in Sixth City Dynasty history — champions, runners-up, third place, consolation champions, conference titles, and the charity each season played for."
+>
+  <div style="max-width: 1200px; margin: 0 auto; padding: 0 1.5rem;">
+
+    <!-- Page header -->
+    <div style="border-bottom: 1px solid var(--color-border); padding: 3rem 0 2.5rem; margin-top: 3rem;">
+      <a href="/hall-of-fame" class="hof-back">&#8592; Hall of Fame</a>
+      <p class="section-label" style="margin-top: 1.25rem;">Ultimate Glory</p>
+      <h1 class="page-title">Champions</h1>
+      <p class="page-subtitle" style="margin-top: 0.75rem;">
+        The Dynasty Bowl decides the season, but it is not the only thing
+        settled in Week 17. Every podium below carries its runner-up, its third
+        place, its consolation champion, and the charity that season played for.
+      </p>
+    </div>
+
+    <!-- Season podiums, reverse chronological -->
+    <div class="season-stack">
+      {podiums.map(podium => (
+        <section class="season-card">
+          <div class="sc-stripe" style="height: 4px; width: 100%;" aria-hidden="true"></div>
+
+          <div class="season-card-head">
+            <div>
+              <p class="sc-eyebrow" style="margin: 0;">{podium.dynastyBowlLabel}</p>
+              <h2 class="season-card-year">{podium.year}</h2>
+            </div>
+            <a href={`/history/${podium.year}`} class="season-card-link">Season Detail &#8594;</a>
+          </div>
+
+          <div class="podium">
+            {tiersFor(podium).map(tier => (
+              <div class={`podium-tier podium-${tier.key}`} style={`--stack-order: ${tier.order};`}>
+                <p class="podium-label">{tier.label}</p>
+                {tier.entry ? (
+                  <Fragment>
+                    <img
+                      src={`/images/logos/${tier.entry.abbr}.png`}
+                      alt=""
+                      width={tier.key === 'gold' ? 72 : 48}
+                      height={tier.key === 'gold' ? 72 : 48}
+                      class="podium-logo"
+                      onerror="this.style.display='none'"
+                    />
+                    <a href={`/franchises/${tier.entry.activeAbbr}`} class="podium-name">{tier.entry.name}</a>
+                    <p class="podium-meta">
+                      {tier.entry.owner}{tier.entry.record ? ` • ${tier.entry.record}` : ''}
+                    </p>
+                  </Fragment>
+                ) : (
+                  <p class="podium-empty">Not recorded</p>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {podium.charity && (
+            <div class="charity-band">
+              <p class="charity-label">
+                {podium.champion ? `${podium.champion.name} played for` : 'This season played for'}
+              </p>
+              <p class="charity-name">{podium.charity}</p>
+            </div>
+          )}
+
+          <div class="season-card-foot">
+            <div class="foot-block">
+              <p class="foot-label">Conference Titles</p>
+              <div class="foot-teams">
+                {[podium.scc, podium.hcc].map(conf => conf ? (
+                  <a href={`/franchises/${conf.activeAbbr}`} class="foot-team">
+                    <span class={`label-badge badge-${conf.conf.toLowerCase()}`}>{conf.conf}</span>
+                    <img
+                      src={`/images/logos/${conf.abbr}.png`}
+                      alt=""
+                      width="22"
+                      height="22"
+                      style="object-fit: contain;"
+                      onerror="this.style.display='none'"
+                    />
+                    <span class="foot-team-name">{conf.name}</span>
+                  </a>
+                ) : null)}
+              </div>
+            </div>
+
+            <div class="foot-block">
+              <p class="foot-label">Consolation Champion</p>
+              {podium.consolation ? (
+                <a href={`/franchises/${podium.consolation.activeAbbr}`} class="foot-team">
+                  <img
+                    src={`/images/logos/${podium.consolation.abbr}.png`}
+                    alt=""
+                    width="22"
+                    height="22"
+                    style="object-fit: contain;"
+                    onerror="this.style.display='none'"
+                  />
+                  <span class="foot-team-name">{podium.consolation.name}</span>
+                  {podium.consolationRunnerUp && (
+                    <span class="foot-note sc-tabular">
+                      def. {podium.consolationRunnerUp.abbr} {fmt(podium.consolation.score)}&ndash;{fmt(podium.consolation.opponentScore)}
+                    </span>
+                  )}
+                </a>
+              ) : (
+                <p class="foot-note">Not recorded</p>
+              )}
+            </div>
+          </div>
+        </section>
+      ))}
+    </div>
+
+    <p class="page-whisper hof-footnote">
+      Third place is the winner of the Week 17 game between the two semifinal
+      losers. The consolation champion is the non-playoff franchise that ran the
+      Weeks 15&ndash;17 consolation bracket undefeated &mdash; a separate title from
+      the final standings, which rank non-playoff teams on the regular season alone.
+    </p>
+  </div>
+</Layout>
+
+<style>
+  .hof-back {
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .hof-back:hover { color: var(--color-text-primary); text-decoration: none; }
+
+  /* ---- Season card ---- */
+  .season-stack {
+    margin-top: 3rem;
+    margin-bottom: 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+
+  .season-card {
+    background-color: var(--surface-card);
+    border: 1px solid var(--border-hairline);
+    box-shadow: var(--shadow-1);
+  }
+
+  .season-card-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.5rem 1.75rem 1.25rem;
+    border-bottom: 1px solid var(--border-hairline);
+  }
+
+  .season-card-year {
+    font-family: var(--font-display);
+    font-size: 2.25rem;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    margin: 0.15rem 0 0;
+    color: var(--text-strong);
+  }
+
+  .season-card-link {
+    font-family: var(--font-body);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+  }
+  .season-card-link:hover { color: var(--ember-700); text-decoration: none; }
+
+  /* ---- Podium ---- */
+  .podium {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 1fr;
+    align-items: end;
+    gap: 1px;
+    background-color: var(--border-hairline);
+    border-bottom: 1px solid var(--border-hairline);
+  }
+
+  .podium-tier {
+    background-color: var(--surface-card);
+    padding: 1.5rem 1.25rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    border-top: 3px solid transparent;
+  }
+
+  /* Tier padding builds the podium silhouette: gold tallest, bronze shortest. */
+  .podium-gold   { padding-top: 2.25rem; padding-bottom: 2.25rem; border-top-color: var(--gold-500); background-color: var(--gold-100); }
+  .podium-silver { padding-top: 1.75rem; border-top-color: var(--slate-400); }
+  .podium-bronze { padding-top: 1.25rem; border-top-color: var(--ember-400); }
+
+  .podium-label {
+    font-family: var(--font-body);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin: 0;
+    color: var(--color-text-muted);
+  }
+  .podium-gold .podium-label   { color: var(--gold-800); }
+  .podium-silver .podium-label { color: var(--slate-600); }
+  .podium-bronze .podium-label { color: var(--ember-700); }
+
+  .podium-logo { object-fit: contain; flex-shrink: 0; }
+
+  .podium-name {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--text-strong);
+  }
+  .podium-gold .podium-name { font-size: 1.5rem; }
+  .podium-name:hover { color: var(--ember-700); text-decoration: none; }
+
+  .podium-meta {
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+    margin: 0;
+  }
+  .podium-gold { 
+    font-size: 1.15rem; color: var(--gold-800);
+  }
+
+  .podium-empty {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    margin: 0.5rem 0;
+  }
+
+  /* ---- Charity band — tethered directly beneath the champion's podium ---- */
+  .charity-band {
+    padding: 1.1rem 1.75rem;
+    background-color: var(--pine-100);
+    border-bottom: 1px solid var(--border-hairline);
+    border-left: 3px solid var(--pine-600);
+  }
+  .charity-label {
+    font-family: var(--font-body);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--pine-700);
+    margin: 0 0 0.2rem;
+  }
+  .charity-name {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--pine-900);
+    margin: 0;
+  }
+
+  /* ---- Footer blocks ---- */
+  .season-card-foot {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background-color: var(--border-hairline);
+  }
+  .foot-block {
+    background-color: var(--surface-card);
+    padding: 1.25rem 1.75rem;
+  }
+  .foot-label {
+    font-family: var(--font-body);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin: 0 0 0.7rem;
+  }
+  .foot-teams { display: flex; flex-direction: column; gap: 0.5rem; }
+  .foot-team {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    color: var(--text-body);
+    flex-wrap: wrap;
+  }
+  .foot-team:hover { text-decoration: none; }
+  .foot-team:hover .foot-team-name { color: var(--ember-700); }
+  .foot-team-name {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-strong);
+  }
+  .foot-note {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+    margin: 0;
+  }
+
+  .hof-footnote {
+    font-size: 0.85rem;
+    max-width: 70ch;
+    margin: 0 0 5rem;
+  }
+
+  @media (max-width: 768px) {
+
+    .podium { grid-template-columns: 1fr !important; }
+    .podium-tier {
+      order: var(--stack-order);
+      padding-top: 1.5rem !important;
+      padding-bottom: 1.5rem !important;
+    }
+
+    .season-card-foot { grid-template-columns: 1fr !important; }
+
+    .charity-name { font-size: 1.1rem; }
+    .season-card-head { padding: 1.25rem 1.25rem 1rem; }
+    .charity-band { padding: 1rem 1.25rem; }
+    .foot-block { padding: 1.1rem 1.25rem; }
+  }
+</style>

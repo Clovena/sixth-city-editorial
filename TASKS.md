@@ -1,13 +1,17 @@
 # SCDFL Site — Task Board
 
 ## TODO
+1. Transaction log on player pages
+1. Hall of Fame - Player awards, HOF awards, trophies
+1. Remove team color palettes from Spotlight Games
+1. History page cleanup
+    - No footnote about HCC alltime record, etc.
 1. Low priority QOL cleanup
     - Season recap brackets on mobile
-1. WIDGETS.md
+1. WIDGETS.md, pt.2
 1. More content 
     - Game recaps
     - Better rivalry blurbs
-1. Hall of Fame - Player awards, HOF awards, trophies
 
 ## Dev
 - Consolation bracket

@@ -61,6 +61,35 @@ Breakpoint: `@media (max-width: 768px)`. All mobile overrides use scoped `<style
 - `.lineup-row-b` gets `flex-direction: row` on mobile (was `row-reverse` on desktop) so element order matches Team A: pos | thumb | name | score
 - Team A `border-right` removed (no adjacent column on mobile)
 
+### `hall-of-fame/index.astro`
+- Hero is a `data-theme="ink"` broadcast band (dark section on the cream page) — it re-scopes the colour tokens, so any child must use semantic tokens, not hardcoded light values
+- `wing-grid`: 2-2-1 layout via `grid-template-columns: 1fr 1fr` with the fifth tile taking `grid-column: 1 / -1`. On mobile it goes single column and the fifth tile's span is reset with `grid-column: auto !important`
+- The locked "Hall of Famers" tile is still a working link (the page has explainer content) — it is only styled as anticipated: sunken surface, muted ink, "Not Yet Open" badge
+- `recent-grid` collapses to one column
+
+### `hall-of-fame/champions.astro`
+- `.podium` is a 3-column grid rendered silver | gold | bronze so the champion sits centred; differing top/bottom padding per tier builds the podium silhouette
+- On mobile the grid collapses to 1 column and `--stack-order` (set inline per tier) drives CSS `order` so the champion leads
+- `season-card-foot` (conference titles + consolation) collapses to 1 column
+- Logos use the **era** abbr (`entry.abbr`); links use the **active** abbr (`entry.activeAbbr`)
+
+### `hall-of-fame/superlatives.astro`
+- `award-grid` is `auto-fill, minmax(320px, 1fr)` → 1 column on mobile
+- `trade-sides` uses `grid-template-columns: repeat(var(--side-count), 1fr)` so a three-team trade renders three columns; collapses to 1 column on mobile
+- Repeat winners get an ember left spine (`.timeline-row.is-repeat`) so a run of the same name reads at a glance
+
+### `hall-of-fame/medals.astro`
+- Sortable leaderboard. The inline `<script>` sorts `<tbody>` rows in place off `data-*` attributes and renumbers `.rank-cell` — the markup stays the only copy of the data, no JSON blob is shipped
+- All columns except rank, player, and medals are `col-hide-mobile`
+
+### `hall-of-fame/records.astro`
+- Rows are clickable to `/games/[year]/[slug]` via `onclick`; the player-name link inside calls `event.stopPropagation()` so it wins over the row handler
+- All columns except rank, score, and the subject are `col-hide-mobile`, and the wrapper drops `overflow-x` on mobile
+
+### `hall-of-fame/inductees.astro`
+- Placeholder wing. Season numbering is derived (`SEASON_ONE_YEAR = 2021`), and "complete" is judged by a played Week 17 `game_type = 1` matchup, not by a `seasons` row existing
+- The gallery preview is `aria-hidden` and deliberately inert — dashed plaques showing the future grid shape
+
 ### `players/[id].astro`
 - **Only on-demand (SSR) route on the site** — `export const prerender = false`, no `getStaticPaths`. Data is fetched per request, so independent Supabase queries are batched in one `Promise.all` and only the roster→franchise and draft→drafts→drafter chains stay sequential. Adding a serial `await` here costs every visitor, not the build.
 - Page wrapper (`player-page-wrap`) constrains to screen width with `overflow-x: hidden` and tighter padding

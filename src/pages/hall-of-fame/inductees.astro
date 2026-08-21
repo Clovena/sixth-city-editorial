@@ -1,0 +1,224 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { supabase } from '../../lib/supabase';
+
+// Season 1 was 2021, so the first class is voted after the Season 6 (2026)
+// campaign closes. Derived rather than hard-coded so the copy stays correct.
+const SEASON_ONE_YEAR = 2021;
+const FIRST_CLASS_SEASON = 6;
+const firstClassYear = SEASON_ONE_YEAR + FIRST_CLASS_SEASON - 1;
+
+const [{ data: seasonRows, error: sErr }, { data: finalRows, error: fErr }] = await Promise.all([
+  supabase.schema('scdfl').from('seasons').select('year').order('year', { ascending: false }).limit(1),
+  // A season only counts as finished once its Dynasty Bowl has been played —
+  // the `seasons` row exists from the moment the league is created on Sleeper.
+  supabase.schema('scdfl').from('matchups').select('year, score_a, score_b').eq('week', 17).eq('game_type', 1),
+]);
+
+if (sErr) throw new Error(`Seasons query failed: ${sErr.message}`);
+if (fErr) throw new Error(`Matchups query failed: ${fErr.message}`);
+
+const currentYear = seasonRows?.[0]?.year ?? firstClassYear;
+const currentSeasonNumber = currentYear - SEASON_ONE_YEAR + 1;
+
+const completedYears = (finalRows ?? [])
+  .filter(f => Number(f.score_a ?? 0) > 0 || Number(f.score_b ?? 0) > 0)
+  .map(f => f.year as number);
+const lastCompletedYear = completedYears.length ? Math.max(...completedYears) : null;
+const seasonsRemaining = firstClassYear - (lastCompletedYear ?? SEASON_ONE_YEAR - 1);
+
+const currentStatus = lastCompletedYear !== null && lastCompletedYear >= firstClassYear
+  ? 'Eligible seasons are complete — balloting to follow'
+  : currentYear >= firstClassYear
+    ? `Season ${currentSeasonNumber} is under way — the ballot follows it`
+    : `${seasonsRemaining} season${seasonsRemaining === 1 ? '' : 's'} until the first ballot`;
+
+const steps = [
+  {
+    number: '01',
+    title: 'Eligibility',
+    color: 'ember',
+    body: `Induction is a career honor, not a season one. Candidates are judged on the whole of what they have done in Sixth City: sustained production, accolades, defining moments, and the mark they left on the league.`,
+  },
+  {
+    number: '02',
+    title: 'Nomination',
+    color: 'pine',
+    body: `A ballot is assembled by a select committee. The exact size of the ballot is fluid from year to year, and candidates can carry over from one year's ballot to the next. The committee membership is still being assembled.`,
+  },
+  {
+    number: '03',
+    title: 'The Vote',
+    color: 'slate',
+    body: `The league votes, the way it already votes on Superlatives. The threshold required for enshrinement and the maximum size of a single class have not been fixed yet.`,
+  },
+  {
+    number: '04',
+    title: 'Enshrinement',
+    color: 'gold',
+    body: `Each inductee gets their own page: a career resume, the numbers behind the case, and an induction write-up. This page becomes the gallery that links them together.`,
+  },
+];
+---
+
+<Layout
+  title="Hall of Famers"
+  description="The Sixth City Dynasty Hall of Famers wing — career inductions voted on by the league, beginning after Season 6."
+>
+  <div style="max-width: 1200px; margin: 0 auto; padding: 0 1.5rem;">
+
+    <!-- Page header -->
+    <div style="border-bottom: 1px solid var(--color-border); padding: 3rem 0 2.5rem; margin-top: 3rem;">
+      <a href="/hall-of-fame" class="hof-back">&#8592; Hall of Fame</a>
+      <p class="section-label" style="margin-top: 1.25rem;">The Legends of Sixth City</p>
+      <h1 class="page-title">Hall of Famers</h1>
+      <p class="page-subtitle" style="margin-top: 0.75rem;">
+        The other four wings record what happened. This one records what it meant. Hall of Famers are inducted by a vote of the league on career performance and merit. The first class will not be seated
+        until Season {FIRST_CLASS_SEASON} is in the books.
+      </p>
+    </div>
+
+    <!-- How induction will work -->
+    <section class="process">
+      <div class="award-section-head">
+        <h2 class="award-section-title">How Induction Will Work</h2>
+      </div>
+      <div class="process-grid">
+        {steps.map(step => (
+          <div
+            class="process-card"
+            style={`--step-accent: var(--${step.color}-500); --step-ink: var(--${step.color}-700);`}
+          >
+            <p class="process-number">{step.number}</p>
+            <h3 class="process-title">{step.title}</h3>
+            <p class="process-body">{step.body}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- Future gallery -->
+    <section class="gallery-preview">
+      <div class="award-section-head">
+        <h2 class="award-section-title">The Gallery</h2>
+      </div>
+      <div class="gallery-grid" aria-hidden="true">
+        {Array.from({ length: 6 }).map(() => (
+          <div class="gallery-plaque">
+            <div class="plaque-hex sc-hex"></div>
+            <div class="plaque-line plaque-line-wide"></div>
+            <div class="plaque-line"></div>
+          </div>
+        ))}
+      </div>
+      <p class="page-whisper gallery-caption">
+        Each plaque will open an induction page, the way a franchise tile
+        on <a href="/franchises">Franchises</a> opens a franchise page.
+      </p>
+    </section>
+  </div>
+</Layout>
+
+<style>
+  .hof-back {
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .hof-back:hover { color: var(--color-text-primary); text-decoration: none; }
+
+  /* ---- Section heads ---- */
+  .award-section-head {
+    border-bottom: 2px solid var(--rule-ink);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.75rem;
+  }
+  .award-section-title {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-strong);
+  }
+
+  /* ---- Process ---- */
+  .process { margin-top: 3.5rem; }
+  .process-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.25rem;
+  }
+  .process-card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    /* --step-accent / --step-ink are set per card from `steps[].color`;
+       slate is the fallback for a step with no colour assigned. */
+    border-top: 3px solid var(--step-accent, var(--slate-500));
+    padding: 1.5rem;
+  }
+  .process-number {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--step-ink, var(--slate-700));
+    margin: 0 0 0.6rem;
+  }
+  .process-title {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+    color: var(--text-strong);
+  }
+  .process-body {
+    font-family: var(--font-serif);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
+
+  /* ---- Gallery preview — deliberately inert ---- */
+  .gallery-preview { margin-top: 3.5rem; }
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+    opacity: 0.5;
+  }
+  .gallery-plaque {
+    background-color: var(--surface-sunken);
+    border: 1px dashed var(--border-default);
+    padding: 1.5rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .plaque-hex {
+    width: 54px;
+    background-color: var(--ink-200);
+  }
+  .plaque-line {
+    height: 8px;
+    width: 55%;
+    background-color: var(--ink-200);
+  }
+  .plaque-line-wide { width: 80%; }
+
+  .gallery-caption { font-size: 0.85rem; margin: 1rem 0 0; }
+
+  @media (max-width: 768px) {
+    .status-inner { grid-template-columns: 1fr !important; }
+    .process-grid { grid-template-columns: 1fr !important; }
+    .gallery-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  }
+</style>

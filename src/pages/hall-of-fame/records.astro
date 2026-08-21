@@ -1,0 +1,312 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { loadFranchises, loadRecords, gameHref, GAME_TYPE_LABEL } from '../../lib/hall-of-fame';
+
+const TOP_N = 10;
+
+const franchises = await loadFranchises();
+const { teamScores: topTeamScores, playerScores: topPlayerScores } = await loadRecords(franchises, TOP_N);
+---
+
+<Layout
+  title="Records"
+  description="Single-game record books for the Sixth City Dynasty Football League — the highest team scores and the highest individual starts in league history."
+>
+  <div style="max-width: 1200px; margin: 0 auto; padding: 0 1.5rem;">
+
+    <!-- Page header -->
+    <div style="border-bottom: 1px solid var(--color-border); padding: 3rem 0 2.5rem; margin-top: 3rem;">
+      <a href="/hall-of-fame" class="hof-back">&#8592; Hall of Fame</a>
+      <p class="section-label" style="margin-top: 1.25rem;">Unforgettable Moments</p>
+      <h1 class="page-title">Records</h1>
+      <p class="page-subtitle" style="margin-top: 0.75rem;">
+        The single-game record book. Every score below comes from a game that
+        was actually played &mdash; regular season, playoffs, and consolation
+        bracket all count. Click any row for the full game.
+      </p>
+    </div>
+
+    <!-- Top team scores -->
+    <section class="record-section">
+      <div class="record-head">
+        <h2 class="record-title">Highest Team Scores</h2>
+        <p class="record-sub">Top {TOP_N} single-game team totals, all-time</p>
+      </div>
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="col-rank">#</th>
+              <th>Score</th>
+              <th>Franchise</th>
+              <th class="col-hide-mobile">Opponent</th>
+              <th class="col-hide-mobile">Result</th>
+              <th class="col-hide-mobile">Game</th>
+            </tr>
+          </thead>
+          <tbody>
+            {topTeamScores.map((record, i) => {
+              const href = gameHref(record.year, record.week, record.team, record.opponent);
+              const won = record.score > record.opponentScore;
+              return (
+                <tr
+                  class={href ? 'record-row' : undefined}
+                  style={href ? 'cursor: pointer;' : undefined}
+                  onclick={href ? `window.location='${href}'` : undefined}
+                >
+                  <td class="col-rank rank-cell">{i + 1}</td>
+                  <td class="score-cell">{record.score.toFixed(2)}</td>
+                  <td>
+                    {record.team ? (
+                      <span class="entity">
+                        <img
+                          src={`/images/logos/${record.team.abbr}.png`}
+                          alt=""
+                          width="24"
+                          height="24"
+                          class="entity-logo"
+                          onerror="this.style.display='none'"
+                        />
+                        <span>
+                          <span class="entity-name">{record.team.name}</span>
+                          <span class="entity-meta">{record.team.abbr}</span>
+                        </span>
+                      </span>
+                    ) : '—'}
+                  </td>
+                  <td class="col-hide-mobile">
+                    {record.opponent ? (
+                      <span class="entity">
+                        <img
+                          src={`/images/logos/${record.opponent.abbr}.png`}
+                          alt=""
+                          width="20"
+                          height="20"
+                          class="entity-logo"
+                          onerror="this.style.display='none'"
+                        />
+                        <span class="entity-meta">{record.opponent.abbr}</span>
+                      </span>
+                    ) : '—'}
+                  </td>
+                  <td class="col-hide-mobile">
+                    <span class={won ? 'result-win' : 'result-loss'}>
+                      {won ? 'W' : 'L'} {record.score.toFixed(2)}&ndash;{record.opponentScore.toFixed(2)}
+                    </span>
+                  </td>
+                  <td class="col-hide-mobile game-cell">
+                    {record.year} &bull; Wk {record.week}
+                    <span class="game-type">{GAME_TYPE_LABEL[record.gameType] ?? ''}</span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Top player scores -->
+    <section class="record-section">
+      <div class="record-head">
+        <h2 class="record-title">Highest Player Scores</h2>
+        <p class="record-sub">Top {TOP_N} single-game starts by an individual player, all-time</p>
+      </div>
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="col-rank">#</th>
+              <th>Points</th>
+              <th>Player</th>
+              <th class="col-hide-mobile">Started For</th>
+              <th class="col-hide-mobile">Opponent</th>
+              <th class="col-hide-mobile">Game</th>
+            </tr>
+          </thead>
+          <tbody>
+            {topPlayerScores.map((record, i) => {
+              const href = gameHref(record.year, record.week, record.team, record.opponent);
+              return (
+                <tr
+                  class={href ? 'record-row' : undefined}
+                  style={href ? 'cursor: pointer;' : undefined}
+                  onclick={href ? `window.location='${href}'` : undefined}
+                >
+                  <td class="col-rank rank-cell">{i + 1}</td>
+                  <td class="score-cell">{record.points.toFixed(2)}</td>
+                  <td>
+                    <a href={`/players/${record.playerId}`} class="entity-name entity-link" onclick="event.stopPropagation()">
+                      {record.name}
+                    </a>
+                    <span class="entity-meta">{record.position}</span>
+                  </td>
+                  <td class="col-hide-mobile">
+                    {record.team ? (
+                      <span class="entity">
+                        <img
+                          src={`/images/logos/${record.team.abbr}.png`}
+                          alt=""
+                          width="20"
+                          height="20"
+                          class="entity-logo"
+                          onerror="this.style.display='none'"
+                        />
+                        <span class="entity-meta">{record.team.abbr}</span>
+                      </span>
+                    ) : '—'}
+                  </td>
+                  <td class="col-hide-mobile">
+                    {record.opponent ? (
+                      <span class="entity">
+                        <img
+                          src={`/images/logos/${record.opponent.abbr}.png`}
+                          alt=""
+                          width="20"
+                          height="20"
+                          class="entity-logo"
+                          onerror="this.style.display='none'"
+                        />
+                        <span class="entity-meta">{record.opponent.abbr}</span>
+                      </span>
+                    ) : '—'}
+                  </td>
+                  <td class="col-hide-mobile game-cell">
+                    {record.year} &bull; Wk {record.week}
+                    <span class="game-type">{record.gameType === null ? '' : GAME_TYPE_LABEL[record.gameType] ?? ''}</span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <p class="page-whisper hof-footnote">
+      More record books are planned for this wing &mdash; biggest blowout, closest
+      finish, longest win streak &mdash; and will slot in alongside the tables above.
+    </p>
+  </div>
+</Layout>
+
+<style>
+  .hof-back {
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .hof-back:hover { color: var(--color-text-primary); text-decoration: none; }
+
+  /* ---- Record sections ---- */
+  .record-section {
+    margin-top: 3rem;
+    background-color: var(--surface-card);
+    border: 1px solid var(--border-hairline);
+    box-shadow: var(--shadow-1);
+  }
+
+  .record-head {
+    padding: 1.5rem 1.5rem 1.25rem;
+    border-bottom: 1px solid var(--border-default);
+  }
+
+  .record-title {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-strong);
+  }
+
+  .record-sub {
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin: 0.35rem 0 0;
+  }
+
+  .table-scroll { overflow-x: auto; }
+
+  .record-row:hover td { background-color: color-mix(in srgb, var(--ember-500) 5%, transparent); }
+
+  .col-rank { width: 3rem; }
+
+  .rank-cell {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: var(--color-text-muted);
+  }
+
+  /* The top three of each book get the medal treatment. */
+  tbody tr:nth-child(1) .rank-cell { color: var(--gold-600); }
+  tbody tr:nth-child(2) .rank-cell { color: var(--slate-400); }
+  tbody tr:nth-child(3) .rank-cell { color: var(--ember-400); }
+
+  .score-cell {
+    font-family: var(--font-mono);
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-strong);
+    white-space: nowrap;
+  }
+
+  .entity { display: inline-flex; align-items: center; gap: 0.55rem; }
+  .entity-logo { object-fit: contain; flex-shrink: 0; }
+
+  .entity-name {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--text-strong);
+  }
+  .entity-link:hover { color: var(--ember-700); }
+
+  .entity-meta {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+  }
+
+  .result-win { color: var(--status-win); font-weight: 600; font-family: var(--font-mono); font-size: 0.8rem; white-space: nowrap; }
+  .result-loss { color: var(--status-loss); font-weight: 600; font-family: var(--font-mono); font-size: 0.8rem; white-space: nowrap; }
+
+  .game-cell {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+  .game-type {
+    display: block;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  .hof-footnote {
+    font-size: 0.85rem;
+    max-width: 70ch;
+    margin: 2rem 0 5rem;
+  }
+
+  @media (max-width: 768px) {
+    .col-hide-mobile { display: none; }
+    .table-scroll { overflow-x: hidden; }
+    .record-head { padding: 1.25rem 1.25rem 1rem; }
+  }
+</style>

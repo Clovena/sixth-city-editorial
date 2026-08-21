@@ -1,0 +1,696 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { supabase } from '../../lib/supabase';
+import { loadFranchises, franchiseForYear, activeFranchise } from '../../lib/hall-of-fame';
+
+const franchises = await loadFranchises();
+
+const { data: accoladeRows, error: aErr } = await supabase
+  .schema('scdfl')
+  .from('accolades')
+  .select('year, award_code, award_desc, player_id, sleeper_id, transaction_id, vote_share, total_votes')
+  .order('year', { ascending: false })
+  .limit(500);
+
+if (aErr) throw new Error(`Accolades query failed: ${aErr.message}`);
+
+const accolades = accoladeRows ?? [];
+
+// `accolades` has no category column — exactly one of player_id / sleeper_id /
+// transaction_id is non-null per row, and that is what determines the kind of
+// award. Branch on it rather than hard-coding award codes.
+const playerAccolades = accolades.filter(a => a.player_id);
+const managerAccolades = accolades.filter(a => a.sleeper_id);
+const tradeAccolades = accolades.filter(a => a.transaction_id);
+
+// ── Supporting lookups ────────────────────────────────────────────────────
+const tradeIds = [...new Set(tradeAccolades.map(a => a.transaction_id))];
+
+const { data: tradeRows, error: tErr } = tradeIds.length
+  ? await supabase
+      .schema('scdfl')
+      .from('transactions')
+      .select('transaction_id, year, week, roster_id, action, asset, player_id, pick_season, pick_round, pick_original_roster_id')
+      .in('transaction_id', tradeIds)
+      .limit(500)
+  : { data: [], error: null };
+
+if (tErr) throw new Error(`Transactions query failed: ${tErr.message}`);
+
+const neededPlayerIds = [
+  ...new Set([
+    ...playerAccolades.map(a => a.player_id),
+    ...(tradeRows ?? []).map(t => t.player_id).filter(Boolean),
+  ]),
+] as string[];
+
+const { data: playerRows, error: pErr } = neededPlayerIds.length
+  ? await supabase
+      .schema('scdfl')
+      .from('v_players')
+      .select('player_id, first_name, last_name, position, team, espn_id')
+      .in('player_id', neededPlayerIds)
+  : { data: [], error: null };
+
+if (pErr) throw new Error(`Players query failed: ${pErr.message}`);
+
+const playerById = new Map((playerRows ?? []).map(p => [p.player_id, p]));
+
+function playerName(id: string | null): string {
+  if (!id) return '—';
+  const p = playerById.get(id);
+  return p ? `${p.first_name ?? ''} ${p.last_name ?? ''}`.trim() : id;
+}
+
+type TeamIdentity = { abbr: string; activeAbbr: string; name: string; owner: string; conf: string };
+
+function teamFor(sleeperId: string, year: number): TeamIdentity | null {
+  const era = franchiseForYear(franchises, sleeperId, year);
+  const active = activeFranchise(franchises, sleeperId);
+  const identity = era ?? active;
+  if (!identity) return null;
+  return {
+    abbr: identity.abbr,
+    activeAbbr: active?.abbr ?? identity.abbr,
+    name: identity.name,
+    owner: identity.owner,
+    conf: identity.conf,
+  };
+}
+
+// ── Award ordering — curated, with unknown codes falling to the back ──────
+// MVP leads as a full-width band; the nine that follow fill a 3×3 grid,
+// reading breakout/comeback/geriatric, then waiver/rookie/value rookie, then
+// the three ways a season can go wrong.
+const PLAYER_AWARD_ORDER = ['mvp', 'breakout', 'comeback', 'geriatric', 'waiver', 'roty', 'vroty', 'jamielee', 'sweeney', 'injury'];
+const MANAGER_AWARD_ORDER = ['moty', 'mif'];
+const TRADE_AWARD_ORDER = ['goodtrade', 'badtrade'];
+
+/** Award code pulled out of the grid and rendered as the headline band. */
+const FEATURED_PLAYER_AWARD = 'mvp';
+const ANTI_PLAYER_AWARD = ['jamielee', 'sweeney', 'injury'];
+
+type Winner = {
+  year: number;
+  voteShare: number | null;
+  player: { id: string; name: string; position: string; team: string; espnId: string | null } | null;
+  team: TeamIdentity | null;
+};
+
+type AwardTimeline = {
+  code: string;
+  name: string;
+  winners: Winner[];
+  /** Names/abbrs that appear more than once — flagged in the timeline */
+  repeats: Set<string>;
+};
+
+function buildTimelines(rows: typeof accolades, order: string[]): AwardTimeline[] {
+  const byCode = new Map<string, AwardTimeline>();
+
+  for (const row of rows) {
+    let timeline = byCode.get(row.award_code);
+    if (!timeline) {
+      timeline = { code: row.award_code, name: row.award_desc, winners: [], repeats: new Set() };
+      byCode.set(row.award_code, timeline);
+    }
+
+    const player = row.player_id ? playerById.get(row.player_id) : null;
+
+    timeline.winners.push({
+      year: row.year,
+      voteShare: row.vote_share === null ? null : Number(row.vote_share),
+      player: row.player_id
+        ? {
+            id: row.player_id,
+            name: playerName(row.player_id),
+            position: player?.position ?? '—',
+            team: player?.team ?? '—',
+            espnId: player?.espn_id ?? null,
+          }
+        : null,
+      team: row.sleeper_id ? teamFor(row.sleeper_id, row.year) : null,
+    });
+  }
+
+  for (const timeline of byCode.values()) {
+    timeline.winners.sort((a, b) => b.year - a.year);
+
+    // A repeat winner is the whole point of reading an award as a timeline.
+    const seen = new Map<string, number>();
+    for (const winner of timeline.winners) {
+      const key = winner.player?.id ?? winner.team?.activeAbbr;
+      if (!key) continue;
+      seen.set(key, (seen.get(key) ?? 0) + 1);
+    }
+    for (const [key, count] of seen) if (count > 1) timeline.repeats.add(key);
+  }
+
+  const rank = (code: string) => {
+    const i = order.indexOf(code);
+    return i === -1 ? order.length : i;
+  };
+
+  return [...byCode.values()].sort(
+    (a, b) => rank(a.code) - rank(b.code) || a.name.localeCompare(b.name),
+  );
+}
+
+const playerTimelines = buildTimelines(playerAccolades, PLAYER_AWARD_ORDER);
+const managerTimelines = buildTimelines(managerAccolades, MANAGER_AWARD_ORDER);
+
+// ── Trade awards — multi-manager by nature, so no single "winner" ─────────
+function ordinal(n: number): string {
+  const suffix = n % 10 === 1 && n % 100 !== 11 ? 'st'
+    : n % 10 === 2 && n % 100 !== 12 ? 'nd'
+    : n % 10 === 3 && n % 100 !== 13 ? 'rd'
+    : 'th';
+  return `${n}${suffix}`;
+}
+
+type TradeSide = { team: TeamIdentity | null; received: string[] };
+
+/** One year's winner of a trade award — the analogue of a `Winner` row. */
+type TradeInstance = {
+  year: number;
+  week: number | null;
+  voteShare: number | null;
+  sides: TradeSide[];
+};
+
+type TradeTimeline = {
+  code: string;
+  name: string;
+  instances: TradeInstance[];
+};
+
+function toTradeInstance(accolade: typeof accolades[number]): TradeInstance {
+  const legs = (tradeRows ?? []).filter(t => t.transaction_id === accolade.transaction_id);
+  const rosterIds = [...new Set(legs.map(t => t.roster_id))].sort((a, b) => a - b);
+
+  const sides: TradeSide[] = rosterIds.map(rosterId => {
+    const received = legs
+      .filter(t => t.roster_id === rosterId && t.action === 'add')
+      .map(t => {
+        if (t.asset === 'player') return playerName(t.player_id);
+        const original = t.pick_original_roster_id === null
+          ? null
+          : teamFor(String(t.pick_original_roster_id), t.pick_season ?? accolade.year);
+        const via = original && original.abbr ? ` (${original.abbr})` : '';
+        return `${t.pick_season} ${ordinal(t.pick_round ?? 0)}${via}`;
+      });
+
+    return { team: teamFor(String(rosterId), accolade.year), received };
+  });
+
+  return {
+    year: accolade.year,
+    week: legs[0]?.week ?? null,
+    voteShare: accolade.vote_share === null ? null : Number(accolade.vote_share),
+    sides,
+  };
+}
+
+// Grouped by award code and stacked by year — the same shape the player and
+// manager timelines use, so a second year of trade awards reads as another
+// entry inside an existing card rather than a second free-floating card.
+function buildTradeTimelines(rows: typeof accolades): TradeTimeline[] {
+  const byCode = new Map<string, TradeTimeline>();
+
+  for (const row of rows) {
+    let timeline = byCode.get(row.award_code);
+    if (!timeline) {
+      timeline = { code: row.award_code, name: row.award_desc, instances: [] };
+      byCode.set(row.award_code, timeline);
+    }
+    timeline.instances.push(toTradeInstance(row));
+  }
+
+  for (const timeline of byCode.values()) {
+    timeline.instances.sort((a, b) => b.year - a.year);
+  }
+
+  const rank = (code: string) => {
+    const i = TRADE_AWARD_ORDER.indexOf(code);
+    return i === -1 ? TRADE_AWARD_ORDER.length : i;
+  };
+
+  return [...byCode.values()].sort(
+    (a, b) => rank(a.code) - rank(b.code) || a.name.localeCompare(b.name),
+  );
+}
+
+const tradeTimelines = buildTradeTimelines(tradeAccolades);
+
+function pct(share: number | null): string | null {
+  return share === null ? null : `${Math.round(share * 100)}%`;
+}
+---
+
+<Layout
+  title="Superlatives"
+  description="Sixth City Dynasty's voted awards: MVP, Rookie of the Year, Manager of the Year, trade of the year, and the rest, by season."
+>
+  <div style="max-width: 1200px; margin: 0 auto; padding: 0 1.5rem;">
+
+    <!-- Page header -->
+    <div style="border-bottom: 1px solid var(--color-border); padding: 3rem 0 2.5rem; margin-top: 3rem;">
+      <a href="/hall-of-fame" class="hof-back">&#8592; Hall of Fame</a>
+      <p class="section-label" style="margin-top: 1.25rem;">Awards From The People</p>
+      <h1 class="page-title">Superlatives</h1>
+      <p class="page-subtitle" style="margin-top: 0.75rem;">
+        Since 2025, the league votes on various superlative awards. Nothing here is computed from a box score; these are the honors the members handed each other at the end of a season.
+      </p>
+    </div>
+
+    <!-- Player awards -->
+    <section class="award-section">
+      <div class="award-section-head">
+        <h2 class="award-section-title">Player Awards</h2>
+        <p class="award-section-sub">Honors voted to the players themselves</p>
+      </div>
+      <div class="award-grid award-grid-player">
+        {playerTimelines.map(award => (
+          <article class={`award-card${award.code === FEATURED_PLAYER_AWARD ? ' is-featured' : ANTI_PLAYER_AWARD.includes(award.code) ? ' is-anti' : ''}`}>
+            <div class="award-card-head">
+              <h3 class="award-name">{award.name}</h3>
+            </div>
+            <ol class="timeline">
+              {award.winners.map(winner => (
+                <li class={`timeline-row${winner.player && award.repeats.has(winner.player.id) ? ' is-repeat' : ''}`}>
+                  <span class="timeline-year sc-tabular">{winner.year}</span>
+                  <span class="timeline-body">
+                    {winner.player ? (
+                      <Fragment>
+                        <img
+                          src={winner.player.espnId
+                            ? `https://a.espncdn.com/i/headshots/nfl/players/full/${winner.player.espnId}.png`
+                            : '/images/player-placeholder.png'}
+                          alt=""
+                          width="38"
+                          height="38"
+                          loading="lazy"
+                          decoding="async"
+                          class="headshot"
+                          onerror="this.src='/images/player-placeholder.png';this.onerror=null;"
+                        />
+                        <span>
+                          <a href={`/players/${winner.player.id}`} class="winner-name">{winner.player.name}</a>
+                          <span class="winner-meta">
+                            {winner.player.position} &bull; {winner.player.team}
+                            {pct(winner.voteShare) && (
+                              <span class="vote-share"> &bull; {pct(winner.voteShare)} of votes</span>
+                            )}
+                          </span>
+                        </span>
+                      </Fragment>
+                    ) : <span class="winner-name">—</span>}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <!-- Manager awards -->
+    <section class="award-section">
+      <div class="award-section-head">
+        <h2 class="award-section-title">Manager Awards</h2>
+        <p class="award-section-sub">Honors voted to the franchises behind the roster</p>
+      </div>
+      <div class="award-grid">
+        {managerTimelines.map(award => (
+          <article class="award-card">
+            <div class="award-card-head">
+              <h3 class="award-name">{award.name}</h3>
+            </div>
+            <ol class="timeline">
+              {award.winners.map(winner => (
+                <li class={`timeline-row${winner.team && award.repeats.has(winner.team.activeAbbr) ? ' is-repeat' : ''}`}>
+                  <span class="timeline-year sc-tabular">{winner.year}</span>
+                  <span class="timeline-body">
+                    {winner.team ? (
+                      <Fragment>
+                        <img
+                          src={`/images/logos/${winner.team.abbr}.png`}
+                          alt=""
+                          width="38"
+                          height="38"
+                          class="team-logo"
+                          onerror="this.style.display='none'"
+                        />
+                        <span>
+                          <a href={`/franchises/${winner.team.activeAbbr}`} class="winner-name">{winner.team.name}</a>
+                          <span class="winner-meta">
+                            {winner.team.owner}
+                            {pct(winner.voteShare) && (
+                              <span class="vote-share"> &bull; {pct(winner.voteShare)} of votes</span>
+                            )}
+                          </span>
+                        </span>
+                      </Fragment>
+                    ) : <span class="winner-name">—</span>}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <!-- Trade awards -->
+    <section class="award-section">
+      <div class="award-section-head">
+        <h2 class="award-section-title">Trade Awards</h2>
+        <p class="award-section-sub">
+          No single winner &mdash; the players moved, but the managers made the deal
+        </p>
+      </div>
+      <div class="trade-stack">
+        {tradeTimelines.map(award => (
+          <article class="trade-card">
+            <div class="sc-stripe" style="height: 3px; width: 100%;" aria-hidden="true"></div>
+            <div class="award-card-head">
+              <h3 class="award-name">{award.name}</h3>
+            </div>
+            <ol class="timeline">
+              {award.instances.map(trade => (
+                <li class="timeline-row trade-row">
+                  <span class="timeline-year sc-tabular">{trade.year}</span>
+                  <div class="trade-row-body">
+                    <p class="trade-meta">
+                      {trade.week ? `Week ${trade.week} • ` : ''}{trade.sides.length}-team trade
+                      {pct(trade.voteShare) && ` • ${pct(trade.voteShare)} of votes`}
+                    </p>
+                    <div class="trade-sides" style={`--side-count: ${trade.sides.length};`}>
+                      {trade.sides.map(side => (
+                        <div class="trade-side">
+                          <div class="trade-side-head">
+                            {side.team && (
+                              <Fragment>
+                                <img
+                                  src={`/images/logos/${side.team.abbr}.png`}
+                                  alt=""
+                                  width="34"
+                                  height="34"
+                                  class="team-logo"
+                                  onerror="this.style.display='none'"
+                                />
+                                <span>
+                                  <a href={`/franchises/${side.team.activeAbbr}`} class="winner-name">{side.team.name}</a>
+                                  <span class="winner-meta">{side.team.owner}</span>
+                                </span>
+                              </Fragment>
+                            )}
+                          </div>
+                          <p class="trade-received-label">Received</p>
+                          <ul class="trade-assets">
+                            {side.received.map(asset => <li>{asset}</li>)}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <p class="page-whisper hof-footnote">
+      Awards are entered after each season's vote closes. Seasons played before
+      the league started voting have no entries here.
+    </p>
+  </div>
+</Layout>
+
+<style>
+  .hof-back {
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .hof-back:hover { color: var(--color-text-primary); text-decoration: none; }
+
+  /* ---- Sections ---- */
+  .award-section { margin-top: 3.5rem; }
+
+  .award-section-head {
+    border-bottom: 2px solid var(--rule-ink);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.75rem;
+  }
+  .award-section-title {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-strong);
+  }
+  .award-section-sub {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    margin: 0.3rem 0 0;
+  }
+
+  /* ---- Award cards ---- */
+  .award-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.25rem;
+  }
+
+  /* Player awards run on a fixed 3-wide grid so the nine non-MVP awards read
+     as a clean 3×3 block beneath the full-width MVP band. */
+  .award-grid-player { grid-template-columns: repeat(3, 1fr); }
+  .award-grid-player .award-card.is-featured { grid-column: 1 / -1; }
+
+  .award-card {
+    background-color: var(--surface-card);
+    border: 1px solid var(--border-hairline);
+    border-top: 3px solid var(--slate-500);
+    box-shadow: var(--shadow-1);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .award-card-head {
+    padding: 1.1rem 1.25rem 0.9rem;
+    border-bottom: 1px solid var(--border-hairline);
+  }
+
+  .award-name {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1.15;
+    margin: 0;
+    color: var(--text-strong);
+  }
+
+  /* Featured band: name on the left, the year timeline filling the width to
+     its right, so a single winner doesn't leave a stretched empty row. */
+  .award-card.is-featured {
+    display: grid;
+    grid-template-columns: minmax(200px, 260px) 1fr;
+    border-top: 3px solid var(--gold-500);
+  }
+  .award-card.is-featured .award-card-head {
+    border-bottom: none;
+    border-right: 1px solid var(--border-hairline);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 1.5rem;
+  }
+  .award-card.is-featured .award-name { font-size: 1.75rem; }
+  .award-card.is-featured .timeline-row { padding: 1.1rem 1.5rem; }
+  .award-card.is-featured .winner-name { font-size: 1.3rem; }
+  .award-card.is-featured .timeline-year { font-size: 1.5rem; min-width: 3.2rem; }
+  .award-card.is-featured .headshot { width: 52px; height: 52px; }
+
+  /* Anti-awards: red top border */
+  .award-card.is-anti {
+    border-top: 3px solid var(--ember-500);
+  }
+
+  /* ---- Timeline ---- */
+  .timeline { list-style: none; margin: 0; padding: 0; }
+
+  .timeline-row {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid var(--border-hairline);
+  }
+  .timeline-row:last-child { border-bottom: none; }
+
+  /* Repeat winners get an ember spine so a dynasty reads at a glance. */
+  .timeline-row.is-repeat { border-left: 3px solid var(--ember-500); padding-left: calc(1.25rem - 3px); }
+
+  .timeline-year {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+    min-width: 2.6rem;
+  }
+
+  .timeline-body { display: inline-flex; align-items: center; gap: 0.65rem; min-width: 0; }
+
+  .headshot {
+    object-fit: cover;
+    border-radius: 50%;
+    background-color: var(--surface-sunken);
+    flex-shrink: 0;
+  }
+  .team-logo { object-fit: contain; flex-shrink: 0; }
+
+  .winner-name {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--text-strong);
+  }
+  .winner-name:hover { color: var(--ember-700); }
+
+  .winner-meta {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+  }
+  .vote-share { font-variant-numeric: tabular-nums; }
+
+  /* ---- Trade cards ---- */
+  .trade-stack { display: flex; flex-direction: column; gap: 1.5rem; }
+
+  .trade-card {
+    background-color: var(--surface-card);
+    border: 1px solid var(--border-hairline);
+    box-shadow: var(--shadow-1);
+  }
+
+  /* A trade year is a timeline row like any other — the year sits beside its
+     winners rather than in the card header, so extra years stack cleanly. */
+  .trade-row {
+    align-items: flex-start;
+    padding: 1.25rem 1.5rem;
+  }
+  .trade-row .timeline-year { min-width: 3.2rem; line-height: 1; }
+  .trade-row-body { flex: 1; min-width: 0; }
+
+  .trade-meta {
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin: 0 0 0.85rem;
+  }
+
+  .trade-sides {
+    display: grid;
+    grid-template-columns: repeat(var(--side-count), 1fr);
+    gap: 1px;
+    background-color: var(--border-hairline);
+    border: 1px solid var(--border-hairline);
+  }
+
+  .trade-side {
+    background-color: var(--surface-card);
+    padding: 1.15rem 1.35rem 1.35rem;
+  }
+
+  .trade-side-head {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 1rem;
+  }
+
+  .trade-received-label {
+    font-family: var(--font-body);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin: 0 0 0.5rem;
+  }
+
+  .trade-assets {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .trade-assets li {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    color: var(--text-body);
+    padding-left: 0.85rem;
+    position: relative;
+  }
+  .trade-assets li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.55em;
+    width: 5px;
+    height: 5px;
+    background-color: var(--ember-500);
+  }
+
+  .hof-footnote {
+    font-size: 0.85rem;
+    max-width: 70ch;
+    margin: 2.5rem 0 5rem;
+  }
+
+  /* Two-wide before the 3×3 grid gets too narrow to read. */
+  @media (max-width: 1024px) {
+    .award-grid-player { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 768px) {
+    .award-grid,
+    .award-grid-player { grid-template-columns: 1fr !important; }
+
+    /* The featured band has no width to split — fall back to the stacked card. */
+    .award-card.is-featured { display: flex; flex-direction: column; }
+    .award-card.is-featured .award-card-head {
+      border-right: none;
+      border-bottom: 1px solid var(--border-hairline);
+      padding: 1.1rem 1.25rem 0.9rem;
+    }
+    .award-card.is-featured .award-name { font-size: 1.35rem; }
+    .award-card.is-featured .timeline-row { padding: 0.85rem 1rem; }
+
+    .trade-sides { grid-template-columns: 1fr !important; }
+    .timeline-row { padding: 0.85rem 1rem; }
+    .trade-row { padding: 1rem 1rem 1.25rem; }
+    .trade-side { padding: 1.1rem 1.25rem 1.25rem; }
+  }
+</style>
