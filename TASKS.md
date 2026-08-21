@@ -1,13 +1,12 @@
 # SCDFL Site — Task Board
 
 ## TODO
+1. Transaction log on player pages
 1. Low priority QOL cleanup
     - Season recap brackets on mobile
-1. WIDGETS.md
 1. More content 
     - Game recaps
     - Better rivalry blurbs
-1. Hall of Fame - Player awards, HOF awards, trophies
 
 ## Dev
 - Consolation bracket
@@ -54,3 +53,10 @@
 - Replace accolades key on franchise pages with actual accolades mimicking player pages
 - If player undrafted, replace with first waiver claim / FA add 
   - Franchises arranged as 2-3-2 on desktop, not 3-3-1
+- Hall of Fame - Player awards, HOF awards, trophies
+- Remove team color palettes from Spotlight Games
+- History page cleanup
+  - No footnote about HCC alltime record, etc.
+- WIDGETS.md
+  - Franchise game-by-game line chart
+  - Commish tool: trade heat map

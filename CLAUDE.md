@@ -60,6 +60,12 @@ Every route is pre-rendered at build time (`output: 'static'`) **except** `/play
 | `/scores` | `src/pages/scores.astro` |
 | `/games/[year]/[slug]` | `src/pages/games/[year]/[slug].astro` |
 | `/content` | `src/pages/content.astro` |
+| `/hall-of-fame` | `src/pages/hall-of-fame/index.astro` |
+| `/hall-of-fame/champions` | `src/pages/hall-of-fame/champions.astro` |
+| `/hall-of-fame/superlatives` | `src/pages/hall-of-fame/superlatives.astro` |
+| `/hall-of-fame/medals` | `src/pages/hall-of-fame/medals.astro` |
+| `/hall-of-fame/records` | `src/pages/hall-of-fame/records.astro` |
+| `/hall-of-fame/inductees` | `src/pages/hall-of-fame/inductees.astro` |
 | `/players/[id]` | `src/pages/players/[id].astro` (SSR) |
 
 ---
@@ -335,6 +341,41 @@ Example: `/games/2025/15-bkb-low` (BKB vs. LOW, week 15)
 - Teams are alphabetized before building the slug
 - Matchups with missing team data (byes, incomplete brackets) gracefully render without links
 - Replaces the previous playoff format text with "Click a matchup for more details →"
+
+---
+
+## Hall of Fame (`/hall-of-fame`) — Wings & Derived Placements
+
+Five wings hang off a lobby. The lobby's wing grid **is** the sub-navigation — there is no persistent tab bar; each wing links back with a `← Hall of Fame` breadcrumb.
+
+| Wing | Slug | Source |
+|------|------|--------|
+| Champions | `champions` | `seasons` + `results` + `matchups` (weeks 15–17) |
+| Superlatives | `superlatives` | `accolades` + `transactions` (trade awards) |
+| Medals | `medals` | `v_medals` |
+| Records | `records` | `matchups` + `v_player_starts` |
+| Hall of Famers | `inductees` | None — placeholder/explainer until after Season 6 (2026) |
+
+Shared loaders live in `src/lib/hall-of-fame.ts` (`loadSeasonPodiums`, `loadRecords`, `loadMedals`, identity helpers, `buildSlug`/`gameHref`). The lobby reuses all of them for its "Recent Additions" module, so put new cross-wing data there rather than in a page.
+
+### Placement is derived, not read from `results.finish`
+
+`finish` records **regular-season** standing for non-playoff teams and does not distinguish the two semifinal losers. Two placements are therefore computed in `loadSeasonPodiums`:
+
+- **3rd place** — winner of the Week 17 `game_type = -1` game whose two rosters are exactly the teams with `finish = 'Semifinals'`. Verified against all five completed seasons.
+- **Consolation champion** — the non-playoff franchise (`playoff = false`) that won *every* one of its `game_type = -1` games in weeks 15–17. This bracket has no bearing on `finish`, draft order, or accolades, so the two genuinely disagree (2025: TOR finished 8th; IQT won the consolation).
+
+A season is only "complete" when its Week 17 `game_type = 1` matchup has been played — `seasons` rows exist from the moment a league is created on Sleeper, so never treat `MAX(year)` as a finished season.
+
+### Award category is inferred, not stored
+
+`accolades` has no category column. Exactly one of `player_id` / `sleeper_id` / `transaction_id` is non-null, and that determines whether the row is a player, manager, or trade award. Branch on it — do not key off `award_code`.
+
+**Trade awards are not necessarily two-team.** The 2025 `badtrade` is a three-team deal, so trade cards render one column per participating `roster_id` (`--side-count` drives the grid), never a fixed two-logo layout.
+
+### Medals are gold-only
+
+`v_medals` emits `row_number() = 1` per position per season across weeks 1–14 — one winner, no silver or bronze. The leaderboard is a career count of those. Defensive positions (DL/LB/DB) only appear from 2022, when IDP slots entered the league. Adding tiers would mean widening the view, not changing the page.
 
 ---
 

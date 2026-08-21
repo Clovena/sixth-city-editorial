@@ -121,7 +121,7 @@ function line(n: number | null): string {
       <section class="bet-panel" data-panel="wins">
         <div class="board">
           <div class="board-head board-head-wins">
-            <span class="board-head-team">{currentYear} Regular Season Wins</span>
+            <span class="board-head-team"></span>
             <span class="board-head-cell">Wins</span>
             <span class="board-head-cell">Over</span>
             <span class="board-head-cell">Under</span>
@@ -377,6 +377,16 @@ function line(n: number | null): string {
 
   @media (max-width: 768px) {
     .board-name { display: none; }
+
+    .board-team {
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .board-logo { width: 22px; height: 22px; }
+
+    .board-abbr { min-width: 0; }
+
     .board-head-wins,
     .board-row-wins { grid-template-columns: 1fr 3rem 5.5rem 5.5rem; }
     .board-head-two,
@@ -385,6 +395,10 @@ function line(n: number | null): string {
     .board-row-conf { grid-template-columns: 1fr 5.5rem; }
     .wins-callout { font-size: 1.4rem; }
     .bet-tab { padding: 0.85rem 0.85rem; font-size: 0.68rem; }
+  }
+
+  @media (max-width: 360px) {
+    .board-logo { display: none; }
   }
 </style>
 

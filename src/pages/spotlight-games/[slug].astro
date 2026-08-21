@@ -164,11 +164,6 @@ function buildGameUrl(year: number, week: number, rosterIdA: number, rosterIdB: 
             <p style="font-family: var(--font-body); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-text-muted); margin: 0 0 0.4rem;">{teamA?.abbr} &bull; <span class={`label-badge badge-${teamA?.conf.toLowerCase()}`}>{teamA?.conf}</span></p>
             <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; color: var(--color-text-primary); margin: 0 0 0.5rem; line-height: 1.2;">{teamA?.name}</h2>
             <p style="font-size: 0.8rem; color: var(--color-text-muted); margin: 0;">Owner: {teamA?.owner}</p>
-            <div style="display: flex; gap: 5px; margin-top: 0.75rem;">
-              {teamA?.colors.map((c: string) => (
-                <span style={`display: inline-block; width: 14px; height: 14px; background-color: ${c}; border-radius: 50%;`}></span>
-              ))}
-            </div>
           </div>
         </a>
 
@@ -186,11 +181,6 @@ function buildGameUrl(year: number, week: number, rosterIdA: number, rosterIdB: 
             <p style="font-family: var(--font-body); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-text-muted); margin: 0 0 0.4rem;">{teamB?.abbr} &bull; <span class={`label-badge badge-${teamB?.conf.toLowerCase()}`}>{teamB?.conf}</span></p>
             <h2 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; color: var(--color-text-primary); margin: 0 0 0.5rem; line-height: 1.2;">{teamB?.name}</h2>
             <p style="font-size: 0.8rem; color: var(--color-text-muted); margin: 0;">Owner: {teamB?.owner}</p>
-            <div style="display: flex; gap: 5px; margin-top: 0.75rem;">
-              {teamB?.colors.map((c: string) => (
-                <span style={`display: inline-block; width: 14px; height: 14px; background-color: ${c}; border-radius: 50%;`}></span>
-              ))}
-            </div>
           </div>
         </a>
 
