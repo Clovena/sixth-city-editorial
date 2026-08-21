@@ -4,7 +4,6 @@
 1. Transaction log on player pages
 1. Low priority QOL cleanup
     - Season recap brackets on mobile
-1. WIDGETS.md, pt.2
 1. More content 
     - Game recaps
     - Better rivalry blurbs
@@ -58,3 +57,6 @@
 - Remove team color palettes from Spotlight Games
 - History page cleanup
   - No footnote about HCC alltime record, etc.
+- WIDGETS.md
+  - Franchise game-by-game line chart
+  - Commish tool: trade heat map
