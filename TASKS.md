@@ -2,10 +2,6 @@
 
 ## TODO
 1. Transaction log on player pages
-1. Hall of Fame - Player awards, HOF awards, trophies
-1. Remove team color palettes from Spotlight Games
-1. History page cleanup
-    - No footnote about HCC alltime record, etc.
 1. Low priority QOL cleanup
     - Season recap brackets on mobile
 1. WIDGETS.md, pt.2
@@ -58,3 +54,7 @@
 - Replace accolades key on franchise pages with actual accolades mimicking player pages
 - If player undrafted, replace with first waiver claim / FA add 
   - Franchises arranged as 2-3-2 on desktop, not 3-3-1
+- Hall of Fame - Player awards, HOF awards, trophies
+- Remove team color palettes from Spotlight Games
+- History page cleanup
+  - No footnote about HCC alltime record, etc.

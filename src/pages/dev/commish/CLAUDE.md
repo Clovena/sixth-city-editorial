@@ -16,6 +16,7 @@ Private audit and utility pages for league commissioner use only. Kept separate 
 |------|------|-----|---------|
 | **Roster Audit** | `roster-audit.astro` | `/dev/commish/roster-audit` | Week-by-week starting lineup changes per franchise; see when starters changed and by how many |
 | **Transactions Audit** | `trans-audit.astro` | `/dev/commish/trans-audit` | Transaction activity per franchise grouped by type (waiver/free agent/trade) and completion status; pivot table by week |
+| **Trade Timing Heatmap** | `trade-timing.astro` | `/dev/commish/trade-timing` | League-wide calendar heatmap of when trades happen; ISO week × year, colored by trade count |
 
 ---
 
@@ -61,6 +62,72 @@ Forensic inspection of starting lineup changes week-by-week per franchise. Answe
 3. **Bye week handling:** Entries with null `matchup_id` are skipped during build-time aggregation. These represent byes (no actual matchup) and have no meaningful starters to audit.
 
 4. **Client-side script:** Uses vanilla JS (no framework). All state lives in the select elements; `renderResults()` is the single render function called on franchise/year change. No re-querying — all data is embedded at build time.
+
+---
+
+## Trade Timing Heatmap (`trade-timing.astro`)
+
+### Purpose
+
+The **league-wide** counterpart to trans-audit's per-team view. Answers "when in the
+calendar does trading happen, year over year?" — read across a row to compare the same
+stretch of the calendar across seasons. It never filters by franchise; that division of
+labour with trans-audit is deliberate.
+
+### Data Flow
+
+Entirely build-time. Nothing is fetched or recomputed client-side.
+
+- Queries `scdfl.transactions` where `type = 'trade'`, paginated in 1,000-row pages
+  (~2,800 legs today, so a single unpaginated query would silently truncate).
+- **Dedupes to one record per `transaction_id`.** Sleeper writes one row per asset leg,
+  so a 3-player trade is several rows. Counting rows overcounts ~7×.
+- Buckets each trade by the **Eastern-time civil date** derived from `created`
+  (millisecond Unix epoch) via `Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' })`.
+- Builds two matrices at build time — ISO week × year and month × year — plus per-year
+  totals and a legend derived from each matrix's own max.
+
+### Key Implementation Details
+
+1. **Columns are ET calendar years, not `transactions.year`.** Sleeper's season year and
+   the real calendar year disagree for February deals — five Feb-2022 trades are filed
+   under season 2021. The calendar view is correct for this widget; the discrepancy is
+   footnoted on the page. Anything cross-checked against a season-keyed report will differ
+   by those rows.
+
+2. **Hand-rolled ISO week math.** `isoWeek()` (date → ISO year + week) and
+   `isoWeekMonday()` (ISO year + week → Monday) are local helpers; no date library is in
+   the stack. Note that Postgres `EXTRACT(WEEK …)` is *not* ISO — if a reference SQL query
+   is ever compared against this page, use `EXTRACT(ISOYEAR …)` / `date_part('week', …)`
+   consistently or the numbers drift by one at year edges.
+
+3. **Rows are clamped to the active range** (currently ISO weeks 7–48, late Feb → late
+   Nov) rather than padding to 52 mostly-empty rows. The month gutter labels a row only
+   when the ISO week's Monday crosses into a new month; anchors are computed off the most
+   recent year, so other columns can drift by a few days.
+
+4. **Zero is not the palest ramp step.** `data-step="0"` renders as bare paper with a
+   hairline inset; steps 1–5 are `--slate-100 / 200 / 400 / 600 / 800`. Without this, an
+   empty cell and a single trade look nearly identical.
+
+5. **Legend ranges are derived by walking `1..max` through the same `step()` function**
+   that colors the cells, so the legend can never disagree with the grid.
+
+6. **Grain toggle swaps pre-rendered markup.** Both grids and both legends ship in the
+   HTML; the Week/Month buttons only flip the `hidden` attribute on `[data-grain-panel]`
+   elements. No client-side aggregation.
+
+7. **Tooltip is desktop-only** (`(hover: hover) and (pointer: fine)`) and its listeners are
+   scoped to the two `.tt-grid-scroll` panels rather than `document`. Tooltip contents are
+   injected via `innerHTML`, so their styles need `:global()`.
+
+### Known Data Notes
+
+- **The WIDGETS.md brief's "identical 2021 timestamp" caveat does not hold.** All 381
+  trades carry distinct `created` values; the earliest are Jul 18 / Jul 20 / Jul 29, 2021.
+  The early-2021 cluster is genuine startup-period trading around the inaugural draft. The
+  page footnotes this explicitly so the claim isn't re-litigated.
+- Every trade row in the table has `status = 'complete'`; no status filter is applied.
 
 ### Adding New Commissioner Pages
 
