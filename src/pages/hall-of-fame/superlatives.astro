@@ -101,8 +101,6 @@ type AwardTimeline = {
   code: string;
   name: string;
   winners: Winner[];
-  /** Names/abbrs that appear more than once — flagged in the timeline */
-  repeats: Set<string>;
 };
 
 function buildTimelines(rows: typeof accolades, order: string[]): AwardTimeline[] {
@@ -111,7 +109,7 @@ function buildTimelines(rows: typeof accolades, order: string[]): AwardTimeline[
   for (const row of rows) {
     let timeline = byCode.get(row.award_code);
     if (!timeline) {
-      timeline = { code: row.award_code, name: row.award_desc, winners: [], repeats: new Set() };
+      timeline = { code: row.award_code, name: row.award_desc, winners: [] };
       byCode.set(row.award_code, timeline);
     }
 
@@ -135,15 +133,6 @@ function buildTimelines(rows: typeof accolades, order: string[]): AwardTimeline[
 
   for (const timeline of byCode.values()) {
     timeline.winners.sort((a, b) => b.year - a.year);
-
-    // A repeat winner is the whole point of reading an award as a timeline.
-    const seen = new Map<string, number>();
-    for (const winner of timeline.winners) {
-      const key = winner.player?.id ?? winner.team?.activeAbbr;
-      if (!key) continue;
-      seen.set(key, (seen.get(key) ?? 0) + 1);
-    }
-    for (const [key, count] of seen) if (count > 1) timeline.repeats.add(key);
   }
 
   const rank = (code: string) => {
@@ -277,7 +266,7 @@ function pct(share: number | null): string | null {
             </div>
             <ol class="timeline">
               {award.winners.map(winner => (
-                <li class={`timeline-row${winner.player && award.repeats.has(winner.player.id) ? ' is-repeat' : ''}`}>
+                <li class="timeline-row">
                   <span class="timeline-year sc-tabular">{winner.year}</span>
                   <span class="timeline-body">
                     {winner.player ? (
@@ -328,7 +317,7 @@ function pct(share: number | null): string | null {
             </div>
             <ol class="timeline">
               {award.winners.map(winner => (
-                <li class={`timeline-row${winner.team && award.repeats.has(winner.team.activeAbbr) ? ' is-repeat' : ''}`}>
+                <li class="timeline-row">
                   <span class="timeline-year sc-tabular">{winner.year}</span>
                   <span class="timeline-body">
                     {winner.team ? (
@@ -539,9 +528,6 @@ function pct(share: number | null): string | null {
     border-bottom: 1px solid var(--border-hairline);
   }
   .timeline-row:last-child { border-bottom: none; }
-
-  /* Repeat winners get an ember spine so a dynasty reads at a glance. */
-  .timeline-row.is-repeat { border-left: 3px solid var(--ember-500); padding-left: calc(1.25rem - 3px); }
 
   .timeline-year {
     font-family: var(--font-display);

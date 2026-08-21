@@ -76,11 +76,15 @@ Breakpoint: `@media (max-width: 768px)`. All mobile overrides use scoped `<style
 ### `hall-of-fame/superlatives.astro`
 - `award-grid` is `auto-fill, minmax(320px, 1fr)` → 1 column on mobile
 - `trade-sides` uses `grid-template-columns: repeat(var(--side-count), 1fr)` so a three-team trade renders three columns; collapses to 1 column on mobile
-- Repeat winners get an ember left spine (`.timeline-row.is-repeat`) so a run of the same name reads at a glance
+- Timeline rows are unadorned — repeat winners are deliberately **not** highlighted (an earlier ember-spine treatment was removed)
 
 ### `hall-of-fame/medals.astro`
-- Sortable leaderboard. The inline `<script>` sorts `<tbody>` rows in place off `data-*` attributes and renumbers `.rank-cell` — the markup stays the only copy of the data, no JSON blob is shipped
-- All columns except rank, player, and medals are `col-hide-mobile`
+- Card-per-position timelines, deliberately mirroring `superlatives.astro` — no table, no sorting, no client JS. One `.medal-card` per position, each holding a year-by-year `.timeline` newest-first, so a new season appends a row to eight existing cards rather than reshuffling a leaderboard
+- `sections` (frontmatter) drives both bands from one template loop: Offense (QB/RB/WR/TE) and Kicker & Defense (K/DL/LB/DB). A section with no cards is filtered out, so the IDP band would disappear rather than render empty
+- Card accent is set per-position from `MEDAL_POSITION_COLOR` as inline `--accent` / `--accent-surface` custom properties (top border + head tint). DL/LB/DB all map to `idp`, so the three defensive cards intentionally share a colour
+- Card head is just the position chip + full position name; timeline rows are unadorned. No repeat-winner highlight and no per-card counts — both were tried and cut
+- Logos use the **era** abbr (`win.abbr`); the link uses the **active** abbr (`win.activeAbbr`)
+- `.medal-grid` is a fixed 2-up that collapses to 1 column at 900px
 
 ### `hall-of-fame/records.astro`
 - Rows are clickable to `/games/[year]/[slug]` via `onclick`; the player-name link inside calls `event.stopPropagation()` so it wins over the row handler
