@@ -312,30 +312,6 @@ if (newestRecord) {
     margin: 1rem auto 0;
   }
 
-  .hof-hero-counts {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 0.5rem 2rem;
-    margin-top: 1.75rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--border-on-ink);
-    font-family: var(--font-sans);
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-  }
-  .hof-hero-counts strong {
-    font-family: var(--font-display);
-    font-size: 1.25rem;
-    font-weight: 900;
-    color: var(--gold-400);
-    margin-right: 0.35rem;
-    vertical-align: -0.05em;
-  }
-
   /* ---- Wing grid: two rows of two, then one full width ---- */
   .wing-grid {
     display: grid;
@@ -509,7 +485,6 @@ if (newestRecord) {
   @media (max-width: 768px) {
     .hof-hero { margin-bottom: 2.5rem; }
     .hof-hero-inner { padding: 2.5rem 1.5rem 2.25rem; }
-    .hof-hero-counts { gap: 0.5rem 1.25rem; font-size: 0.65rem; }
 
     .wing-grid { grid-template-columns: 1fr !important; }
     .wing-grid > *:nth-child(5) { grid-column: auto !important; }

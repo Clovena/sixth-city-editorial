@@ -249,27 +249,6 @@ for (const m of champMatchups) {
   }
 
   @media (max-width: 768px) {
-    /* Quick stats: 2×2 grid filling full width */
-    .quick-stats-grid {
-      display: grid !important;
-      grid-template-columns: 1fr 1fr !important;
-      width: 100% !important;
-    }
-
-    /* Reset all left borders, then restore for right-column cells */
-    .quick-stats-grid > div {
-      border-left: none !important;
-    }
-
-    .quick-stats-grid > div:nth-child(even) {
-      border-left: 1px solid var(--color-border) !important;
-    }
-
-    .quick-stats-grid > div:nth-child(3),
-    .quick-stats-grid > div:nth-child(4) {
-      border-top: 1px solid var(--color-border);
-    }
-
     /* Dynasty bowls: hide runner-up, collapse to 2 columns */
     .dynasty-bowl-loser {
       display: none !important;
