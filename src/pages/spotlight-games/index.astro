@@ -3,6 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 import { supabase } from '../../lib/supabase';
 import fs from 'node:fs';
 import path from 'node:path';
+import { logoPath, primaryColor } from '../../lib/franchise-identity';
 
 // ── Determine current season year ───────────────────────────────────────────
 const { data: seasonRows, error: sError } = await supabase
@@ -161,14 +162,14 @@ function getFranchise(abbr: string) {
                   <div class="bowl-teams-inner" style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
                     <div class="bowl-team-a" style="display: flex; align-items: center; gap: 0.6rem;">
                       <span class="bowl-team-name" style="font-size: 0.8rem; color: var(--color-text-secondary);">{teamA?.name}</span>
-                      <img src={`/images/logos/${game.team_a}.png`} alt="" width="24" height="24" style="object-fit: contain; flex-shrink: 0;" onerror="this.style.display='none'" />
-                      <span style={`font-family: var(--font-body); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; padding: 0.15rem 0.45rem; background-color: ${teamA?.colors[0]}22; color: ${teamA?.colors[0]}; border: 1px solid ${teamA?.colors[0]}44;`}>{game.team_a}</span>
+                      <img src={logoPath(game.team_a)} alt="" width="24" height="24" style="object-fit: contain; flex-shrink: 0;" onerror="this.style.display='none'" />
+                      <span style={`font-family: var(--font-body); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; padding: 0.15rem 0.45rem; background-color: ${primaryColor(teamA?.colors)}22; color: ${primaryColor(teamA?.colors)}; border: 1px solid ${primaryColor(teamA?.colors)}44;`}>{game.team_a}</span>
                     </div>
                     <div style="font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-muted);">vs.</div>
                     <div style="display: flex; align-items: center; gap: 0.6rem;">
                       <span class="bowl-team-name" style="font-size: 0.8rem; color: var(--color-text-secondary);">{teamB?.name}</span>
-                      <img src={`/images/logos/${game.team_b}.png`} alt="" width="24" height="24" style="object-fit: contain; flex-shrink: 0;" onerror="this.style.display='none'" />
-                      <span style={`font-family: var(--font-body); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; padding: 0.15rem 0.45rem; background-color: ${teamB?.colors[0]}22; color: ${teamB?.colors[0]}; border: 1px solid ${teamB?.colors[0]}44;`}>{game.team_b}</span>
+                      <img src={logoPath(game.team_b)} alt="" width="24" height="24" style="object-fit: contain; flex-shrink: 0;" onerror="this.style.display='none'" />
+                      <span style={`font-family: var(--font-body); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; padding: 0.15rem 0.45rem; background-color: ${primaryColor(teamB?.colors)}22; color: ${primaryColor(teamB?.colors)}; border: 1px solid ${primaryColor(teamB?.colors)}44;`}>{game.team_b}</span>
                     </div>
                   </div>
                 </div>
@@ -207,14 +208,14 @@ function getFranchise(abbr: string) {
                   <div class="bowl-teams-inner" style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
                     <div class="bowl-team-a" style="display: flex; align-items: center; gap: 0.6rem;">
                       <span class="bowl-team-name" style="font-size: 0.8rem; color: var(--color-text-secondary);">{teamA?.name}</span>
-                      <img src={`/images/logos/${game.team_a}.png`} alt="" width="24" height="24" style="object-fit: contain; flex-shrink: 0;" onerror="this.style.display='none'" />
-                      <span style={`font-family: var(--font-body); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; padding: 0.15rem 0.45rem; background-color: ${teamA?.colors[0]}22; color: ${teamA?.colors[0]}; border: 1px solid ${teamA?.colors[0]}44;`}>{game.team_a}</span>
+                      <img src={logoPath(game.team_a)} alt="" width="24" height="24" style="object-fit: contain; flex-shrink: 0;" onerror="this.style.display='none'" />
+                      <span style={`font-family: var(--font-body); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; padding: 0.15rem 0.45rem; background-color: ${primaryColor(teamA?.colors)}22; color: ${primaryColor(teamA?.colors)}; border: 1px solid ${primaryColor(teamA?.colors)}44;`}>{game.team_a}</span>
                     </div>
                     <div style="font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-muted);">vs.</div>
                     <div style="display: flex; align-items: center; gap: 0.6rem;">
                       <span class="bowl-team-name" style="font-size: 0.8rem; color: var(--color-text-secondary);">{teamB?.name}</span>
-                      <img src={`/images/logos/${game.team_b}.png`} alt="" width="24" height="24" style="object-fit: contain; flex-shrink: 0;" onerror="this.style.display='none'" />
-                      <span style={`font-family: var(--font-body); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; padding: 0.15rem 0.45rem; background-color: ${teamB?.colors[0]}22; color: ${teamB?.colors[0]}; border: 1px solid ${teamB?.colors[0]}44;`}>{game.team_b}</span>
+                      <img src={logoPath(game.team_b)} alt="" width="24" height="24" style="object-fit: contain; flex-shrink: 0;" onerror="this.style.display='none'" />
+                      <span style={`font-family: var(--font-body); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; padding: 0.15rem 0.45rem; background-color: ${primaryColor(teamB?.colors)}22; color: ${primaryColor(teamB?.colors)}; border: 1px solid ${primaryColor(teamB?.colors)}44;`}>{game.team_b}</span>
                     </div>
                   </div>
                 </div>

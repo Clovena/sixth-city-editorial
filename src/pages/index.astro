@@ -1,52 +1,22 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { supabase } from '../lib/supabase';
+import { loadFranchises, franchiseForYear, logoPath, primaryColor, type FranchiseRow } from '../lib/franchise-identity';
+import { loadChampionshipMatchups } from '../lib/game-utils';
+import { toRoman } from '../lib/format';
 
 // ── Fetch all franchise identities (including historical) ─────────────────
-const { data: allFranchises, error: fErr } = await supabase
-  .schema('scdfl')
-  .from('franchises')
-  .select('id, sleeper_id, abbr, name, owner, conf, colors, "from", "to"');
-
-if (fErr || !allFranchises) throw new Error(`Franchises query failed: ${fErr?.message || 'No data returned'}`);
-
-const activeFranchises = allFranchises.filter(f => f.to === null);
-const activeBySleeperId = new Map(activeFranchises.map(f => [f.sleeper_id, f]));
-
-function franchiseForYear(sleeperId: string, yr: number) {
-  return activeFranchises.find(f =>
-    f.sleeper_id === sleeperId && f.from <= yr && (f.to === null || f.to >= yr)
-  );
-}
+const allFranchises = await loadFranchises();
 
 // ── Fetch championship matchups (week 17, game_type = 1) ──────────────────
-const { data: champMatchups, error: cmErr } = await supabase
-  .schema('scdfl')
-  .from('matchups')
-  .select('year, roster_id_a, roster_id_b, score_a, score_b')
-  .eq('week', 17)
-  .eq('game_type', 1)
-  .order('year', { ascending: false });
-
-if (cmErr) throw new Error(`Championship matchups query failed: ${cmErr.message}`);
-
-// ── Roman numeral helper ──────────────────────────────────────────────────
-function toRoman(n: number): string {
-  const vals = [1000,900,500,400,100,90,50,40,10,9,5,4,1];
-  const syms = ['M','CM','D','CD','C','XC','L','XL','X','IX','V','IV','I'];
-  let result = '';
-  for (let i = 0; i < vals.length; i++) {
-    while (n >= vals[i]) { result += syms[i]; n -= vals[i]; }
-  }
-  return result;
-}
+const champMatchups = (await loadChampionshipMatchups())
+  .sort((a, b) => b.year - a.year);
 
 // ── Build recent dynasty bowls (last 3) ───────────────────────────────────
 type BowlDisplay = {
   year: number;
   label: string;
-  winner: typeof allFranchises[0] | undefined;
-  loser: typeof allFranchises[0] | undefined;
+  winner: FranchiseRow | undefined;
+  loser: FranchiseRow | undefined;
 };
 
 const recentBowls: BowlDisplay[] = [];
@@ -57,20 +27,10 @@ for (const m of champMatchups.slice(0, 3)) {
   recentBowls.push({
     year: m.year,
     label: `Dynasty Bowl ${toRoman(m.year - 2020)}`,
-    winner: franchiseForYear(winnerSleeperId, m.year),
-    loser: franchiseForYear(loserSleeperId, m.year),
+    winner: franchiseForYear(allFranchises, winnerSleeperId, m.year),
+    loser: franchiseForYear(allFranchises, loserSleeperId, m.year),
   });
 }
-
-// ── Unique champions (attributed to current identity) ─────────────────────
-const champSet = new Set<string>();
-for (const m of champMatchups) {
-  const aWins = m.score_a > m.score_b;
-  const winnerSleeperId = String(aWins ? m.roster_id_a : m.roster_id_b);
-  const active = activeBySleeperId.get(winnerSleeperId);
-  if (active) champSet.add(active.abbr);
-}
-
 ---
 
 <Layout title="SCDFL" description="Sixth City Dynasty Fantasy Football League. 14 franchises, 5 seasons, 4 champions. Est. 2021.">
@@ -141,9 +101,9 @@ for (const m of champMatchups) {
                 <p class="sc-eyebrow" style="font-size: 0.62rem; color: var(--text-muted); margin: 0.35rem 0 0;">{bowl.label}</p>
               </div>
 
-              <div style={`border-left: 3px solid ${winner?.colors[0]}; padding-left: 1.25rem; display: flex; align-items: center; gap: 0.9rem;`}>
+              <div style={`border-left: 3px solid ${primaryColor(winner?.colors)}; padding-left: 1.25rem; display: flex; align-items: center; gap: 0.9rem;`}>
                 <img
-                  src={`/images/logos/${winner?.abbr}.png`}
+                  src={logoPath(winner?.abbr ?? '')}
                   alt=""
                   width="34"
                   height="34"
@@ -161,7 +121,7 @@ for (const m of champMatchups) {
 
               <div class="dynasty-bowl-loser" style="padding-left: 1.25rem; display: flex; align-items: center; gap: 0.9rem;">
                 <img
-                  src={`/images/logos/${loser?.abbr}.png`}
+                  src={logoPath(loser?.abbr ?? '')}
                   alt=""
                   width="34"
                   height="34"
@@ -249,27 +209,6 @@ for (const m of champMatchups) {
   }
 
   @media (max-width: 768px) {
-    /* Quick stats: 2×2 grid filling full width */
-    .quick-stats-grid {
-      display: grid !important;
-      grid-template-columns: 1fr 1fr !important;
-      width: 100% !important;
-    }
-
-    /* Reset all left borders, then restore for right-column cells */
-    .quick-stats-grid > div {
-      border-left: none !important;
-    }
-
-    .quick-stats-grid > div:nth-child(even) {
-      border-left: 1px solid var(--color-border) !important;
-    }
-
-    .quick-stats-grid > div:nth-child(3),
-    .quick-stats-grid > div:nth-child(4) {
-      border-top: 1px solid var(--color-border);
-    }
-
     /* Dynasty bowls: hide runner-up, collapse to 2 columns */
     .dynasty-bowl-loser {
       display: none !important;

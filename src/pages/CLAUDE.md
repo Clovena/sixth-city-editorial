@@ -30,7 +30,7 @@ Breakpoint: `@media (max-width: 768px)`. All mobile overrides use scoped `<style
 ### `history/[year].astro`
 - Final Standings grid goes vertical (HCC below SCC, each full width)
 - Playoff bracket `bracket-wrap` goes vertical
-- **Playoff bracket interaction**: All matchup elements are clickable links to game recaps. Each matchup wraps in an `<a href="/games/{year}/{slug}">` tag where slug is built using `buildSlug(teamA, teamB, week)`:
+- **Playoff bracket interaction**: All matchup elements are clickable links to game recaps. Each matchup wraps in an `<a href="/games/{year}/{slug}">` tag where slug is built using a local `buildSlug(teamA, teamB, week)` that takes `StandingsRow` objects and delegates to the shared `buildSlug(abbrA, abbrB, week)` in `src/lib/game-utils.ts` — see root CLAUDE.md's "Shared Utility Libraries":
   - Round 1: week 15
   - Semifinals: week 16
   - Championship: week 17

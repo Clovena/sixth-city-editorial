@@ -1,14 +1,9 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { supabase } from '../../lib/supabase';
-import {
-  loadFranchises,
-  loadMedals,
-  franchiseForYear,
-  activeFranchise,
-  MEDAL_POSITION_ORDER,
-  MEDAL_POSITION_COLOR,
-} from '../../lib/hall-of-fame';
+import { loadMedals, MEDAL_POSITION_ORDER, MEDAL_POSITION_COLOR } from '../../lib/hall-of-fame';
+import { loadFranchises, franchiseForYear, activeFranchise, logoPath } from '../../lib/franchise-identity';
+import { playerName, espnHeadshotUrl, formatPoints } from '../../lib/format';
 
 const [franchises, medals] = await Promise.all([loadFranchises(), loadMedals()]);
 
@@ -59,7 +54,7 @@ for (const medal of medals) {
   timeline.wins.push({
     year: medal.year,
     playerId: medal.player_id,
-    name: player ? `${player.first_name ?? ''} ${player.last_name ?? ''}`.trim() : medal.player_id,
+    name: playerName(player?.first_name, player?.last_name, medal.player_id),
     espnId: player?.espn_id ?? null,
     fpts: Number(medal.fpts),
     gamesStarted: Number(medal.games_started),
@@ -118,8 +113,6 @@ for (const medal of medals) {
 const repeatMedalists = [...careerCounts.values()].filter(count => count > 1).length;
 
 const positionsInPlay = MEDAL_POSITION_ORDER.filter(p => byPosition.has(p));
-
-const fmtPoints = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 ---
 
 <Layout
@@ -164,9 +157,7 @@ const fmtPoints = (n: number) => n.toLocaleString('en-US', { minimumFractionDigi
                     <span class="timeline-year sc-tabular">{win.year}</span>
                     <span class="timeline-body">
                       <img
-                        src={win.espnId
-                          ? `https://a.espncdn.com/i/headshots/nfl/players/full/${win.espnId}.png`
-                          : '/images/player-placeholder.png'}
+                        src={espnHeadshotUrl(win.espnId)}
                         alt=""
                         width="40"
                         height="40"
@@ -178,7 +169,7 @@ const fmtPoints = (n: number) => n.toLocaleString('en-US', { minimumFractionDigi
                       <span class="timeline-names">
                         <a href={`/players/${win.playerId}`} class="winner-name">{win.name}</a>
                         <span class="winner-meta">
-                          <span class="sc-tabular">{fmtPoints(win.fpts)}</span> pts &bull;
+                          <span class="sc-tabular">{formatPoints(win.fpts)}</span> pts &bull;
                           {' '}<span class="sc-tabular">{win.gamesStarted}</span> starts
                         </span>
                       </span>
@@ -190,7 +181,7 @@ const fmtPoints = (n: number) => n.toLocaleString('en-US', { minimumFractionDigi
                         title={`Started by ${win.abbr}`}
                       >
                         <img
-                          src={`/images/logos/${win.abbr}.png`}
+                          src={logoPath(win.abbr ?? '')}
                           alt={win.abbr}
                           width="26"
                           height="26"

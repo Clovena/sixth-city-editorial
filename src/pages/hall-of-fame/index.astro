@@ -1,14 +1,9 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { supabase } from '../../lib/supabase';
-import {
-  loadFranchises,
-  loadSeasonPodiums,
-  loadMedals,
-  loadRecords,
-  franchiseForYear,
-  activeFranchise,
-} from '../../lib/hall-of-fame';
+import { loadSeasonPodiums, loadMedals, loadRecords } from '../../lib/hall-of-fame';
+import { loadFranchises, franchiseForYear, activeFranchise, logoPath } from '../../lib/franchise-identity';
+import { ordinal, playerName, formatPoints } from '../../lib/format';
 
 const franchises = await loadFranchises();
 
@@ -113,7 +108,7 @@ const playerById = new Map((spotlightPlayers ?? []).map(p => [p.player_id, p]));
 function playerLabel(id: string | null | undefined): string {
   if (!id) return '—';
   const p = playerById.get(id);
-  return p ? `${p.first_name ?? ''} ${p.last_name ?? ''}`.trim() : id;
+  return playerName(p?.first_name, p?.last_name, id);
 }
 
 /** Manager/trade awards have no player, so resolve the franchise instead. */
@@ -129,14 +124,6 @@ function accoladeSubject(accolade: typeof accolades[number] | null): string {
 }
 
 const medalPlayerName = playerLabel(latestMedal?.player_id);
-
-function ordinal(n: number): string {
-  const suffix = n % 10 === 1 && n % 100 !== 11 ? 'st'
-    : n % 10 === 2 && n % 100 !== 12 ? 'nd'
-    : n % 10 === 3 && n % 100 !== 13 ? 'rd'
-    : 'th';
-  return `${n}${suffix}`;
-}
 
 type RecentCard = {
   wing: string;
@@ -178,7 +165,7 @@ if (latestMedal) {
     href: '/hall-of-fame/medals',
     eyebrow: `${latestMedal.year} • ${latestMedal.position} Medalist`,
     headline: medalPlayerName,
-    detail: `${Number(latestMedal.fpts).toFixed(2)} pts • ${latestMedalCount} medals awarded that season`,
+    detail: `${formatPoints(Number(latestMedal.fpts))} pts • ${latestMedalCount} medals awarded that season`,
   });
 }
 
@@ -188,7 +175,7 @@ if (newestRecord) {
     href: '/hall-of-fame/records',
     eyebrow: `${newestRecord.year} • Week ${newestRecord.week}`,
     headline: newestRecord.who,
-    detail: `${newestRecord.score.toFixed(2)} — ${ordinal(newestRecord.rank)}-highest ${newestRecord.kind === 'team' ? 'team score' : 'player score'} all-time`,
+    detail: `${formatPoints(newestRecord.score)} — ${ordinal(newestRecord.rank)}-highest ${newestRecord.kind === 'team' ? 'team score' : 'player score'} all-time`,
   });
 }
 ---
@@ -249,7 +236,7 @@ if (newestRecord) {
               <div class="recent-headline-row">
                 {card.logoAbbr && (
                   <img
-                    src={`/images/logos/${card.logoAbbr}.png`}
+                    src={logoPath(card.logoAbbr)}
                     alt=""
                     width="32"
                     height="32"
@@ -310,30 +297,6 @@ if (newestRecord) {
     color: var(--text-body);
     max-width: 56ch;
     margin: 1rem auto 0;
-  }
-
-  .hof-hero-counts {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 0.5rem 2rem;
-    margin-top: 1.75rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--border-on-ink);
-    font-family: var(--font-sans);
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-  }
-  .hof-hero-counts strong {
-    font-family: var(--font-display);
-    font-size: 1.25rem;
-    font-weight: 900;
-    color: var(--gold-400);
-    margin-right: 0.35rem;
-    vertical-align: -0.05em;
   }
 
   /* ---- Wing grid: two rows of two, then one full width ---- */
@@ -509,7 +472,6 @@ if (newestRecord) {
   @media (max-width: 768px) {
     .hof-hero { margin-bottom: 2.5rem; }
     .hof-hero-inner { padding: 2.5rem 1.5rem 2.25rem; }
-    .hof-hero-counts { gap: 0.5rem 1.25rem; font-size: 0.65rem; }
 
     .wing-grid { grid-template-columns: 1fr !important; }
     .wing-grid > *:nth-child(5) { grid-column: auto !important; }
