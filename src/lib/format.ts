@@ -52,6 +52,14 @@ export function playerName(
   return parts.length ? parts.join(' ') : fallback;
 }
 
+/** Sleeper timestamps are unix ms — render one as `Sep 14, 2021`. */
+export function formatTimestamp(ms: number | string | null | undefined): string {
+  if (ms === null || ms === undefined) return '—';
+  const date = new Date(Number(ms));
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 /** ESPN headshot URL for a player, or the site placeholder image if no ESPN id is known. */
 export function espnHeadshotUrl(espnId: string | null | undefined): string {
   return espnId
