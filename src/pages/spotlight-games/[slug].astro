@@ -93,7 +93,7 @@ export async function getStaticPaths() {
   const { data: allFranchises, error: allError } = await sb
     .schema('scdfl')
     .from('franchises')
-    .select('id, sleeper_id, abbr, "from", "to"');
+    .select('id, sleeper_id, abbr, name, owner, conf, colors, "from", "to"');
 
   if (allError) throw new Error(`All franchises query failed: ${allError.message}`);
 

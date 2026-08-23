@@ -19,7 +19,7 @@ if (sErr) throw new Error(`Seasons query failed: ${sErr.message}`);
 const { data: allFranchises, error: fErr } = await supabase
   .schema('scdfl')
   .from('franchises')
-  .select('sleeper_id, abbr, name, conf, colors, "from", "to"');
+  .select('id, sleeper_id, abbr, name, owner, conf, colors, "from", "to"');
 
 if (fErr || !allFranchises) throw new Error(`Franchises query failed: ${fErr?.message || 'No data returned'}`);
 

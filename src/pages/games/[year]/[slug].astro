@@ -21,7 +21,7 @@ export async function getStaticPaths() {
     sb
       .schema('scdfl')
       .from('franchises')
-      .select('sleeper_id, abbr, "from", "to"'),
+      .select('id, sleeper_id, abbr, name, owner, conf, colors, "from", "to"'),
     sb
       .schema('scdfl')
       .from('exhibitions')
@@ -153,7 +153,7 @@ if (isExhibition && exhib) {
     supabase
       .schema('scdfl')
       .from('franchises')
-      .select('sleeper_id, abbr, name, conf, colors, "from", "to"'),
+      .select('id, sleeper_id, abbr, name, owner, conf, colors, "from", "to"'),
     supabase
       .schema('scdfl')
       .from('matchups')
