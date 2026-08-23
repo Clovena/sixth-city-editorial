@@ -14,11 +14,6 @@
   - Brackets generated on season recap pages
 
 ## Codebase
-- Centralize functions
-  - `effectiveAbbr()`
-  - `toRoman()`
-- Pull data in the same way always
-  - `.schema()` first
 
 ## QA
 
@@ -60,3 +55,8 @@
 - WIDGETS.md
   - Franchise game-by-game line chart
   - Commish tool: trade heat map
+- Centralize functions
+  - `effectiveAbbr()`
+  - `toRoman()`
+- Pull data in the same way always
+  - `.schema()` first

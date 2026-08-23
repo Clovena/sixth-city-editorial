@@ -1,6 +1,9 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { supabase } from '../../lib/supabase';
+import { loadFranchises, franchiseForYear, franchiseByAbbrForYear, logoPath } from '../../lib/franchise-identity';
+import { loadChampionshipMatchups } from '../../lib/game-utils';
+import { toRoman } from '../../lib/format';
 
 // ── Fetch seasons ──────────────────────────────────────────────────────────
 const { data: seasonRows, error: sErr } = await supabase
@@ -12,51 +15,12 @@ const { data: seasonRows, error: sErr } = await supabase
 if (sErr) throw new Error(`Seasons query failed: ${sErr.message}`);
 
 // ── Fetch all franchise identities (including historical) ──────────────────
-const { data: allFranchises, error: fErr } = await supabase
-  .schema('scdfl')
-  .from('franchises')
-  .select('id, sleeper_id, abbr, name, owner, conf, colors, "from", "to"');
-
-if (fErr || !allFranchises) throw new Error(`Franchises query failed: ${fErr?.message || 'No data returned'}`);
-
-const franchises = allFranchises;
+const franchises = await loadFranchises();
 const activeFranchises = franchises.filter(f => f.to === null);
 const activeBySleeperId = new Map(activeFranchises.map(f => [f.sleeper_id, f]));
 
-// Resolve franchise identity for a given year
-function franchiseForYear(sleeperId: string, yr: number) {
-  return franchises.find(f =>
-    f.sleeper_id === sleeperId && f.from <= yr && (f.to === null || f.to >= yr)
-  );
-}
-
-// Resolve franchise identity by abbr for a given year
-function franchiseByAbbrForYear(abbr: string, yr: number) {
-  return franchises.find(f =>
-    f.abbr === abbr && f.from <= yr && (f.to === null || f.to >= yr)
-  );
-}
-
-// ── Fetch championship matchups (week 17, game_type = 1) ───────────────────
-const { data: champMatchups, error: cmErr } = await supabase
-  .schema('scdfl')
-  .from('matchups')
-  .select('year, roster_id_a, roster_id_b, score_a, score_b')
-  .eq('week', 17)
-  .eq('game_type', 1);
-
-if (cmErr) throw new Error(`Championship matchups query failed: ${cmErr.message}`);
-
-// ── Roman numeral helper ───────────────────────────────────────────────────
-function toRoman(n: number): string {
-  const vals = [1000,900,500,400,100,90,50,40,10,9,5,4,1];
-  const syms = ['M','CM','D','CD','C','XC','L','XL','X','IX','V','IV','I'];
-  let result = '';
-  for (let i = 0; i < vals.length; i++) {
-    while (n >= vals[i]) { result += syms[i]; n -= vals[i]; }
-  }
-  return result;
-}
+// ── Fetch championship matchups (week 17, game_type = 1, already played) ──
+const champMatchups = await loadChampionshipMatchups();
 
 // ── Build per-season display data ──────────────────────────────────────────
 type FranchiseDisplay = { abbr: string; name: string; owner: string; conf: string };
@@ -81,17 +45,17 @@ for (const s of seasonRows) {
   const bowlNum = s.year - 2020;
 
   // SCC/HCC champions — join by abbr for the year
-  const sccF = franchiseByAbbrForYear(s.scc_champion, s.year);
-  const hccF = franchiseByAbbrForYear(s.hcc_champion, s.year);
+  const sccF = franchiseByAbbrForYear(franchises, s.scc_champion, s.year);
+  const hccF = franchiseByAbbrForYear(franchises, s.hcc_champion, s.year);
 
   // Dynasty Bowl winner/loser from week 17 matchup scores
   const aWins = champMatch.score_a > champMatch.score_b;
   const winnerSleeperId = String(aWins ? champMatch.roster_id_a : champMatch.roster_id_b);
   const loserSleeperId = String(aWins ? champMatch.roster_id_b : champMatch.roster_id_a);
-  const winnerF = franchiseForYear(winnerSleeperId, s.year);
-  const loserF = franchiseForYear(loserSleeperId, s.year);
+  const winnerF = franchiseForYear(franchises, winnerSleeperId, s.year);
+  const loserF = franchiseForYear(franchises, loserSleeperId, s.year);
 
-  const toDisplay = (f: typeof allFranchises[0] | undefined): FranchiseDisplay | null =>
+  const toDisplay = (f: typeof franchises[0] | undefined): FranchiseDisplay | null =>
     f ? { abbr: f.abbr, name: f.name, owner: f.owner, conf: f.conf } : null;
 
   seasons.push({
@@ -228,7 +192,7 @@ const sccWins = seasons.filter(s => s.champion?.conf === 'SCC').length;
           <div style={`display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; ${i !== 0 ? 'border-top: 1px solid var(--color-border);' : ''} `}>
             <div style="display: flex; align-items: center; gap: 1rem;">
               <img
-                src={`/images/logos/${franchise.abbr}.png`}
+                src={logoPath(franchise.abbr)}
                 alt=""
                 width="32"
                 height="32"

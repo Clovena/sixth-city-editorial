@@ -2,6 +2,9 @@
 import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import { supabase } from '../lib/supabase';
+import { franchiseForYear } from '../lib/franchise-identity';
+import { toRoman } from '../lib/format';
+import { buildSlug, isPlayablePostseasonGame } from '../lib/game-utils';
 
 // ── Fetch seasons ──────────────────────────────────────────────────────────
 const { data: seasonRows, error: sErr } = await supabase
@@ -75,9 +78,7 @@ for (const m of matchupRows ?? []) {
   // bracket with placeholder (random) opponents before the postseason begins;
   // these show up as 0–0 and don't reflect the real slate, so exclude them.
   // Regular-season games (game_type 0) are always kept, even at 0–0.
-  const isPostseason = m.game_type !== 0;
-  const notStarted = (m.score_a ?? 0) === 0 && (m.score_b ?? 0) === 0;
-  if (isPostseason && notStarted) continue;
+  if (!isPlayablePostseasonGame(m.game_type, m.score_a, m.score_b)) continue;
 
   const yr = String(m.year);
   const wk = String(m.week);
@@ -94,31 +95,17 @@ for (const m of matchupRows ?? []) {
 }
 
 // ── Dynasty Bowl lookup: derived from week 17 game_type=1 matchups ──────────
-function toRoman(n: number): string {
-  const vals = [1000,900,500,400,100,90,50,40,10,9,5,4,1];
-  const syms = ['M','CM','D','CD','C','XC','L','XL','X','IX','V','IV','I'];
-  let result = '';
-  for (let i = 0; i < vals.length; i++) {
-    while (n >= vals[i]) { result += syms[i]; n -= vals[i]; }
-  }
-  return result;
-}
-
 const dynastyBowls: Record<string, { winner: string; loser: string; label: string }> = {};
 for (const m of matchupRows ?? []) {
   if (m.week !== 17 || m.game_type !== 1) continue;
   // Skip not-yet-played championship placeholders (0–0) — no real winner yet.
-  if ((m.score_a ?? 0) === 0 && (m.score_b ?? 0) === 0) continue;
+  if (!isPlayablePostseasonGame(m.game_type, m.score_a, m.score_b)) continue;
   const aWins = m.score_a > m.score_b;
   const winnerSleeperId = String(aWins ? m.roster_id_a : m.roster_id_b);
   const loserSleeperId = String(aWins ? m.roster_id_b : m.roster_id_a);
   // Find franchise abbr for the championship year
-  const winnerIdentity = franchiseIdentities[winnerSleeperId]?.find(
-    f => f.from <= m.year && (f.to === null || f.to >= m.year)
-  );
-  const loserIdentity = franchiseIdentities[loserSleeperId]?.find(
-    f => f.from <= m.year && (f.to === null || f.to >= m.year)
-  );
+  const winnerIdentity = franchiseForYear(allFranchises, winnerSleeperId, m.year);
+  const loserIdentity = franchiseForYear(allFranchises, loserSleeperId, m.year);
   dynastyBowls[String(m.year)] = {
     winner: winnerIdentity?.abbr ?? '',
     loser: loserIdentity?.abbr ?? '',
@@ -191,12 +178,10 @@ type ExhibEntry = {
 };
 const exhibitionsData: ExhibEntry[] = (exhibRows ?? []).map((e: any) => {
   const scores = e.exhibition_matchups?.[0] ?? { score_a: 0, score_b: 0 };
-  const [slugA, slugB] = [e.team_a_slug.toLowerCase(), e.team_b_slug.toLowerCase()].sort();
-  const weekPad = String(e.week).padStart(2, '0');
   return {
     year: e.year,
     week: e.week,
-    slug: `${weekPad}-${slugA}-${slugB}`,
+    slug: buildSlug(e.team_a_slug, e.team_b_slug, e.week),
     displayNameA: e.team_a_display_name,
     displayNameB: e.team_b_display_name,
     scoreA: scores.score_a ?? 0,

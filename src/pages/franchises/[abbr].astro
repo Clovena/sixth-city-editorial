@@ -2,12 +2,18 @@
 import Layout from '../../layouts/Layout.astro';
 import { supabase } from '../../lib/supabase';
 import { getEntry, render, getCollection } from 'astro:content';
+import { loadFranchises, franchiseForYear, logoPath, primaryColor as getPrimaryColor } from '../../lib/franchise-identity';
+import { toRoman, formatPoints } from '../../lib/format';
+import { buildSlug, isPlayablePostseasonGame, loadChampionshipMatchups } from '../../lib/game-utils';
 
 // ── Static paths: active franchises only ──────────────────────────────────
 export async function getStaticPaths() {
   const { supabase: sb } = await import('../../lib/supabase');
-  const { data: rows } = await sb.schema('scdfl').from('franchises')
-    .select('abbr').is('to', null);
+  const { data: rows } = await sb
+    .schema('scdfl')
+    .from('franchises')
+    .select('abbr')
+    .is('to', null);
   return (rows ?? []).map(f => ({ params: { abbr: f.abbr } }));
 }
 
@@ -76,7 +82,7 @@ if (notesEntry) {
   FranchiseContent = Content;
 }
 
-const primaryColor = franchise.colors[0];
+const primaryColor = getPrimaryColor(franchise.colors);
 const secondaryColor = franchise.colors[1] ?? franchise.colors[0];
 const confColor = franchise.conf === 'SCC' ? 'var(--color-scc)' : 'var(--color-hcc)';
 
@@ -89,22 +95,8 @@ const { data: seasonRows, error: sErr } = await supabase
 
 if (sErr) throw new Error(`Seasons query failed: ${sErr.message}`);
 
-// ── Fetch championship matchups (week 17, game_type = 1) ──────────────────
-const { data: champMatchups, error: cmErr } = await supabase
-  .schema('scdfl')
-  .from('matchups')
-  .select('year, roster_id_a, roster_id_b, score_a, score_b')
-  .eq('week', 17)
-  .eq('game_type', 1);
-
-if (cmErr) throw new Error(`Championship matchups query failed: ${cmErr.message}`);
-
-// Drop not-yet-played championship placeholders (0–0) — Sleeper seeds the
-// bracket with random opponents before the postseason, and those would
-// otherwise register as a Dynasty Bowl appearance with a fabricated winner.
-const playedChampMatchups = (champMatchups ?? []).filter(
-  m => (m.score_a ?? 0) !== 0 || (m.score_b ?? 0) !== 0
-);
+// ── Fetch championship matchups (week 17, game_type = 1, already played) ──
+const playedChampMatchups = await loadChampionshipMatchups();
 
 // Dynasty Bowl appearances for this franchise
 const sleeperId = parseInt(franchise.sleeper_id);
@@ -113,32 +105,7 @@ const myChampMatchups = playedChampMatchups.filter(
 );
 
 // ── Fetch all franchise identities (for year-appropriate display) ─────────
-const { data: allFranchiseRows, error: afErr } = await supabase
-  .schema('scdfl')
-  .from('franchises')
-  .select('sleeper_id, abbr, name, owner, conf, colors, "from", "to"');
-
-if (afErr) throw new Error(`All franchises query failed: ${afErr.message}`);
-
-const activeFranchises = allFranchiseRows;
-
-// Resolve franchise identity for a given year
-function franchiseForYear(sid: string, yr: number) {
-  return activeFranchises.find(f =>
-    f.sleeper_id === sid && f.from <= yr && (f.to === null || f.to >= yr)
-  );
-}
-
-// Roman numeral helper
-function toRoman(n: number): string {
-  const vals = [1000,900,500,400,100,90,50,40,10,9,5,4,1];
-  const syms = ['M','CM','D','CD','C','XC','L','XL','X','IX','V','IV','I'];
-  let result = '';
-  for (let i = 0; i < vals.length; i++) {
-    while (n >= vals[i]) { result += syms[i]; n -= vals[i]; }
-  }
-  return result;
-}
+const allFranchiseRows = await loadFranchises();
 
 // Build dynasty bowl appearance data
 type DynastyBowlAppearance = {
@@ -156,7 +123,7 @@ for (const m of myChampMatchups) {
   const won = (iAmA && aWins) || (!iAmA && !aWins);
   const oppRosterId = iAmA ? m.roster_id_b : m.roster_id_a;
   const oppSleeperId = String(oppRosterId);
-  const oppIdentity = franchiseForYear(oppSleeperId, m.year);
+  const oppIdentity = franchiseForYear(allFranchiseRows, oppSleeperId, m.year);
   dynastyBowlAppearances.push({
     year: m.year,
     won,
@@ -208,7 +175,7 @@ function getSpotlightOpponent(g: SpotlightGame) {
   return g.team_a === abbr ? g.team_b : g.team_a;
 }
 function getOpponentFranchise(oppAbbr: string) {
-  return activeFranchises.find(f => f.abbr === oppAbbr);
+  return allFranchiseRows.find(f => f.abbr === oppAbbr);
 }
 
 // ── Fetch results for this franchise ──────────────────────────────────────
@@ -250,9 +217,7 @@ for (const m of matchupRows ?? []) {
   // bracket with placeholder (random) opponents before the postseason begins;
   // these show up as 0–0 and don't reflect the real slate, so exclude them.
   // Regular-season games (game_type 0) are always kept, even at 0–0.
-  const isPostseason = m.game_type !== 0;
-  const notStarted = (m.score_a ?? 0) === 0 && (m.score_b ?? 0) === 0;
-  if (isPostseason && notStarted) continue;
+  if (!isPlayablePostseasonGame(m.game_type, m.score_a, m.score_b)) continue;
 
   const yr = String(m.year);
   const wk = String(m.week);
@@ -324,8 +289,8 @@ for (const m of matchupRows ?? []) {
   const diff = pf - pa;
   const result: 'W' | 'L' | 'T' = pf > pa ? 'W' : pf < pa ? 'L' : 'T';
 
-  const myId = franchiseForYear(franchise.sleeper_id, m.year);
-  const oppId = franchiseForYear(String(oppRid), m.year);
+  const myId = franchiseForYear(allFranchiseRows, franchise.sleeper_id, m.year);
+  const oppId = franchiseForYear(allFranchiseRows, String(oppRid), m.year);
 
   gamePerf.push({
     year: m.year,
@@ -357,7 +322,7 @@ const perfDefaultSeason = perfSeasons.length > 0 ? perfSeasons[perfSeasons.lengt
 
       <div style="display: flex; align-items: flex-start; gap: 2rem; flex-wrap: wrap;">
         <img
-          src={`/images/logos/${abbr}.png`}
+          src={logoPath(abbr)}
           alt={`${franchise.name} logo`}
           width="72"
           height="72"
@@ -500,7 +465,7 @@ const perfDefaultSeason = perfSeasons.length > 0 ? perfSeasons[perfSeasons.lengt
                     {isAdopted && (
                       <td style="padding: 0.25rem 0.5rem; text-align: center;">
                         <img
-                          src={`/images/logos/${(franchiseForYear(franchise.sleeper_id, row.year))?.abbr ?? abbr}.png`}
+                          src={logoPath(franchiseForYear(allFranchiseRows, franchise.sleeper_id, row.year)?.abbr ?? abbr)}
                           alt=""
                           width="24"
                           height="24"
@@ -518,8 +483,8 @@ const perfDefaultSeason = perfSeasons.length > 0 ? perfSeasons[perfSeasons.lengt
                       <>
                         <td>{row.wins}</td>
                         <td>{row.losses}</td>
-                        <td class="col-hide-mobile" style="text-align: right; font-variant-numeric: tabular-nums;">{row.points_for.toFixed(2)}</td>
-                        <td class="col-hide-mobile" style="text-align: right; font-variant-numeric: tabular-nums;">{row.points_against.toFixed(2)}</td>
+                        <td class="col-hide-mobile" style="text-align: right; font-variant-numeric: tabular-nums;">{formatPoints(row.points_for)}</td>
+                        <td class="col-hide-mobile" style="text-align: right; font-variant-numeric: tabular-nums;">{formatPoints(row.points_against)}</td>
                       </>
                     )}
                     <td style={resultStyle}>{seasonNotStarted ? '—' : row.finish}</td>
@@ -581,10 +546,9 @@ const perfDefaultSeason = perfSeasons.length > 0 ? perfSeasons[perfSeasons.lengt
             <p class="section-label">Dynasty Bowl History</p>
             <div style="display: flex; flex-direction: column; gap: 0.75rem;">
               {dynastyBowlAppearances.map(a => {
-                const oppDisplay = franchiseForYear(a.opponentSleeperId, a.year);
-                const myDisplay = franchiseForYear(franchise.sleeper_id, a.year);
-                const slugAbbrs = [myDisplay?.abbr ?? franchise.abbr, oppDisplay?.abbr ?? a.opponentAbbr].sort().map(s => s.toLowerCase());
-                const recapSlug = `17-${slugAbbrs[0]}-${slugAbbrs[1]}`;
+                const oppDisplay = franchiseForYear(allFranchiseRows, a.opponentSleeperId, a.year);
+                const myDisplay = franchiseForYear(allFranchiseRows, franchise.sleeper_id, a.year);
+                const recapSlug = buildSlug(myDisplay?.abbr ?? franchise.abbr, oppDisplay?.abbr ?? a.opponentAbbr, 17);
                 return (
                   <a href={`/games/${a.year}/${recapSlug}`} style={`display: block; text-decoration: none; padding: 0.75rem; border-left: 3px solid ${a.won ? 'var(--color-gold)' : 'var(--color-border-light)'}; background-color: var(--color-surface-alt); transition: border-color 0.15s ease;`} onmouseover="this.style.borderColor='var(--color-border-light)'" onmouseout={`this.style.borderColor='${a.won ? 'var(--color-gold)' : 'var(--color-border-light)'}'`}>
                     <p style={`font-size: 0.8rem; font-weight: 700; margin: 0 0 0.2rem; color: ${a.won ? 'var(--color-gold)' : 'var(--color-text-muted)'};`}>

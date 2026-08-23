@@ -42,6 +42,7 @@ All sync scripts live in `scripts/lib/` and write directly to Supabase (schema `
 - **Remark/Rehype** — custom plugin (`src/lib/remark-team-headers.ts`) for markdown AST transformation
 - **Node 18+** — see `.nvmrc`; also pinned in `netlify.toml` to fix lightningcss binding issue
 - No framework components (vanilla JS for all interactivity)
+- **Shared page utilities** — `src/lib/franchise-identity.ts`, `src/lib/format.ts`, `src/lib/game-utils.ts`. See "Shared Utility Libraries" below — **always import from these** rather than writing a local `toRoman`/`franchiseForYear`/logo-path/slug-builder. A prior audit found these copy-pasted independently across 10+ pages; that is the failure mode to avoid.
 
 ---
 
@@ -167,6 +168,42 @@ The Identity History block on `franchises/[abbr].astro` therefore collapses **co
 
 ---
 
+## Shared Utility Libraries (`src/lib/`)
+
+Common logic used across many pages lives in three small, focused lib files. **Import from these — do not write a local copy.** The codebase went through a full audit and consolidation pass specifically because this logic had been independently reimplemented (with subtly drifting behavior) across 10+ pages; that history is the reason these exist and the reason to keep using them.
+
+### `src/lib/franchise-identity.ts` — franchise identity resolution
+- `FranchiseRow` type — `{ id, sleeper_id, abbr, name, owner, conf, colors, from, to }`
+- `franchiseForYear(rows, sleeperId, year)` — implements the adoption-logic query above in JS, over an already-fetched row set
+- `activeFranchise(rows, sleeperId)` — current identity (`to IS NULL`)
+- `franchiseByAbbrForYear(rows, abbr, year)` — reverse lookup; used for `seasons.scc_champion`/`hcc_champion`, which are stored as abbr strings
+- `identityFor(rows, rosterId, year)` — convenience wrapper returning `{ abbr, activeAbbr, name }` (era abbr for logos, active abbr for `/franchises/[abbr]` links)
+- `loadFranchises()` — fetches every row of `franchises` (all eras); the standard way to get a full identity table for a page
+
+**Key join fact:** `franchises.id` is numerically identical to `Number(franchises.sleeper_id)` for every row (confirmed by direct query: `SELECT id, sleeper_id FROM scdfl.franchises WHERE id::text != sleeper_id` → zero rows), and `matchups.roster_id_a/b` equal `franchises.id`. So any numeric roster_id can be passed to these functions as `String(rosterId)` in place of a sleeper_id — there is no separate by-`id` lookup, and there shouldn't be.
+
+### `src/lib/format.ts` — pure formatting helpers, zero dependencies
+- `toRoman(n)` — Dynasty Bowl numbering (`toRoman(year - 2020)`)
+- `ordinal(n)`, `pad2(n)`, `draftPickLabel(round, pickNo)`
+- `formatPoints(n)` — null-safe `.toFixed(2)`, renders `—` for null/undefined
+- `playerName(first, last, fallback)` — joins first/last, dropping whichever half is missing
+- `espnHeadshotUrl(espnId)` — always returns a usable `src` (the site placeholder image if there's no `espn_id`), so callers can render an `<img>` unconditionally instead of branching
+- `logoPath(abbr)` / `primaryColor(colors, fallback?)` — `/images/logos/{abbr}.png` and `colors[0]` with a `var(--border-default)` fallback
+
+This file has **no imports of its own** — that's deliberate, not an oversight. `src/lib/remark-team-headers.ts` runs inside `astro.config.mjs`'s evaluation context, before Vite env vars exist; anything it imports must not transitively pull in `src/lib/supabase.ts`, which crashes (`supabaseUrl is required`) if constructed at that point. `logoPath`/`primaryColor` live in `format.ts` rather than the more topically-obvious `franchise-identity.ts` specifically to keep this file import-safe for that plugin — don't move them there.
+
+### `src/lib/game-utils.ts` — game/matchup helpers
+- `buildSlug(abbrA, abbrB, week)` — canonical recap slug (see Slug Format below)
+- `gameHref(year, week, sideA, sideB)` — full recap href, or `null` if either `SideIdentity` is unresolved
+- `GAME_TYPE_LABEL` — `{ 0: 'Regular Season', 1: 'Playoffs', -1: 'Consolation' }`
+- `isPlayablePostseasonGame(gameType, scoreA, scoreB)` — the shared "drop the still-0–0 Sleeper bracket placeholder" rule: regular season is always playable, postseason only once it's actually been scored
+- `loadChampionshipMatchups()` — every played (not placeholder) week-17/`game_type=1` Dynasty Bowl across all seasons, `.limit(1000)` included
+
+### Scope: build-time only
+These are for **frontmatter / build-time use**. A client-side `<script>` can only import them if the script has no `is:inline` attribute (Astro then bundles it through Vite, so a normal `import` resolves) — `scores.astro`'s script qualifies but currently still carries local copies of this logic as a deliberately deferred cleanup. `franchises/[abbr].astro`'s scripts use `is:inline` and cannot import at all, so their local `getIdentity`/`teamRow` duplicates are intentional, not a bug. Don't "fix" either without first resolving the `is:inline` question — that's a separate, riskier piece of work than the frontmatter consolidation.
+
+---
+
 ## Slug Format (`/games/[year]/[slug]`)
 
 ```
@@ -176,7 +213,7 @@ The Identity History block on `franchises/[abbr].astro` therefore collapses **co
 - Teams sorted alphabetically by abbreviation, lowercase
 - Example: `04-bkb-tor`, `17-chc-van`
 
-Slugs are the canonical matchup identifier and the lookup key for recap content files.
+Slugs are the canonical matchup identifier and the lookup key for recap content files. Implemented as `buildSlug(abbrA, abbrB, week)` in `src/lib/game-utils.ts` — always call it rather than reimplementing the pad/sort/join. Some pages wrap it in a thin local helper that accepts a richer object (e.g. `history/[year].astro`'s `buildSlug(teamA: StandingsRow, teamB, week)`, which extracts `.effectiveAbbr` and delegates) — that pattern is fine; a second from-scratch implementation is not.
 
 ---
 
@@ -356,7 +393,7 @@ Five wings hang off a lobby. The lobby's wing grid **is** the sub-navigation —
 | Records | `records` | `matchups` + `v_player_starts` |
 | Hall of Famers | `inductees` | None — placeholder/explainer until after Season 6 (2026) |
 
-Shared loaders live in `src/lib/hall-of-fame.ts` (`loadSeasonPodiums`, `loadRecords`, `loadMedals`, identity helpers, `buildSlug`/`gameHref`). The lobby reuses all of them for its "Recent Additions" module, so put new cross-wing data there rather than in a page.
+Shared loaders live in `src/lib/hall-of-fame.ts` (`loadSeasonPodiums`, `loadRecords`, `loadMedals`, `MEDAL_POSITION_ORDER`/`MEDAL_POSITION_COLOR`). Franchise identity helpers and `buildSlug`/`gameHref` live in `src/lib/franchise-identity.ts` and `src/lib/game-utils.ts` respectively (see "Shared Utility Libraries" above) — `hall-of-fame.ts` imports them rather than redefining them, and pages should do the same. The lobby reuses all of these for its "Recent Additions" module, so put new cross-wing data in `hall-of-fame.ts` rather than in a page.
 
 ### Placement is derived, not read from `results.finish`
 
@@ -395,12 +432,27 @@ Queries the `scdfl.matchups` table at build time to find historical instances of
 - Returns array of matchups sorted newest-first (year desc, week desc)
 - Each result includes: `year`, `week`, `teamAScore`, `teamBScore`
 - Handles bye weeks correctly (null `matchup_id` entries are excluded by the query)
+- Postseason placeholder filtering uses `isPlayablePostseasonGame` from `src/lib/game-utils.ts` (see "Shared Utility Libraries" above)
 
 ---
 
 ## Supabase Query Patterns
 
 All build-time queries use the client at `src/lib/supabase.ts` with `.schema('scdfl')`.
+
+**Chain order and formatting (standardized — follow it for every new query):** `.schema('scdfl')` → `.from(table)` → `.select()`/write op → filters (`.eq`/`.is`/`.in`/`.lte`/`.gte`/`.or`/`.not`) → `.order()` → `.limit()` → `.single()`, **one method per line**:
+```ts
+const { data, error } = await supabase
+  .schema('scdfl')
+  .from('franchises')
+  .select('id, sleeper_id, abbr, name, owner, conf, colors, "from", "to"')
+  .eq('abbr', abbr)
+  .is('to', null)
+  .single();
+```
+`src/` uses single quotes throughout; `scripts/` uses double quotes — each is internally consistent, don't mix within a file.
+
+**Before hand-writing a query, check whether a shared loader already exists:** `loadFranchises()` (all `franchises` rows, all eras) and `loadChampionshipMatchups()` (every played Dynasty Bowl, `.limit(1000)` and postseason-placeholder filtering included) in `src/lib/franchise-identity.ts`/`src/lib/game-utils.ts` cover two of the most commonly repeated queries — see "Shared Utility Libraries" above. `loadSeasonPodiums`/`loadRecords`/`loadMedals` in `src/lib/hall-of-fame.ts` cover the Hall of Fame-specific ones.
 
 **Important:** Supabase JS client silently caps results at 1,000 rows. For large tables (`matchups`: ~580, `transactions`: ~5,700, `nfl_stats`: ~95,000), always set an explicit `.limit()` or paginate. Small tables (`franchises`: ~22, `seasons`: ~6) are fine with defaults.
 

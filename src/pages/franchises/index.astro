@@ -1,6 +1,8 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { supabase } from '../../lib/supabase';
+import { logoPath, primaryColor as getPrimaryColor } from '../../lib/franchise-identity';
+import { loadChampionshipMatchups } from '../../lib/game-utils';
 
 // ── Fetch active franchises ───────────────────────────────────────────────
 const { data: activeFranchises, error: fErr } = await supabase
@@ -31,15 +33,8 @@ const { data: seasonRows, error: sErr } = await supabase
 
 if (sErr) throw new Error(`Seasons query failed: ${sErr.message}`);
 
-// ── Fetch championship matchups (week 17, game_type = 1) ──────────────────
-const { data: champMatchups, error: cmErr } = await supabase
-  .schema('scdfl')
-  .from('matchups')
-  .select('year, roster_id_a, roster_id_b, score_a, score_b')
-  .eq('week', 17)
-  .eq('game_type', 1);
-
-if (cmErr) throw new Error(`Championship matchups query failed: ${cmErr.message}`);
+// ── Fetch championship matchups (week 17, game_type = 1, already played) ──
+const champMatchups = await loadChampionshipMatchups();
 
 // ── Build accolade counts (attributed to active franchise via sleeper_id) ─
 const activeBySleeperId = new Map(activeFranchises.map(f => [f.sleeper_id, f]));
@@ -49,7 +44,7 @@ const runnerUpCounts: Record<string, number> = {};
 const confTitleCounts: Record<string, number> = {};
 
 // Championships & runner-ups from matchup results
-for (const m of champMatchups ?? []) {
+for (const m of champMatchups) {
   const aWins = m.score_a > m.score_b;
   const winnerSleeperId = String(aWins ? m.roster_id_a : m.roster_id_b);
   const loserSleeperId = String(aWins ? m.roster_id_b : m.roster_id_a);
@@ -105,14 +100,14 @@ const hccFranchises = activeFranchises.filter(f => f.conf === 'HCC');
       </div>
       <div class="franchise-grid">
         {sccFranchises.map(franchise => {
-          const primaryColor = franchise.colors[0];
+          const primaryColor = getPrimaryColor(franchise.colors);
           return (
             <a href={`/franchises/${franchise.abbr}`} style="text-decoration: none; display: block;">
               <div class="franchise-card" style={`border-left: 3px solid ${primaryColor};`}>
                 <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.75rem;">
                   <div style="display: flex; align-items: center; gap: 0.75rem;">
                     <img
-                      src={`/images/logos/${franchise.abbr}.png`}
+                      src={logoPath(franchise.abbr)}
                       alt=""
                       width="36"
                       height="36"
@@ -177,14 +172,14 @@ const hccFranchises = activeFranchises.filter(f => f.conf === 'HCC');
       <div class="franchise-grid">
         {hccFranchises.map(franchise => {
           const champs = champCounts[franchise.abbr] || 0;
-          const primaryColor = franchise.colors[0];
+          const primaryColor = getPrimaryColor(franchise.colors);
           return (
             <a href={`/franchises/${franchise.abbr}`} style="text-decoration: none; display: block;">
               <div class="franchise-card" style={`border-left: 3px solid ${primaryColor};`}>
                 <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.75rem;">
                   <div style="display: flex; align-items: center; gap: 0.75rem;">
                     <img
-                      src={`/images/logos/${franchise.abbr}.png`}
+                      src={logoPath(franchise.abbr)}
                       alt=""
                       width="36"
                       height="36"
