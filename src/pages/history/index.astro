@@ -87,9 +87,6 @@ const rollOfHonor = activeFranchises
   .map(f => ({ ...f, ...championshipMap[f.abbr] }))
   .sort((a, b) => Math.min(...a.years) - Math.min(...b.years));
 
-// ── Conference win counts ──────────────────────────────────────────────────
-const hccWins = seasons.filter(s => s.champion?.conf === 'HCC').length;
-const sccWins = seasons.filter(s => s.champion?.conf === 'SCC').length;
 ---
 
 <Layout title="League History" description="Season-by-season history, dynasty bowl results, and franchise records for the Sixth City Dynasty Football League.">
