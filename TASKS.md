@@ -1,7 +1,6 @@
 # SCDFL Site — Task Board
 
 ## TODO
-1. Transaction log on player pages
 1. Low priority QOL cleanup
     - Season recap brackets on mobile
 1. More content 
@@ -60,3 +59,4 @@
   - `toRoman()`
 - Pull data in the same way always
   - `.schema()` first
+- Transaction log on player pages
